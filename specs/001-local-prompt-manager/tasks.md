@@ -23,12 +23,12 @@ description: "Task list for 001-local-prompt-manager"
 **Purpose**: Project initialization and base structure
 
 - [ ] T000 [P] Add test tooling setup與覆蓋率門檻（80% min，critical path 100%）於 package.json（建議 vitest/playwright）
-- [ ] T001 Initialize Next.js 14 App Router project with TypeScript and workspace layout in package.json/app/
-- [ ] T002 [P] Configure Tailwind (tailwind.config.js, postcss.config.js) and global styles in app/globals.css to match prototype base styles
-- [ ] T003 [P] Add shadcn/ui setup (components.json), install lucide-react, clsx, tailwind-merge, @uiw/react-codemirror in package.json
-- [ ] T004 [P] Configure lint/format (eslint, prettier, .editorconfig) with TypeScript/Next rules
-- [ ] T005 [P] Scaffold folders app/(workspace)/components, app/(workspace)/hooks, app/(workspace)/actions, app/(workspace)/store, lib/{db,fs,services,utils,types}
-- [ ] T005a [P] Add TopBar component scaffold in app/(workspace)/components/top-bar.tsx（含「今日變更報告」「新增提示詞」按鈕，依 prototype class）
+- [x] T001 Initialize Next.js 14 App Router project with TypeScript and workspace layout in package.json/app/
+- [x] T002 [P] Configure Tailwind (tailwind.config.js, postcss.config.js) and global styles in app/globals.css to match prototype base styles
+- [x] T003 [P] Add shadcn/ui setup (components.json), install lucide-react, clsx, tailwind-merge, @uiw/react-codemirror in package.json
+- [x] T004 [P] Configure lint/format (eslint, prettier, .editorconfig) with TypeScript/Next rules
+- [x] T005 [P] Scaffold folders app/(workspace)/components, app/(workspace)/hooks, app/(workspace)/actions, app/(workspace)/store, lib/{db,fs,services,utils,types}
+- [x] T005a [P] Add TopBar component scaffold in app/(workspace)/components/top-bar.tsx（含「今日變更報告」「新增提示詞」按鈕，依 prototype class）
 
 ---
 
@@ -36,18 +36,18 @@ description: "Task list for 001-local-prompt-manager"
 
 **Purpose**: Core infrastructure that MUST be complete before any user story
 
-- [ ] T006 Define TypeScript schemas for LowDB and Frontmatter in lib/types/schema.ts (projects/inbox/snippets/settings + prompt frontmatter)
+- [x] T006 Define TypeScript schemas for LowDB and Frontmatter in lib/types/schema.ts (projects/inbox/snippets/settings + prompt frontmatter)
 - [ ] T006a [P] Add contract tests for API schemas（projects/inbox/prompts/snippets/settings/search）in tests/contract/*.test.ts
 - [ ] T006b [P] Add unit tests for adapters/utils（LowDB, fs, frontmatter, conflict, search）in tests/unit/*
-- [ ] T007 [P] Implement LowDB adapter with seed data from ui_prototype.jsx in lib/db.ts (projects/inbox/snippets/settings)
-- [ ] T008 [P] Implement file system adapter for prompts in lib/fs/prompts.ts (read/write Markdown with gray-matter) using lib/utils/sanitizeFilename.ts
-- [ ] T009 [P] Implement frontmatter parser/serializer with damaged-YAML fallback in lib/utils/frontmatter.ts
-- [ ] T010 Implement settings service for rootPath, telemetryEnabled, updateCheckEnabled in lib/services/settings.ts
+- [x] T007 [P] Implement LowDB adapter with seed data from ui_prototype.jsx in lib/db.ts (projects/inbox/snippets/settings)
+- [x] T008 [P] Implement file system adapter for prompts in lib/fs/prompts.ts (read/write Markdown with gray-matter) using lib/utils/sanitizeFilename.ts
+- [x] T009 [P] Implement frontmatter parser/serializer with damaged-YAML fallback in lib/utils/frontmatter.ts
+- [x] T010 Implement settings service for rootPath, telemetryEnabled, updateCheckEnabled in lib/services/settings.ts
 - [ ] T010a Define telemetry/update payload whitelist（不得包含提示詞內容/檔名全文）、頻率與停用行為，記錄於 docs/settings（或 README 設定章節）
-- [ ] T011 Implement conflict detection (mtime/hash) utilities in lib/services/conflict.ts for external-change prompts
-- [ ] T012 Implement search service with 1000-result cap and snippet highlight in lib/services/search.ts
-- [ ] T013 Wire API route skeletons (app/api/projects/route.ts, app/api/inbox/route.ts, app/api/prompts/route.ts, app/api/snippets/route.ts, app/api/settings/route.ts, app/api/search/route.ts)
-- [ ] T014 Add Zustand store scaffolding for selection/filter/editor state in app/(workspace)/store/useWorkspaceStore.ts
+- [x] T011 Implement conflict detection (mtime/hash) utilities in lib/services/conflict.ts for external-change prompts
+- [x] T012 Implement search service with 1000-result cap and snippet highlight in lib/services/search.ts
+- [x] T013 Wire API route skeletons (app/api/projects/route.ts, app/api/inbox/route.ts, app/api/prompts/route.ts, app/api/snippets/route.ts, app/api/settings/route.ts, app/api/search/route.ts)
+- [x] T014 Add Zustand store scaffolding for selection/filter/editor state in app/(workspace)/store/useWorkspaceStore.ts
 
 **Checkpoint**: Foundation ready — user stories can start.
 
@@ -61,13 +61,13 @@ description: "Task list for 001-local-prompt-manager"
 
 ### Implementation for User Story 1
 
-- [ ] T015 [P] [US1] Implement inbox API (GET/POST/PATCH/DELETE) with autosave timestamps in app/api/inbox/route.ts and app/api/inbox/[id]/route.ts
+- [x] T015 [P] [US1] Implement inbox API (GET/POST/PATCH/DELETE) with autosave timestamps in app/api/inbox/route.ts and app/api/inbox/[id]/route.ts
 - [ ] T015a [P] [US1] Integration test：autosave + reopen restores draft（tests/integration/us1-draft-autosave.test.ts）
-- [ ] T016 [P] [US1] Build InboxList component per prototype in app/(workspace)/components/inbox-list.tsx (sorted by updatedAt, show hint/createdAt)
-- [ ] T017 [P] [US1] Implement DraftEditor with autosave + large-paste loading indicator in app/(workspace)/components/draft-editor.tsx
+- [x] T016 [P] [US1] Build InboxList component per prototype in app/(workspace)/components/inbox-list.tsx (sorted by updatedAt, show hint/createdAt)
+- [x] T017 [P] [US1] Implement DraftEditor with autosave + large-paste loading indicator in app/(workspace)/components/draft-editor.tsx
 - [ ] T017a [P] [US1] Unit test：large paste shows loading indicator（tests/unit/draft-editor-loading.test.ts）
-- [ ] T018 [US1] Add useAutosaveDraft hook throttling calls to inbox API and updating store in app/(workspace)/hooks/useAutosaveDraft.ts
-- [ ] T019 [US1] Wire inbox count badge in sidebar header in app/(workspace)/components/sidebar-header.tsx
+- [x] T018 [US1] Add useAutosaveDraft hook throttling calls to inbox API and updating store in app/(workspace)/hooks/useAutosaveDraft.ts
+ - [x] T019 [US1] Wire inbox count badge in sidebar header in app/(workspace)/components/sidebar-header.tsx
 
 **Checkpoint**: 收件匣草稿可自動保存、排序、預覽並可復原。
 
@@ -81,15 +81,15 @@ description: "Task list for 001-local-prompt-manager"
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Implement projects API (GET/POST/PATCH status) in app/api/projects/route.ts using LowDB
-- [ ] T021 [P] [US2] Implement archiveDraft server action in app/(workspace)/actions/archiveDraft.ts (remove inbox entry, write prompt Markdown, update counts)
+ - [x] T020 [P] [US2] Implement projects API (GET/POST/PATCH status) in app/api/projects/route.ts using LowDB
+- [x] T021 [P] [US2] Implement archiveDraft server action in app/(workspace)/actions/archiveDraft.ts (remove inbox entry, write prompt Markdown, update counts)
 - [ ] T021a [US2] Integration test：archiveDraft moves inbox→file 並更新專案計數（tests/integration/us2-archive-draft.test.ts）
-- [ ] T022 [P] [US2] Implement prompts listing API scanning filesystem in app/api/prompts/route.ts returning type/status/model/tags/updatedAt/projectId
+- [x] T022 [P] [US2] Implement prompts listing API scanning filesystem in app/api/prompts/route.ts returning type/status/model/tags/updatedAt/projectId
 - [ ] T022a [P] [US2] Contract test：prompts listing API 回傳欄位與排序正確（tests/contract/prompts-listing.test.ts）
-- [ ] T023 [US2] Build ProjectList component with selection styling per prototype in app/(workspace)/components/project-list.tsx
-- [ ] T024 [US2] Build PromptList panel with filters/status/model/tag chips in app/(workspace)/components/prompt-list.tsx
+- [x] T023 [US2] Build ProjectList component with selection styling per prototype in app/(workspace)/components/project-list.tsx
+- [x] T024 [US2] Build PromptList panel with filters/status/model/tag chips in app/(workspace)/components/prompt-list.tsx
 - [ ] T024a [US2] Wire TopBar actions：開啟變更報告（placeholder modal）與新建提示詞流程（建立草稿/導向編輯）
-- [ ] T025 [US2] Add root-path missing alert/relocation UI in app/(workspace)/components/root-path-alert.tsx triggered on invalid project path
+- [x] T025 [US2] Add root-path missing alert/relocation UI in app/(workspace)/components/root-path-alert.tsx triggered on invalid project path
 
 **Checkpoint**: 草稿可轉正並出現在專案列表與提示詞清單中；缺路徑時有提示。
 
@@ -103,13 +103,13 @@ description: "Task list for 001-local-prompt-manager"
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Integrate CodeMirror Markdown editor in app/(workspace)/components/prompt-editor.tsx
-- [ ] T027 [P] [US3] Implement prompt read/write API with conflict checks in app/api/prompts/[id]/route.ts
+- [x] T026 [P] [US3] Integrate CodeMirror Markdown editor in app/(workspace)/components/prompt-editor.tsx
+- [x] T027 [P] [US3] Implement prompt read/write API with conflict checks in app/api/prompts/[id]/route.ts
 - [ ] T027a [P] [US3] Contract test：prompt read/write API（含衝突偵測）
-- [ ] T028 [P] [US3] Implement clipboard utils for full vs trimmed (no frontmatter) copy in lib/utils/clipboard.ts
+- [x] T028 [P] [US3] Implement clipboard utils for full vs trimmed (no frontmatter) copy in lib/utils/clipboard.ts
 - [ ] T028a [P] [US3] Unit test：clipboard trims frontmatter for slim copy
-- [ ] T029 [US3] Build PromptHeader actions (copy buttons, status/model/project pills) in app/(workspace)/components/prompt-header.tsx
-- [ ] T030 [US3] Add useAutosavePrompt hook with lastSaved indicator in app/(workspace)/hooks/useAutosavePrompt.ts
+- [x] T029 [US3] Build PromptHeader actions (copy buttons, status/model/project pills) in app/(workspace)/components/prompt-header.tsx
+- [x] T030 [US3] Add useAutosavePrompt hook with lastSaved indicator in app/(workspace)/hooks/useAutosavePrompt.ts
 
 **Checkpoint**: 提示詞可編輯、保存、完整/精簡複製並顯示狀態。
 
@@ -123,12 +123,12 @@ description: "Task list for 001-local-prompt-manager"
 
 ### Implementation for User Story 4
 
-- [ ] T031 [P] [US4] Implement snippets API with usage increment in app/api/snippets/route.ts and app/api/snippets/[id]/usage/route.ts
+- [x] T031 [P] [US4] Implement snippets API with usage increment in app/api/snippets/route.ts and app/api/snippets/[id]/usage/route.ts
 - [ ] T031a [P] [US4] Contract test：snippets usage increment endpoint
-- [ ] T032 [P] [US4] Build SnippetPanel UI per prototype (search, usage, category pills) in app/(workspace)/components/snippet-panel.tsx
-- [ ] T033 [US4] Wire snippet insert via editor ref bridge in app/(workspace)/hooks/useSnippetInsert.ts
+- [x] T032 [P] [US4] Build SnippetPanel UI per prototype (search, usage, category pills) in app/(workspace)/components/snippet-panel.tsx
+- [x] T033 [US4] Wire snippet insert via editor ref bridge in app/(workspace)/hooks/useSnippetInsert.ts
 - [ ] T033a [US4] Integration test：click-to-insert updates usage count
-- [ ] T034 [US4] Trigger usage increment on click and refresh list in app/(workspace)/components/snippet-panel.tsx
+ - [x] T034 [US4] Trigger usage increment on click and refresh list in app/(workspace)/components/snippet-panel.tsx
 
 **Checkpoint**: 片語可搜尋、插入並記錄使用次數。
 

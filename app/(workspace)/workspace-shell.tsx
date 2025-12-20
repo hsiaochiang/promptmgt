@@ -26,6 +26,7 @@ export default function WorkspaceShell() {
   const [promptError, setPromptError] = useState<string | null>(null);
   const [pendingInsert, setPendingInsert] = useState<string | null>(null);
   const { insertSnippet } = useSnippetInsert((content) => setPendingInsert(content));
+  const inboxCount = useWorkspaceStore((s) => s.inboxCount);
 
   useEffect(() => {
     const loadPrompt = async () => {
@@ -64,6 +65,9 @@ export default function WorkspaceShell() {
         <aside className="flex-shrink-0 basis-72 border-r border-slate-200 bg-white flex flex-col">
           <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
             <div className="font-semibold text-xs tracking-wide text-slate-600">專案與收件匣</div>
+            <div className="text-[10px] rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 border border-amber-200">
+              收件匣 {inboxCount}
+            </div>
           </div>
           <div className="flex-1 overflow-auto px-3 py-3 space-y-3">
             <ProjectList />
@@ -125,11 +129,7 @@ export default function WorkspaceShell() {
                   onBodyChange={(body) => setPromptBody(body)}
                 />
               </div>
-              <SnippetPanel
-                onInsert={(snippet: Snippet) => {
-                  insertSnippet(snippet);
-                }}
-              />
+              <SnippetPanel onInsert={(snippet: Snippet) => insertSnippet(snippet)} />
             </div>
           </div>
         </section>

@@ -4,13 +4,15 @@ import { useEffect, useMemo, useState } from "react";
 import type { Snippet } from "@/lib/types/schema";
 
 interface Props {
-  onInsert: (snippet: Snippet) => void;
+  onInsert: (snippet: Snippet) => Promise<Snippet | void>;
 }
 
 export default function SnippetPanel({ onInsert }: Props) {
   const [snippets, setSnippets] = useState<Snippet[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSnippets = async () => {
@@ -49,16 +51,43 @@ export default function SnippetPanel({ onInsert }: Props) {
         />
       </div>
       {loading && <div className="text-[10px] text-slate-400 px-3 py-2">載入中…</div>}
+      {error && (
+        <div className="text-[10px] text-amber-700 px-3 py-2 bg-amber-50 border border-amber-200">
+          {error}
+        </div>
+      )}
       <div className="flex-1 overflow-auto p-2 space-y-2 text-[11px]">
         {filtered.map((s) => (
           <button
             key={s.id}
-            onClick={() => onInsert(s)}
+            onClick={async () => {
+              setBusyId(s.id);
+              setError(null);
+              try {
+                const updated = await onInsert(s);
+                if (updated) {
+                  setSnippets((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+                } else {
+                  setSnippets((prev) =>
+                    prev.map((item) =>
+                      item.id === s.id ? { ...item, usage: item.usage + 1, lastUsedAt: new Date().toISOString() } : item
+                    )
+                  );
+                }
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "插入失敗");
+              } finally {
+                setBusyId(null);
+              }
+            }}
             className="w-full text-left rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 hover:bg-slate-100 flex flex-col gap-1"
           >
             <div className="flex items-center justify-between gap-1">
               <span className="font-semibold truncate">{s.name}</span>
-              <span className="text-[9px] text-slate-400">使用 {s.usage}</span>
+              <span className="text-[9px] text-slate-400 flex items-center gap-1">
+                使用 {s.usage}
+                {busyId === s.id && <span className="text-amber-600">更新中…</span>}
+              </span>
             </div>
             <div className="text-[10px] text-slate-500 truncate">{s.content}</div>
             <div className="flex items-center justify-between mt-1 text-[9px] text-slate-400">
