@@ -1,11 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import type { PromptListItem } from "@/lib/types/schema";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 import { AsyncBoundary } from "./error-boundary";
 
-export default function PromptList() {
+interface Props {
+  refreshKey?: number;
+  onDeletePrompt?: (id: string) => Promise<void>;
+}
+
+export default function PromptList({ refreshKey = 0, onDeletePrompt }: Props) {
   const [prompts, setPrompts] = useState<PromptListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,11 +29,14 @@ export default function PromptList() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/prompts?projectId=${selectedProjectId}`);
+      const res = await fetch(`/api/prompts?projectId=${encodeURIComponent(selectedProjectId)}`);
       if (!res.ok) throw new Error("無法載入提示詞列表");
       const data = (await res.json()) as PromptListItem[];
       setPrompts(data);
-      if (data.length > 0 && !selectedPromptId) {
+      const hasSelected = data.some((p) => p.id === selectedPromptId);
+      if (data.length === 0) {
+        setSelectedPromptId(null);
+      } else if (!selectedPromptId || !hasSelected) {
         setSelectedPromptId(data[0].id);
       }
     } catch (err) {
@@ -37,11 +45,11 @@ export default function PromptList() {
     } finally {
       setLoading(false);
     }
-  }, [selectedProjectId, setSelectedPromptId]);
+  }, [selectedProjectId, selectedPromptId, setSelectedPromptId]);
 
   useEffect(() => {
     fetchPrompts();
-  }, [fetchPrompts]);
+  }, [fetchPrompts, refreshKey]);
 
   const filtered =
     filterStatus === "全部" ? prompts : prompts.filter((p) => p.status === "使用中");
@@ -59,11 +67,16 @@ export default function PromptList() {
       <AsyncBoundary loading={loading} error={error} onRetry={fetchPrompts} label="提示詞列表">
         <div className="space-y-2">
           {filtered.map((prompt) => (
-            <button
+            <div
+              role="button"
+              tabIndex={0}
               key={prompt.id}
               onClick={() => setSelectedPromptId(prompt.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") setSelectedPromptId(prompt.id);
+              }}
               className={
-                "w-full text-left rounded-lg border px-3 py-2 text-xs flex flex-col gap-1 hover:bg-slate-50 " +
+                "w-full text-left rounded-lg border px-3 py-2 text-xs flex flex-col gap-1 hover:bg-slate-50 outline-none " +
                 (prompt.id === selectedPromptId
                   ? "border-slate-900 bg-slate-900/5"
                   : "border-slate-200")
@@ -95,8 +108,20 @@ export default function PromptList() {
                     </span>
                   ))}
                 </div>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeletePrompt?.(prompt.id);
+                    }}
+                    className="px-2 py-0.5 rounded-full border border-rose-200 text-rose-700 text-[10px] hover:bg-rose-50"
+                  >
+                    刪除
+                  </button>
+                </div>
               </div>
-            </button>
+            </div>
           ))}
           {filtered.length === 0 && !loading && (
             <div className="text-xs text-slate-400">尚無提示詞，請先將草稿轉正或新增提示詞。</div>

@@ -34,6 +34,7 @@ export async function archiveDraft(payload: ArchivePayload) {
   }
 
   await db.write();
+  const promptId = Buffer.from(filePath, "utf8").toString("base64url");
 
-  return { filePath };
+  return { filePath, promptId };
 }

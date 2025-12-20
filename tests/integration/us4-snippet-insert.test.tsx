@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { setupIsolatedWorkspace } from "../utils/testEnv";
 import SnippetPanel from "@/app/(workspace)/components/snippet-panel";
@@ -78,16 +78,21 @@ describe("US4 - 點擊片語插入並計數", () => {
   it("點擊片語會插入內容並讓 usage +1", async () => {
     render(<TestHarness />);
 
-    const snippetButton = await screen.findByRole("button", { name: /角色設定/ });
-    const initialUsage = parseInt(snippetButton.textContent?.match(/使用\s+(\d+)/)?.[1] ?? "0", 10);
+    const card = await screen.findByText("角色設定－資深系統分析顧問");
+    const cardContainer = card.closest("div")?.parentElement?.parentElement as HTMLElement;
+    const usageText = cardContainer.textContent ?? "";
+    const initialUsage = parseInt(usageText.match(/使用\s+(\d+)/)?.[1] ?? "0", 10);
 
-    fireEvent.click(snippetButton);
+    const insertButtons = within(cardContainer).getAllByRole("button", { name: "插入" });
+    fireEvent.click(insertButtons[0]);
 
     await waitFor(() => {
       expect(screen.getByTestId("body-preview")).toHaveTextContent(/系統分析與網站規劃顧問/);
     });
 
-    const updatedText = (await screen.findByRole("button", { name: /角色設定/ })).textContent ?? "";
+    const updatedCard = await screen.findByText("角色設定－資深系統分析顧問");
+    const updatedContainer = updatedCard.closest("div")?.parentElement?.parentElement as HTMLElement;
+    const updatedText = updatedContainer.textContent ?? "";
     const updatedUsage = parseInt(updatedText.match(/使用\s+(\d+)/)?.[1] ?? "0", 10);
     expect(updatedUsage).toBe(initialUsage + 1);
   });

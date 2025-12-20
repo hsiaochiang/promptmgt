@@ -37,7 +37,14 @@ afterEach(() => {
 
 describe("DraftEditor 大型貼上 loading 指示", () => {
   it("超過閾值時顯示 loading 並在 500ms 後關閉", async () => {
-    render(<DraftEditor draft={createDraft()} />);
+    render(
+      <DraftEditor
+        draft={createDraft()}
+        projects={[{ id: "p1", name: "AI 工作流課程", status: "進行中", promptCount: 0, updatedAt: "" }]}
+        onArchived={vi.fn()}
+        onDeleted={vi.fn()}
+      />
+    );
 
     const textarea = screen.getByPlaceholderText("開始撰寫或貼上草稿內容，系統將自動儲存") as HTMLTextAreaElement;
 

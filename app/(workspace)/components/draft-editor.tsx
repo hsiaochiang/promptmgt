@@ -1,21 +1,32 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import type { InboxItem } from "@/lib/types/schema";
+import React, { useEffect, useMemo, useState } from "react";
+import type { InboxItem, Project, PromptStatus, PromptType } from "@/lib/types/schema";
 import { useAutosaveDraft } from "../hooks/useAutosaveDraft";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 
 interface Props {
   draft: InboxItem | null;
+  projects: Project[];
+  onArchived: (result: { promptId?: string; projectName?: string }) => void;
+  onDeleted: () => void;
 }
 
 const LARGE_PASTE_THRESHOLD = 100000;
 
-export default function DraftEditor({ draft }: Props) {
+export default function DraftEditor({ draft, projects, onArchived, onDeleted }: Props) {
   const [title, setTitle] = useState("");
   const [hint, setHint] = useState("");
   const [content, setContent] = useState("");
   const [pasting, setPasting] = useState(false);
+  const [archiveProject, setArchiveProject] = useState<string>("");
+  const [archiveStatus, setArchiveStatus] = useState<PromptStatus>("使用中");
+  const [archiveType, setArchiveType] = useState<PromptType>("其他");
+  const [archiveModel, setArchiveModel] = useState("gpt-4o-mini");
+  const [archiveTags, setArchiveTags] = useState("");
+  const [archiveNotes, setArchiveNotes] = useState("");
+  const [archiving, setArchiving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const setEditorDirty = useWorkspaceStore((s) => s.setEditorDirty);
   const setLoading = useWorkspaceStore((s) => s.setLoading);
   const lastSavedAt = useWorkspaceStore((s) => s.lastSavedAt);
@@ -38,6 +49,22 @@ export default function DraftEditor({ draft }: Props) {
     setContent(draft.content ?? "");
   }, [draft]);
 
+  useEffect(() => {
+    if (archiveProject) return;
+    if (projects.length > 0) {
+      setArchiveProject(projects[0].name);
+    }
+  }, [projects, archiveProject]);
+
+  const tagsArray = useMemo(
+    () =>
+      archiveTags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
+    [archiveTags]
+  );
+
   const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const pasted = event.clipboardData.getData("text");
     if (pasted.length > LARGE_PASTE_THRESHOLD) {
@@ -47,6 +74,60 @@ export default function DraftEditor({ draft }: Props) {
         setPasting(false);
         setLoading(false);
       }, 500);
+    }
+  };
+
+  const handleArchive = async () => {
+    if (!draft) return;
+    const projectName = archiveProject || projects[0]?.name;
+    if (!projectName) {
+      window.alert("請先建立專案再進行歸檔");
+      return;
+    }
+
+    setArchiving(true);
+    try {
+      const res = await fetch("/api/archive", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          draftId: draft.id,
+          projectName,
+          frontmatter: {
+            title: title || "未命名草稿",
+            project: projectName,
+            type: archiveType,
+            status: archiveStatus,
+            model: archiveModel,
+            tags: tagsArray,
+            notes: archiveNotes,
+            updatedAt: new Date().toISOString()
+          },
+          body: content
+        })
+      });
+      if (!res.ok) throw new Error("歸檔失敗");
+      const data = await res.json();
+      onArchived({ ...data, projectName });
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "歸檔失敗");
+    } finally {
+      setArchiving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!draft) return;
+    if (!window.confirm("確定刪除此草稿？")) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/inbox/${draft.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("刪除失敗");
+      onDeleted();
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "刪除失敗");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -66,6 +147,72 @@ export default function DraftEditor({ draft }: Props) {
           {pasting && <span className="text-amber-600">大型貼上處理中…</span>}
           {isSaving ? "自動儲存中…" : lastSavedAt ? `已儲存：${lastSavedAt}` : "等待編輯"}
         </span>
+      </div>
+      <div className="px-3 pt-3 pb-2 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-3 text-[11px]">
+        <div className="flex items-center gap-2 flex-wrap">
+          <label className="text-slate-500">專案</label>
+          <select
+            className="border border-slate-300 rounded px-2 py-1"
+            value={archiveProject}
+            onChange={(e) => setArchiveProject(e.target.value)}
+          >
+            {projects.map((p) => (
+              <option key={p.id} value={p.name}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+          <label className="text-slate-500">狀態</label>
+          <select
+            className="border border-slate-300 rounded px-2 py-1"
+            value={archiveStatus}
+            onChange={(e) => setArchiveStatus(e.target.value as PromptStatus)}
+          >
+            <option value="使用中">使用中</option>
+            <option value="草稿">草稿</option>
+            <option value="已封存">已封存</option>
+          </select>
+          <label className="text-slate-500">類型</label>
+          <select
+            className="border border-slate-300 rounded px-2 py-1"
+            value={archiveType}
+            onChange={(e) => setArchiveType(e.target.value as PromptType)}
+          >
+            <option value="簡報生成">簡報生成</option>
+            <option value="結構設計">結構設計</option>
+            <option value="RAG 調教">RAG 調教</option>
+            <option value="其他">其他</option>
+          </select>
+          <label className="text-slate-500">模型</label>
+          <input
+            className="border border-slate-300 rounded px-2 py-1 w-32"
+            value={archiveModel}
+            onChange={(e) => setArchiveModel(e.target.value)}
+          />
+          <label className="text-slate-500">標籤</label>
+          <input
+            className="border border-slate-300 rounded px-2 py-1 w-40"
+            value={archiveTags}
+            onChange={(e) => setArchiveTags(e.target.value)}
+            placeholder="以逗號分隔"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleDelete}
+            disabled={deleting || archiving}
+            className="px-3 py-1 rounded-full border border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 disabled:opacity-60"
+          >
+            {deleting ? "刪除中…" : "刪除草稿"}
+          </button>
+          <button
+            onClick={handleArchive}
+            disabled={archiving || deleting}
+            className="px-3 py-1 rounded-full bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-60"
+          >
+            {archiving ? "歸檔中…" : "歸檔為提示詞"}
+          </button>
+        </div>
       </div>
       <div className="p-3 space-y-3 flex-1 overflow-auto">
         <div className="space-y-1">
@@ -103,6 +250,15 @@ export default function DraftEditor({ draft }: Props) {
             }}
             onPaste={handlePaste}
             placeholder="開始撰寫或貼上草稿內容，系統將自動儲存"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs text-slate-500">前言備註</label>
+          <textarea
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
+            value={archiveNotes}
+            onChange={(e) => setArchiveNotes(e.target.value)}
+            placeholder="可選：補充使用說明"
           />
         </div>
       </div>

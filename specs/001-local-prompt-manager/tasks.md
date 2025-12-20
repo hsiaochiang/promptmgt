@@ -67,6 +67,8 @@ description: "Task list for 001-local-prompt-manager"
 - [x] T017 [P] [US1] Implement DraftEditor with autosave + large-paste loading indicator in app/(workspace)/components/draft-editor.tsx
 - [x] T017a [P] [US1] Unit test：large paste shows loading indicator（tests/unit/draft-editor-loading.test.ts）
 - [x] T017b [P] [US1] Unit/Integration：autosave 節奏 2 秒＋無輸入暫停＋恢復後重啟計時（Draft），覆蓋 /api/inbox/[id] 節流寫入
+- [x] T017c [P] [US1] 草稿刪除：在 app/api/inbox/[id]/route.ts 與 InboxList/DraftEditor 增加刪除操作後刷新列表與 inbox 計數，含回歸測試
+- [x] T017d [P] [US1] 收件匣 100+ 筆：列表提供分頁或搜尋提示並顯示整理建議，覆蓋 app/api/inbox/route.ts 與 InboxList 行為，含整合/回歸測試
 - [x] T018 [US1] Add useAutosaveDraft hook throttling calls to inbox API and updating store in app/(workspace)/hooks/useAutosaveDraft.ts
 - [x] T019 [US1] Wire inbox count badge in top bar in app/(workspace)/components/top-bar.tsx
 
@@ -83,16 +85,22 @@ description: "Task list for 001-local-prompt-manager"
 ### Implementation for User Story 2
 
  - [x] T020 [P] [US2] Implement projects API (GET/POST/PATCH status) in app/api/projects/route.ts using LowDB
+- [x] T020b [P] [US2] 專案刪除 API：/api/projects DELETE 合約與回歸，更新 cache 計數
 - [x] T021 [P] [US2] Implement archiveDraft server action in app/(workspace)/actions/archiveDraft.ts (remove inbox entry, write prompt Markdown, update counts)
 - [x] T021a [US2] Integration test：archiveDraft moves inbox→file 並更新專案計數（tests/integration/us2-archive-draft.test.ts）
 - [x] T022 [P] [US2] Implement prompts listing API scanning filesystem in app/api/prompts/route.ts returning type/status/model/tags/updatedAt/projectId
 - [x] T022a [P] [US2] Contract test：prompts listing API 回傳欄位與排序正確（tests/contract/prompts-listing.test.ts）
 - [x] T023 [US2] Build ProjectList component with selection styling per prototype in app/(workspace)/components/project-list.tsx
+ - [x] T023b [US2] 專案 CRUD UI：project-list.tsx 增加新增/編輯/刪除與計數同步、選取重設回歸
 - [x] T024 [US2] Build PromptList panel with filters/status/model/tag chips in app/(workspace)/components/prompt-list.tsx
 - [x] T024a [US2] Wire TopBar actions：開啟變更報告（placeholder modal）與新建提示詞流程（建立草稿/導向編輯）
+- [x] T024b [US2] 直接新增提示詞：/api/prompts POST + TopBar 入口，建立空白提示詞並選取，含回歸測試
+- [x] T024c [US2] 提示詞刪除：/api/prompts/[id] DELETE 與 PromptList 刪除按鈕，刪除後計數/列表/選取同步回歸
+- [x] T024d [US2] 前言編輯 UI：在 prompt 前言區塊編輯並自動保存 Frontmatter（標題/狀態/類型/模型/標籤/備註）回歸
 - [x] T025 [US2] Add root-path missing alert/relocation UI in app/(workspace)/components/root-path-alert.tsx triggered on invalid project path
 - [x] T025b [US2] 衝突處理 UI：提示詞編輯器外部變更警告，提供「載入外部 / 保留本地 / 檢視差異」三選行為
 - [x] T025c [P] [US2] Integration/contract：模擬 hash/mtime 衝突，驗證三選流程與結果（載入/覆寫/差異檢視）
+- [x] T025d [US2] RootPath 導引測試：設定頁 rootPath 輸入儲存流程，RootPathAlert 導向設定頁行為回歸
 
 **Checkpoint**: 草稿可轉正並出現在專案列表與提示詞清單中；缺路徑時有提示。
 
@@ -133,6 +141,7 @@ description: "Task list for 001-local-prompt-manager"
 - [x] T033 [US4] Wire snippet insert via editor ref bridge in app/(workspace)/hooks/useSnippetInsert.ts
  - [x] T033a [US4] Integration test：click-to-insert updates usage count
  - [x] T034 [US4] Trigger usage increment on click and refresh list in app/(workspace)/components/snippet-panel.tsx
+ - [x] T034b [US4] 片語 CRUD：/api/snippets POST/PATCH/DELETE 合約與 SnippetPanel 新增/編輯/刪除流程回歸（含重名阻擋）
 
 **Checkpoint**: 片語可搜尋、插入並記錄使用次數。
 
@@ -148,9 +157,10 @@ description: "Task list for 001-local-prompt-manager"
 - [x] T037a [P] Perf check scripts：SC-003/004（複製/搜尋延遲）、SC-008（啟動 50/500 資料集）、SC-006（外部修改提示 ≤5s）
 - [x] T037b UX check：SC-009/010 首次體驗成功率與卡頓回報率（手動腳本/調查）
 - [x] T038 [P] Add error boundary/loading states for editor and lists in app/(workspace)/components/error-boundary.tsx
+- [x] T038a [P] 刪除後同步：刪除專案/提示詞時列表、計數、選取狀態同步的回歸測試
 - [x] T039 Verify search cap, large-paste loading, filename sanitizer coverage across flows in app/(workspace)/ and lib/utils
 - [x] T039a [P] Coverage gate enforcement in CI（>=80%，critical path 100%），確保測試未通過時阻擋
-- [ ] T039b [P] [Phase 7] 覆蓋率驗證：含 autosave 節奏、衝突處理 UI、搜尋上限、檔名合法化皆達覆蓋門檻
+- [x] T039b [P] [Phase 7] 覆蓋率驗證：自動化檢查 autosave 節奏、衝突 UI、搜尋上限、檔名合法化，覆蓋率達 80%/critical path 100%
 
 ---
 

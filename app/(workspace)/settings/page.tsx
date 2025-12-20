@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { Settings } from "@/lib/types/schema";
 
 export default function SettingsPage() {
@@ -8,6 +8,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rootPathInput, setRootPathInput] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -17,6 +18,7 @@ export default function SettingsPage() {
         const res = await fetch("/api/settings");
         const data = (await res.json()) as Settings;
         setSettings(data);
+        setRootPathInput(data.rootPath ?? "");
       } catch (err) {
         setError(err instanceof Error ? err.message : "讀取設定失敗");
       } finally {
@@ -38,6 +40,7 @@ export default function SettingsPage() {
       });
       const data = (await res.json()) as Settings;
       setSettings(data);
+      setRootPathInput(data.rootPath ?? "");
     } catch (err) {
       setError(err instanceof Error ? err.message : "更新設定失敗");
     } finally {
@@ -71,6 +74,29 @@ export default function SettingsPage() {
           <div className="text-sm text-slate-500">載入設定中…</div>
         ) : (
           <div className="space-y-4">
+            <div className="p-4 border border-slate-200 rounded-lg space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-semibold text-sm">根路徑</div>
+                  <div className="text-sm text-slate-500">指定 Prompts 儲存資料夾的絕對路徑。</div>
+                </div>
+                <span className="text-[11px] text-slate-400">{saving ? "儲存中…" : null}</span>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
+                  value={rootPathInput}
+                  onChange={(e) => setRootPathInput(e.target.value)}
+                  placeholder="例如：C:\\Users\\me\\Prompts"
+                />
+                <button
+                  onClick={() => update({ rootPath: rootPathInput })}
+                  className="px-3 py-2 rounded-lg bg-slate-900 text-white text-sm hover:bg-slate-800"
+                >
+                  儲存路徑
+                </button>
+              </div>
+            </div>
             <ToggleRow
               title="匿名遙測"
               description="用於彙總啟動/效能/錯誤代碼，不含提示詞內容或檔名。"

@@ -43,7 +43,12 @@ export default function InboxWorkspace() {
       </aside>
       <div className="w-[3px] cursor-col-resize bg-slate-200/70" />
       <main className="flex-1 bg-slate-50 p-4 overflow-auto">
-        <DraftEditor draft={selected} />
+        <DraftEditor
+          draft={selected}
+          projects={[]}
+          onArchived={() => {}}
+          onDeleted={() => {}}
+        />
       </main>
     </div>
   );

@@ -9,8 +9,8 @@ import PromptEditor from "./components/prompt-editor";
 import SnippetPanel from "./components/snippet-panel";
 import DraftEditor from "./components/draft-editor";
 import { AsyncBoundary, ErrorBoundary } from "./components/error-boundary";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { InboxItem, PromptFrontmatter, Snippet } from "@/lib/types/schema";
+import { useCallback, useEffect, useState } from "react";
+import type { InboxItem, PromptFrontmatter, Project, PromptStatus, PromptType, Snippet } from "@/lib/types/schema";
 import RootPathAlert from "./components/root-path-alert";
 import { useWorkspaceStore } from "./store/useWorkspaceStore";
 import { useSnippetInsert } from "./hooks/useSnippetInsert";
@@ -19,13 +19,16 @@ export default function WorkspaceShell() {
   const [inboxItems, setInboxItems] = useState<InboxItem[]>([]);
   const [selectedInboxId, setSelectedInboxId] = useState<string | null>(null);
   const [inboxRefreshKey, setInboxRefreshKey] = useState(0);
-  const [creatingDraft, setCreatingDraft] = useState(false);
+  const [creatingPrompt, setCreatingPrompt] = useState(false);
   const [showChangeLog, setShowChangeLog] = useState(false);
   const selectedPromptId = useWorkspaceStore((s) => s.selectedPromptId);
   const setEditorDirty = useWorkspaceStore((s) => s.setEditorDirty);
   const setSelectedProjectId = useWorkspaceStore((s) => s.setSelectedProjectId);
   const setSelectedPromptId = useWorkspaceStore((s) => s.setSelectedPromptId);
   const selectedProjectId = useWorkspaceStore((s) => s.selectedProjectId);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectRefreshKey, setProjectRefreshKey] = useState(0);
+  const [promptRefreshKey, setPromptRefreshKey] = useState(0);
 
   const [promptFrontmatter, setPromptFrontmatter] = useState<PromptFrontmatter | null>(null);
   const [promptBody, setPromptBody] = useState<string>("");
@@ -33,6 +36,7 @@ export default function WorkspaceShell() {
   const [promptLoading, setPromptLoading] = useState(false);
   const [promptError, setPromptError] = useState<string | null>(null);
   const [pendingInsert, setPendingInsert] = useState<string | null>(null);
+  const [tagsInput, setTagsInput] = useState<string>("");
   const { insertSnippet } = useSnippetInsert((content) => setPendingInsert(content));
   const inboxCount = useWorkspaceStore((s) => s.inboxCount);
 
@@ -56,6 +60,7 @@ export default function WorkspaceShell() {
       setPromptFrontmatter(data.frontmatter);
       setPromptBody(data.body);
       setPromptHash(data.hash);
+      setTagsInput((data.frontmatter?.tags ?? []).join(", "));
       setEditorDirty(false);
     } catch (err) {
       setPromptError(err instanceof Error ? err.message : "讀取失敗");
@@ -73,24 +78,95 @@ export default function WorkspaceShell() {
     setSelectedInboxId(null);
   }, [selectedProjectId]);
 
-  const handleCreatePrompt = async () => {
+  useEffect(() => {
+    setTagsInput((promptFrontmatter?.tags ?? []).join(", "));
+  }, [selectedPromptId, promptFrontmatter?.tags]);
+
+  const handleFrontmatterChange = (partial: Partial<PromptFrontmatter>) => {
+    if (!promptFrontmatter) return;
+    const next = { ...promptFrontmatter, ...partial } as PromptFrontmatter;
+    setPromptFrontmatter(next);
+    setEditorDirty(true);
+  };
+
+  const handleDeletePrompt = async (promptId: string) => {
+    if (!promptId) return;
+    if (!window.confirm("確定刪除此提示詞？")) return;
     try {
-      setCreatingDraft(true);
-      const res = await fetch("/api/inbox", {
+      const res = await fetch(`/api/prompts/${promptId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("刪除提示詞失敗");
+      setSelectedPromptId(null);
+      setPromptFrontmatter(null);
+      setPromptBody("");
+      setPromptHash(null);
+      setPromptRefreshKey((k) => k + 1);
+      setProjectRefreshKey((k) => k + 1);
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "刪除提示詞失敗");
+    }
+  };
+
+  const handleArchiveSuccess = (result: { promptId?: string; projectName?: string }) => {
+    setSelectedInboxId(null);
+    setInboxRefreshKey((k) => k + 1);
+    setProjectRefreshKey((k) => k + 1);
+    setPromptRefreshKey((k) => k + 1);
+    if (result.projectName) {
+      setSelectedProjectId(result.projectName);
+    }
+    if (result.promptId) {
+      setSelectedPromptId(result.promptId);
+    }
+  };
+
+  const handleDraftDeleted = () => {
+    setSelectedInboxId(null);
+    setInboxRefreshKey((k) => k + 1);
+  };
+
+  const handleCreatePrompt = async () => {
+    const projectName = selectedProjectId ?? projects[0]?.name;
+    if (!projectName) {
+      window.alert("請先建立並選擇專案");
+      return;
+    }
+
+    const title = window.prompt("輸入提示詞標題", "新提示詞");
+    if (!title) return;
+
+    try {
+      setCreatingPrompt(true);
+      const now = new Date().toISOString();
+      const res = await fetch("/api/prompts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: "新草稿", content: "", hint: "" })
+        body: JSON.stringify({
+          frontmatter: {
+            title,
+            project: projectName,
+            type: "其他" as PromptType,
+            status: "使用中" as PromptStatus,
+            model: "gpt-4o-mini",
+            tags: [],
+            updatedAt: now
+          },
+          body: ""
+        })
       });
-      if (!res.ok) throw new Error("建立草稿失敗");
-      const created = (await res.json()) as InboxItem;
-      setSelectedInboxId(created.id);
-      setSelectedPromptId(null);
-      setSelectedProjectId(null);
-      setInboxRefreshKey((k) => k + 1);
+      if (!res.ok) throw new Error("建立提示詞失敗，請確認已設定根路徑");
+      const data = await res.json();
+      setSelectedPromptId(data.id);
+      setSelectedInboxId(null);
+      setPromptFrontmatter(data.frontmatter);
+      setPromptBody(data.body ?? "");
+      setPromptHash(data.hash ?? null);
+      setTagsInput((data.frontmatter?.tags ?? []).join(", "));
+      setPromptRefreshKey((k) => k + 1);
+      setProjectRefreshKey((k) => k + 1);
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "建立草稿失敗");
+      window.alert(err instanceof Error ? err.message : "建立提示詞失敗");
     } finally {
-      setCreatingDraft(false);
+      setCreatingPrompt(false);
     }
   };
 
@@ -99,7 +175,7 @@ export default function WorkspaceShell() {
       <TopBar
         onShowChangeReport={() => setShowChangeLog(true)}
         onCreatePrompt={handleCreatePrompt}
-        creating={creatingDraft}
+        creating={creatingPrompt}
       />
       <div className="flex flex-1 overflow-hidden">
         <aside className="flex-shrink-0 basis-72 border-r border-slate-200 bg-white flex flex-col">
@@ -110,7 +186,15 @@ export default function WorkspaceShell() {
             </div>
           </div>
           <div className="flex-1 overflow-auto px-3 py-3 space-y-3">
-            <ProjectList />
+            <ProjectList
+              refreshKey={projectRefreshKey}
+              onProjectsChange={(list) => {
+                setProjects(list);
+                if (!selectedProjectId && list.length > 0) {
+                  setSelectedProjectId(list[0].name);
+                }
+              }}
+            />
             <div className="pt-2 border-t border-slate-200 mt-2">
               <InboxList
                 selectedId={selectedInboxId}
@@ -147,14 +231,19 @@ export default function WorkspaceShell() {
             <RootPathAlert />
           </div>
           <ErrorBoundary label="提示詞列表">
-            <PromptList />
+            <PromptList refreshKey={promptRefreshKey} onDeletePrompt={handleDeletePrompt} />
           </ErrorBoundary>
         </main>
         <div className="w-[3px] cursor-col-resize bg-slate-200/70" />
         <section className="flex-[1.8] flex flex-col p-4 bg-slate-50">
           <div className="flex flex-col gap-3 h-full">
             {selectedInboxId ? (
-              <DraftEditor draft={inboxItems.find((i) => i.id === selectedInboxId) ?? null} />
+              <DraftEditor
+                draft={inboxItems.find((i) => i.id === selectedInboxId) ?? null}
+                projects={projects}
+                onArchived={handleArchiveSuccess}
+                onDeleted={handleDraftDeleted}
+              />
             ) : (
               <AsyncBoundary
                 loading={promptLoading}
@@ -164,6 +253,111 @@ export default function WorkspaceShell() {
               >
                 <div className="flex h-full gap-3">
                   <div className="flex-1 flex flex-col gap-3">
+                    {promptFrontmatter && (
+                      <div className="border border-slate-200 bg-white rounded-lg p-3 text-[12px] space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-600 font-semibold">前言編輯</span>
+                          <button
+                            onClick={() => selectedPromptId && handleDeletePrompt(selectedPromptId)}
+                            className="px-3 py-1 rounded-full border border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 text-[11px]"
+                          >
+                            刪除提示詞
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-1">
+                            <div className="text-[11px] text-slate-500">標題</div>
+                            <input
+                              className="w-full border border-slate-300 rounded px-2 py-1"
+                              value={promptFrontmatter.title}
+                              onChange={(e) =>
+                                handleFrontmatterChange({
+                                  title: e.target.value,
+                                  updatedAt: new Date().toISOString()
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <div className="text-[11px] text-slate-500">模型</div>
+                            <input
+                              className="w-full border border-slate-300 rounded px-2 py-1"
+                              value={promptFrontmatter.model}
+                              onChange={(e) =>
+                                handleFrontmatterChange({
+                                  model: e.target.value,
+                                  updatedAt: new Date().toISOString()
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <div className="text-[11px] text-slate-500">狀態</div>
+                            <select
+                              className="w-full border border-slate-300 rounded px-2 py-1"
+                              value={promptFrontmatter.status}
+                              onChange={(e) =>
+                                handleFrontmatterChange({
+                                  status: e.target.value as PromptStatus,
+                                  updatedAt: new Date().toISOString()
+                                })
+                              }
+                            >
+                              <option value="使用中">使用中</option>
+                              <option value="草稿">草稿</option>
+                              <option value="已封存">已封存</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="text-[11px] text-slate-500">類型</div>
+                            <select
+                              className="w-full border border-slate-300 rounded px-2 py-1"
+                              value={promptFrontmatter.type}
+                              onChange={(e) =>
+                                handleFrontmatterChange({
+                                  type: e.target.value as PromptType,
+                                  updatedAt: new Date().toISOString()
+                                })
+                              }
+                            >
+                              <option value="簡報生成">簡報生成</option>
+                              <option value="結構設計">結構設計</option>
+                              <option value="RAG 調教">RAG 調教</option>
+                              <option value="其他">其他</option>
+                            </select>
+                          </div>
+                          <div className="col-span-2 space-y-1">
+                            <div className="text-[11px] text-slate-500">標籤（以逗號分隔）</div>
+                            <input
+                              className="w-full border border-slate-300 rounded px-2 py-1"
+                              value={tagsInput}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setTagsInput(value);
+                                const tags = value
+                                  .split(",")
+                                  .map((t) => t.trim())
+                                  .filter(Boolean);
+                                handleFrontmatterChange({ tags, updatedAt: new Date().toISOString() });
+                              }}
+                            />
+                          </div>
+                          <div className="col-span-2 space-y-1">
+                            <div className="text-[11px] text-slate-500">備註</div>
+                            <textarea
+                              className="w-full border border-slate-300 rounded px-2 py-1"
+                              value={promptFrontmatter.notes ?? ""}
+                              onChange={(e) =>
+                                handleFrontmatterChange({
+                                  notes: e.target.value,
+                                  updatedAt: new Date().toISOString()
+                                })
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <PromptHeader
                       title={promptFrontmatter?.title ?? "尚未選擇提示詞"}
                       frontmatter={promptFrontmatter}
@@ -177,6 +371,10 @@ export default function WorkspaceShell() {
                       insertText={pendingInsert}
                       onInserted={() => setPendingInsert(null)}
                       onBodyChange={(body) => setPromptBody(body)}
+                      onFrontmatterChange={(fm) => {
+                        setPromptFrontmatter(fm);
+                        setTagsInput((fm?.tags ?? []).join(", "));
+                      }}
                     />
                   </div>
                   <SnippetPanel onInsert={(snippet: Snippet) => insertSnippet(snippet)} />

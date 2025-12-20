@@ -18,6 +18,7 @@ interface Props {
   insertText?: string | null;
   onInserted?: () => void;
   onBodyChange?: (body: string) => void;
+  onFrontmatterChange?: (frontmatter: PromptFrontmatter | null) => void;
 }
 
 export default function PromptEditor({
@@ -27,7 +28,8 @@ export default function PromptEditor({
   clientHash,
   insertText,
   onInserted,
-  onBodyChange
+  onBodyChange,
+  onFrontmatterChange
 }: Props) {
   const [body, setBody] = useState(initialBody);
   const [frontmatter, setFrontmatter] = useState<PromptFrontmatter | null>(initialFrontmatter);
@@ -60,7 +62,8 @@ export default function PromptEditor({
 
   useEffect(() => {
     setFrontmatter(initialFrontmatter);
-  }, [initialFrontmatter]);
+    onFrontmatterChange?.(initialFrontmatter);
+  }, [initialFrontmatter, onFrontmatterChange]);
 
   useEffect(() => {
     if (!insertText) return;
@@ -83,6 +86,7 @@ export default function PromptEditor({
       const res = await fetch(`/api/prompts/${promptId}`);
       const data = await res.json();
       setFrontmatter(data.frontmatter);
+      onFrontmatterChange?.(data.frontmatter);
       setBody(data.body);
       setHash(data.hash);
       onBodyChange?.(data.body);

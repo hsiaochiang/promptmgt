@@ -5,7 +5,7 @@
 
 ## Summary
 
-落地本機提示詞管理：雙層儲存（LowDB + 檔案系統 Markdown），支援收件匣草稿自動儲存、專案歸檔、Markdown 編輯與複製、片語插入。自動儲存間隔 2 秒，無輸入時暫停，恢復輸入再計時。
+落地本機提示詞管理：雙層儲存（LowDB + 檔案系統 Markdown），支援收件匣草稿自動儲存、草稿刪除與轉正、專案 CRUD、提示詞直接新增/刪除/前言編輯、片語 CRUD 與插入、設定頁 rootPath 編輯。自動儲存間隔 2 秒，無輸入時暫停，恢復輸入再計時。
 
 ## Technical Context
 
@@ -16,7 +16,7 @@
 **Target Platform**: 本機瀏覽器（桌面）  
 **Project Type**: 單一 Next.js 應用  
 **Performance Goals**: 搜尋/複製/自動存取均在 2–3 秒內完成；啟動載入 50 專案/500 提示詞 ≤5 秒  
-**Constraints**: 離線本機運行；檔名需經合法化；外部檔案修改需提示並避免覆寫  
+**Constraints**: 離線本機運行；檔名需經合法化；外部檔案修改需提示並避免覆寫；缺 rootPath 時需引導設定  
 **Scale/Scope**: 專案 ≤100、單專案提示詞 ≤500、片語 ≤200
 
 ## Constitution Check
@@ -51,13 +51,13 @@ app/
     inbox-workspace.tsx
     actions/archiveDraft.ts
     components/
-      project-list.tsx
+      project-list.tsx            # 專案 CRUD 按鈕（新增/編輯/刪除）
       inbox-list.tsx
-      draft-editor.tsx
-      prompt-list.tsx
-      prompt-editor.tsx
+      draft-editor.tsx            # 草稿刪除＋歸檔表單（前言欄位）
+      prompt-list.tsx             # 刪除提示詞入口
+      prompt-editor.tsx           # 前言回填與衝突處理
       prompt-header.tsx
-      snippet-panel.tsx
+      snippet-panel.tsx           # 片語新增/編輯/刪除＋插入
       error-boundary.tsx
       top-bar.tsx
     hooks/
@@ -66,15 +66,16 @@ app/
       useSnippetInsert.ts
     store/useWorkspaceStore.ts
   api/
-    projects/route.ts
+    projects/route.ts             # GET/POST/PATCH/DELETE 專案
     inbox/route.ts
     inbox/[id]/route.ts
-    prompts/route.ts
-    prompts/[id]/route.ts
-    snippets/route.ts
+    prompts/route.ts              # GET (filter)、POST 建立提示詞
+    prompts/[id]/route.ts         # GET/POST/DELETE 單一提示詞
+    snippets/route.ts             # GET/POST/PATCH/DELETE 片語
     snippets/[id]/usage/route.ts
     settings/route.ts
     search/route.ts
+    archive/route.ts              # 歸檔草稿 API proxy
 lib/
   db.ts
   fs/prompts.ts

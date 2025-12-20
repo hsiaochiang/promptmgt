@@ -28,7 +28,13 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 
 export async function DELETE(_: Request, { params }: { params: { id: string } }) {
   const db = await getDb();
+  const before = db.data!.inbox.length;
   db.data!.inbox = db.data!.inbox.filter((i) => i.id !== params.id);
+
+  if (db.data!.inbox.length === before) {
+    return NextResponse.json({ message: "Not Found" }, { status: 404 });
+  }
+
   await db.write();
   return NextResponse.json({ ok: true });
 }

@@ -1,7 +1,11 @@
+import { promises as fs } from "fs";
+import { join } from "path";
 import { NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import { getDb } from "@/lib/db";
-import { applyPromptMeta } from "@/lib/services/cache";
+import { applyPromptMeta, setPromptMetaFromPrompts } from "@/lib/services/cache";
+import { listPrompts } from "@/lib/fs/prompts";
+import { sanitizeFilename } from "@/lib/utils/sanitizeFilename";
 
 function now() {
   return new Date().toISOString();
@@ -51,4 +55,35 @@ export async function PATCH(request: Request) {
 
   await db.write();
   return NextResponse.json(project);
+}
+
+export async function DELETE(request: Request) {
+  const payload = await request.json();
+  const { id } = payload;
+
+  if (!id) {
+    return NextResponse.json({ message: "id is required" }, { status: 400 });
+  }
+
+  const db = await getDb();
+  const existing = db.data!.projects.find((p) => p.id === id);
+  if (!existing) {
+    return NextResponse.json({ message: "Not Found" }, { status: 404 });
+  }
+
+  db.data!.projects = db.data!.projects.filter((p) => p.id !== id);
+
+  const rootPath = db.data!.settings.rootPath;
+  if (rootPath) {
+    const projectDir = join(rootPath, sanitizeFilename(existing.name));
+    await fs.rm(projectDir, { recursive: true, force: true });
+
+    const prompts = await listPrompts(rootPath);
+    setPromptMetaFromPrompts(prompts);
+    db.data!.projects = applyPromptMeta(db.data!.projects);
+  }
+
+  await db.write();
+
+  return NextResponse.json({ ok: true });
 }

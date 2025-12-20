@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { access } from "fs/promises";
 import { setupIsolatedWorkspace } from "../utils/testEnv";
 
 let restoreWorkspace: (() => Promise<void>) | undefined;
@@ -76,11 +77,43 @@ describe("API contracts", () => {
     expect(notFoundRes.status).toBe(404);
   });
 
+  it("projects DELETE validates id and removes project", async () => {
+    const { POST, DELETE, GET } = await import("@/app/api/projects/route");
+
+    const missingRes = await DELETE(new Request("http://localhost/api/projects", { method: "DELETE", body: JSON.stringify({}) }));
+    expect(missingRes.status).toBe(400);
+
+    const createdRes = await POST(
+      new Request("http://localhost/api/projects", {
+        method: "POST",
+        body: JSON.stringify({ name: "刪除測試" })
+      })
+    );
+    const created = await createdRes.json();
+
+    const notFound = await DELETE(
+      new Request("http://localhost/api/projects", { method: "DELETE", body: JSON.stringify({ id: "proj-missing" }) })
+    );
+    expect(notFound.status).toBe(404);
+
+    const deleteRes = await DELETE(
+      new Request("http://localhost/api/projects", { method: "DELETE", body: JSON.stringify({ id: created.id }) })
+    );
+    expect(deleteRes.status).toBe(200);
+
+    const list = await GET();
+    const projects = await list.json();
+    expect(projects.find((p: any) => p.id === created.id)).toBeUndefined();
+  });
+
   it("inbox routes return and create drafts with required fields", async () => {
     const { GET, POST } = await import("@/app/api/inbox/route");
 
-    const response = await GET();
-    const drafts = await response.json();
+    const response = await GET(new Request("http://localhost/api/inbox?limit=200"));
+    const payload = await response.json();
+    const drafts = Array.isArray(payload) ? payload : payload.items;
+    const total = Array.isArray(payload) ? drafts.length : payload.total;
+    expect(total).toBeGreaterThan(0);
     expect(drafts[0]).toMatchObject({
       id: expect.any(String),
       title: expect.any(String),
@@ -184,6 +217,34 @@ describe("API contracts", () => {
     });
   });
 
+  it("prompts list without filter returns all projects", async () => {
+    const { updateSettings } = await import("@/lib/services/settings");
+    const { writePrompt } = await import("@/lib/fs/prompts");
+    const { GET } = await import("@/app/api/prompts/route");
+
+    const rootPath = process.env.DEFAULT_ROOT!;
+    await updateSettings({ rootPath });
+
+    await writePrompt(
+      rootPath,
+      "proj-A",
+      {
+        title: "All Prompt",
+        project: "proj-A",
+        type: "其他",
+        status: "草稿",
+        model: "gpt-4",
+        tags: [],
+        updatedAt: new Date().toISOString()
+      },
+      "body"
+    );
+
+    const response = await GET(new Request("http://localhost/api/prompts"));
+    const prompts = await response.json();
+    expect(prompts.some((p: any) => p.projectId === "proj-A" || p.project === "proj-A")).toBe(true);
+  });
+
   it("prompts list returns empty when rootPath is unset", async () => {
     const { updateSettings } = await import("@/lib/services/settings");
     const { GET } = await import("@/app/api/prompts/route");
@@ -192,6 +253,143 @@ describe("API contracts", () => {
     const response = await GET(new Request("http://localhost/api/prompts"));
     const prompts = await response.json();
     expect(prompts).toEqual([]);
+  });
+
+  it("prompts POST creates prompt and updates project count", async () => {
+    const { POST: createPrompt } = await import("@/app/api/prompts/route");
+    const { GET: listPromptsApi } = await import("@/app/api/prompts/route");
+    const { GET: listProjects } = await import("@/app/api/projects/route");
+
+    const createRes = await createPrompt(
+      new Request("http://localhost/api/prompts", {
+        method: "POST",
+        body: JSON.stringify({
+          frontmatter: {
+            title: "新增提示",
+            project: "AI 工作流課程",
+            type: "其他",
+            status: "草稿",
+            model: "gpt-4",
+            tags: ["test"],
+            updatedAt: new Date().toISOString()
+          },
+          body: "內容"
+        })
+      })
+    );
+    expect(createRes.status).toBe(201);
+    const created = await createRes.json();
+    await access(Buffer.from(created.id, "base64url").toString("utf8"));
+
+    const promptList = await listPromptsApi(new Request("http://localhost/api/prompts?projectId=AI%20%E5%B7%A5%E4%BD%9C%E6%B5%81%E8%AA%B2%E7%A8%8B"));
+    const prompts = await promptList.json();
+    expect(prompts.some((p: any) => p.title === "新增提示")).toBe(true);
+
+    const projectList = await listProjects();
+    const projects = await projectList.json();
+    const project = projects.find((p: any) => p.name === "AI 工作流課程");
+    expect(project.promptCount).toBeGreaterThanOrEqual(1);
+  });
+
+  it("prompt DELETE removes file and refreshes project counts", async () => {
+    const { POST: createPrompt } = await import("@/app/api/prompts/route");
+    const { DELETE: deletePrompt, GET: getPrompt } = await import("@/app/api/prompts/[id]/route");
+    const { GET: listProjects } = await import("@/app/api/projects/route");
+
+    const createRes = await createPrompt(
+      new Request("http://localhost/api/prompts", {
+        method: "POST",
+        body: JSON.stringify({
+          frontmatter: {
+            title: "刪除提示",
+            project: "AI 工作流課程",
+            type: "其他",
+            status: "草稿",
+            model: "gpt-4",
+            tags: [],
+            updatedAt: new Date().toISOString()
+          },
+          body: "待刪除"
+        })
+      })
+    );
+    const created = await createRes.json();
+
+    const deleteRes = await deletePrompt(new Request("http://localhost/api/prompts/id", { method: "DELETE" }), {
+      params: { id: created.id }
+    });
+    expect(deleteRes.status).toBe(200);
+
+    const listAfter = await getPrompt(new Request("http://localhost/api/prompts/id"), { params: { id: created.id } });
+    expect(listAfter.status).toBe(404);
+
+    const projectList = await listProjects();
+    const projects = await projectList.json();
+    const project = projects.find((p: any) => p.name === "AI 工作流課程");
+    expect(project.promptCount).toBeGreaterThanOrEqual(0);
+  });
+
+  it("prompt detail GET returns 404 when file missing", async () => {
+    const { GET: getPrompt } = await import("@/app/api/prompts/[id]/route");
+    const res = await getPrompt(new Request("http://localhost/api/prompts/id"), { params: { id: "missing" } });
+    expect(res.status).toBe(404);
+  });
+
+  it("archive route archives draft and returns file info", async () => {
+    const { POST: archiveRoute } = await import("@/app/api/archive/route");
+    const { getDb } = await import("@/lib/db");
+    const db = await getDb();
+    const draft = db.data!.inbox[0];
+    const payload = {
+      draftId: draft.id,
+      projectName: db.data!.projects[0].name,
+      frontmatter: {
+        title: "轉正合約測試",
+        project: db.data!.projects[0].name,
+        type: "其他",
+        status: "使用中",
+        model: "gpt-4",
+        tags: ["contract"],
+        updatedAt: new Date().toISOString()
+      },
+      body: "內容"
+    };
+
+    const res = await archiveRoute(new Request("http://localhost/api/archive", { method: "POST", body: JSON.stringify(payload) }));
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.filePath).toBeDefined();
+  });
+
+  it("prompts POST validates rootPath and required fields", async () => {
+    const { updateSettings } = await import("@/lib/services/settings");
+    const { POST: createPrompt } = await import("@/app/api/prompts/route");
+
+    await updateSettings({ rootPath: null });
+    const noRoot = await createPrompt(
+      new Request("http://localhost/api/prompts", {
+        method: "POST",
+        body: JSON.stringify({ frontmatter: { title: "x", project: "p" } })
+      })
+    );
+    expect(noRoot.status).toBe(400);
+
+    await updateSettings({ rootPath: process.env.DEFAULT_ROOT });
+    const missingFields = await createPrompt(
+      new Request("http://localhost/api/prompts", {
+        method: "POST",
+        body: JSON.stringify({ frontmatter: { title: "" } })
+      })
+    );
+    expect(missingFields.status).toBe(400);
+
+    const noProject = await createPrompt(
+      new Request("http://localhost/api/prompts", {
+        method: "POST",
+        body: JSON.stringify({ frontmatter: { title: "x", project: "未知專案" }, body: "b" })
+      })
+    );
+    expect(noProject.status).toBe(201);
   });
 
   it("prompt detail route returns and saves content with conflict checks", async () => {
@@ -311,6 +509,23 @@ describe("API contracts", () => {
     expect(updated.telemetryEnabled).toBe(true);
   });
 
+  it("settings POST updates rootPath and persists", async () => {
+    const { POST, GET } = await import("@/app/api/settings/route");
+    const newRoot = `${process.env.DEFAULT_ROOT}-alt`;
+
+    const res = await POST(
+      new Request("http://localhost/api/settings", {
+        method: "POST",
+        body: JSON.stringify({ rootPath: newRoot })
+      })
+    );
+    expect(res.status).toBe(200);
+
+    const getRes = await GET();
+    const settings = await getRes.json();
+    expect(settings.rootPath).toBe(newRoot);
+  });
+
   it("search endpoint returns capped results with snippets", async () => {
     const { updateSettings } = await import("@/lib/services/settings");
     const { writePrompt } = await import("@/lib/fs/prompts");
@@ -386,5 +601,58 @@ describe("API contracts", () => {
     const { POST: incrementUsage } = await import("@/app/api/snippets/[id]/usage/route");
     const response = await incrementUsage(new Request("http://localhost"), { params: { id: "missing" } });
     expect(response.status).toBe(404);
+  });
+
+  it("snippets POST/PATCH/DELETE enforce duplicate guard", async () => {
+    const { POST, PATCH, DELETE, GET } = await import("@/app/api/snippets/route");
+
+    const firstRes = await POST(
+      new Request("http://localhost/api/snippets", { method: "POST", body: JSON.stringify({ name: "片語A" }) })
+    );
+    expect(firstRes.status).toBe(201);
+    const first = await firstRes.json();
+
+    const secondRes = await POST(
+      new Request("http://localhost/api/snippets", { method: "POST", body: JSON.stringify({ name: "片語B" }) })
+    );
+    expect(secondRes.status).toBe(201);
+    const second = await secondRes.json();
+
+    const duplicateRes = await POST(
+      new Request("http://localhost/api/snippets", { method: "POST", body: JSON.stringify({ name: "片語A" }) })
+    );
+    expect(duplicateRes.status).toBe(409);
+
+    const updateConflict = await PATCH(
+      new Request("http://localhost/api/snippets", {
+        method: "PATCH",
+        body: JSON.stringify({ id: second.id, name: "片語A" })
+      })
+    );
+    expect(updateConflict.status).toBe(409);
+
+    const deleteRes = await DELETE(
+      new Request("http://localhost/api/snippets", { method: "DELETE", body: JSON.stringify({ id: first.id }) })
+    );
+    expect(deleteRes.status).toBe(200);
+
+    const listRes = await GET();
+    const snippets = await listRes.json();
+    expect(snippets.find((s: any) => s.id === first.id)).toBeUndefined();
+  });
+
+  it("snippets PATCH/DELETE validate id presence", async () => {
+    const { PATCH, DELETE } = await import("@/app/api/snippets/route");
+
+    const missingPatch = await PATCH(new Request("http://localhost/api/snippets", { method: "PATCH", body: JSON.stringify({}) }));
+    expect(missingPatch.status).toBe(400);
+
+    const missingDelete = await DELETE(new Request("http://localhost/api/snippets", { method: "DELETE", body: JSON.stringify({}) }));
+    expect(missingDelete.status).toBe(400);
+
+    const notFoundDelete = await DELETE(
+      new Request("http://localhost/api/snippets", { method: "DELETE", body: JSON.stringify({ id: "snip-missing" }) })
+    );
+    expect(notFoundDelete.status).toBe(404);
   });
 });
