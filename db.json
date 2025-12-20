@@ -1,0 +1,146 @@
+{
+  "projects": [
+    {
+      "id": "proj-1",
+      "name": "AI 工作流課程",
+      "status": "進行中",
+      "promptCount": 12,
+      "updatedAt": "2025-12-10"
+    },
+    {
+      "id": "proj-2",
+      "name": "企業資金詢價平台",
+      "status": "進行中",
+      "promptCount": 8,
+      "updatedAt": "2025-12-08"
+    },
+    {
+      "id": "proj-3",
+      "name": "貿易管理業務知識資料庫",
+      "status": "規劃中",
+      "promptCount": 5,
+      "updatedAt": "2025-12-05"
+    }
+  ],
+  "inbox": [
+    {
+      "id": "inbox-1",
+      "title": "TAIA 官網改版－需求釐清提示詞草稿",
+      "content": "",
+      "createdAt": "2025-12-09",
+      "updatedAt": "2025-12-09",
+      "hint": "尚未指定專案與標籤"
+    },
+    {
+      "id": "inbox-2",
+      "title": "RAG 教學簡報逐字稿生成 v1",
+      "content": "",
+      "createdAt": "2025-12-09",
+      "updatedAt": "2025-12-09",
+      "hint": "候選：AI 工作流課程 / 外部授課"
+    },
+    {
+      "id": "inbox-YbwwOdfW",
+      "title": "新草稿",
+      "content": "",
+      "hint": "",
+      "createdAt": "2025-12-20T12:40:24.427Z",
+      "updatedAt": "2025-12-20T12:40:24.427Z"
+    },
+    {
+      "id": "inbox-WmQLndXF",
+      "title": "新草稿",
+      "content": "",
+      "hint": "",
+      "createdAt": "2025-12-20T12:42:55.008Z",
+      "updatedAt": "2025-12-20T12:42:55.008Z"
+    },
+    {
+      "id": "inbox-yYUhOOWc",
+      "title": "新草稿",
+      "content": "",
+      "hint": "",
+      "createdAt": "2025-12-20T13:05:20.221Z",
+      "updatedAt": "2025-12-20T13:05:20.221Z"
+    },
+    {
+      "id": "inbox-tUoSKXWk",
+      "title": "新草稿",
+      "content": "",
+      "hint": "",
+      "createdAt": "2025-12-20T13:08:17.789Z",
+      "updatedAt": "2025-12-20T13:08:17.789Z"
+    },
+    {
+      "id": "inbox-GHDeC4GZ",
+      "title": "新草稿",
+      "content": "",
+      "hint": "",
+      "createdAt": "2025-12-20T14:32:11.226Z",
+      "updatedAt": "2025-12-20T14:32:11.226Z"
+    },
+    {
+      "id": "inbox-njjCvM8Z",
+      "title": "新草稿",
+      "content": "",
+      "hint": "",
+      "createdAt": "2025-12-20T14:32:20.484Z",
+      "updatedAt": "2025-12-20T14:32:20.484Z"
+    },
+    {
+      "id": "inbox-qQh0A9EB",
+      "title": "新草稿",
+      "content": "",
+      "hint": "",
+      "createdAt": "2025-12-20T14:32:34.038Z",
+      "updatedAt": "2025-12-20T14:32:34.038Z"
+    },
+    {
+      "id": "inbox-5jN0SDUx",
+      "title": "新草稿",
+      "content": "",
+      "hint": "",
+      "createdAt": "2025-12-20T14:39:50.799Z",
+      "updatedAt": "2025-12-20T14:58:20.102Z"
+    },
+    {
+      "id": "inbox-30y4BWDC",
+      "title": "新草稿",
+      "content": "",
+      "hint": "",
+      "createdAt": "2025-12-20T14:40:10.860Z",
+      "updatedAt": "2025-12-20T14:58:25.598Z"
+    }
+  ],
+  "snippets": [
+    {
+      "id": "s-1",
+      "name": "角色設定－資深系統分析顧問",
+      "category": "角色設定",
+      "usage": 22,
+      "content": "你是一位資深系統分析與網站規劃顧問，熟悉跨部門專案協作與需求釐清。",
+      "lastUsedAt": "2025-12-20T14:32:42.816Z"
+    },
+    {
+      "id": "s-2",
+      "name": "輸出格式－Markdown＋表格",
+      "category": "輸出格式",
+      "usage": 26,
+      "content": "請以 Markdown 格式輸出結果，必要時使用表格彙整重點。",
+      "lastUsedAt": "2025-12-20T14:32:44.181Z"
+    },
+    {
+      "id": "s-3",
+      "name": "RAG 回答規則",
+      "category": "限制條件",
+      "usage": 16,
+      "content": "所有回答必須以向量資料庫中的內容為主，無相關資訊時請明確回答不知道。",
+      "lastUsedAt": "2025-12-20T12:42:07.199Z"
+    }
+  ],
+  "settings": {
+    "rootPath": "D:\\program\\promptmgt\\Prompts",
+    "telemetryEnabled": true,
+    "updateCheckEnabled": true
+  }
+}

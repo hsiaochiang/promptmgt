@@ -150,7 +150,7 @@ description: "Task list for 001-local-prompt-manager"
 - [x] T038 [P] Add error boundary/loading states for editor and lists in app/(workspace)/components/error-boundary.tsx
 - [x] T039 Verify search cap, large-paste loading, filename sanitizer coverage across flows in app/(workspace)/ and lib/utils
 - [x] T039a [P] Coverage gate enforcement in CI（>=80%，critical path 100%），確保測試未通過時阻擋
-- [x] T039b [P] [Phase 7] 覆蓋率驗證：含 autosave 節奏、衝突處理 UI、搜尋上限、檔名合法化皆達覆蓋門檻
+- [ ] T039b [P] [Phase 7] 覆蓋率驗證：含 autosave 節奏、衝突處理 UI、搜尋上限、檔名合法化皆達覆蓋門檻
 
 ---
 
