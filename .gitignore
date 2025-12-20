@@ -1,0 +1,24 @@
+# Node/Next
+node_modules/
+.next/
+dist/
+build/
+.turbo/
+out/
+coverage/
+.vercel/
+
+# Env & logs
+.env*
+*.log
+*.tmp
+*.swp
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editors/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
