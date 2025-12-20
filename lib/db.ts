@@ -4,8 +4,8 @@ import { Low } from "lowdb";
 import { JSONFile } from "lowdb/node";
 import type { DatabaseSchema } from "./types/schema";
 
-const DB_FILE = join(process.cwd(), "db.json");
-const DEFAULT_ROOT = join(process.cwd(), "Prompts");
+const DB_FILE = process.env.DB_FILE || join(process.cwd(), "db.json");
+const DEFAULT_ROOT = process.env.DEFAULT_ROOT || join(process.cwd(), "Prompts");
 
 const seedData: DatabaseSchema = {
   projects: [
@@ -89,11 +89,15 @@ async function initDb() {
       if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true });
       }
+
+      const shouldSeedFile = !existsSync(DB_FILE);
       const adapter = new JSONFile<DatabaseSchema>(DB_FILE);
       const db = new Low<DatabaseSchema>(adapter, seedData);
       await db.read();
       if (!db.data) {
         db.data = seedData;
+      }
+      if (shouldSeedFile) {
         await db.write();
       }
       return db;

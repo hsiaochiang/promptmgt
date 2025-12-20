@@ -22,7 +22,7 @@ description: "Task list for 001-local-prompt-manager"
 
 **Purpose**: Project initialization and base structure
 
-- [ ] T000 [P] Add test tooling setup與覆蓋率門檻（80% min，critical path 100%）於 package.json（建議 vitest/playwright）
+- [x] T000 [P] Add test tooling setup與覆蓋率門檻（80% min，critical path 100%）於 package.json（建議 vitest/playwright）
 - [x] T001 Initialize Next.js 14 App Router project with TypeScript and workspace layout in package.json/app/
 - [x] T002 [P] Configure Tailwind (tailwind.config.js, postcss.config.js) and global styles in app/globals.css to match prototype base styles
 - [x] T003 [P] Add shadcn/ui setup (components.json), install lucide-react, clsx, tailwind-merge, @uiw/react-codemirror in package.json
@@ -37,13 +37,13 @@ description: "Task list for 001-local-prompt-manager"
 **Purpose**: Core infrastructure that MUST be complete before any user story
 
 - [x] T006 Define TypeScript schemas for LowDB and Frontmatter in lib/types/schema.ts (projects/inbox/snippets/settings + prompt frontmatter)
-- [ ] T006a [P] Add contract tests for API schemas（projects/inbox/prompts/snippets/settings/search）in tests/contract/*.test.ts
-- [ ] T006b [P] Add unit tests for adapters/utils（LowDB, fs, frontmatter, conflict, search）in tests/unit/*
+- [x] T006a [P] Add contract tests for API schemas（projects/inbox/prompts/snippets/settings/search）in tests/contract/*.test.ts
+- [x] T006b [P] Add unit tests for adapters/utils（LowDB, fs, frontmatter, conflict, search）in tests/unit/*
 - [x] T007 [P] Implement LowDB adapter with seed data from ui_prototype.jsx in lib/db.ts (projects/inbox/snippets/settings)
 - [x] T008 [P] Implement file system adapter for prompts in lib/fs/prompts.ts (read/write Markdown with gray-matter) using lib/utils/sanitizeFilename.ts
 - [x] T009 [P] Implement frontmatter parser/serializer with damaged-YAML fallback in lib/utils/frontmatter.ts
 - [x] T010 Implement settings service for rootPath, telemetryEnabled, updateCheckEnabled in lib/services/settings.ts
-- [ ] T010a Define telemetry/update payload whitelist（不得包含提示詞內容/檔名全文）、頻率與停用行為，記錄於 docs/settings（或 README 設定章節）
+- [x] T010a Define telemetry/update payload whitelist（不得包含提示詞內容/檔名全文）、頻率與停用行為，記錄於 docs/settings（或 README 設定章節）
 - [x] T011 Implement conflict detection (mtime/hash) utilities in lib/services/conflict.ts for external-change prompts
 - [x] T012 Implement search service with 1000-result cap and snippet highlight in lib/services/search.ts
 - [x] T013 Wire API route skeletons (app/api/projects/route.ts, app/api/inbox/route.ts, app/api/prompts/route.ts, app/api/snippets/route.ts, app/api/settings/route.ts, app/api/search/route.ts)
