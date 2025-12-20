@@ -1,67 +1,108 @@
 # Tech Stack
-* **Core Platform**: Electron (latest stable) - 用於構建跨平台桌面應用程式，提供 File System 存取權限。
-* **Frontend Framework**: React 18+ (使用 Vite 建置) - 延續現有 UI Prototype (.jsx) 的開發邏輯。
-* **Language**: TypeScript - 確保型別安全，特別是在處理檔案結構與 Metadata 介面時。
-* **Styling**: Tailwind CSS - 配合現有 Prototype 的樣式類別 (class-based styling)。
-* **State Management**: Zustand - 輕量級狀態管理，處理專案列表、選取狀態與草稿暫存。
+* **App Framework**: Next.js 14+ (App Router) - 用於構建本機 Web 介面與 API。
+* **Runtime**: Node.js (LTS).
+* **Language**: TypeScript.
+* **Database (System)**: LowDB (v7) - 儲存 Projects meta, Inbox, Snippets, App Settings。
+* **Storage (Content)**: Native File System (`node:fs`) - 儲存正式 Prompts (.md 檔)。
+* **Styling**: Tailwind CSS + Shadcn/UI + Lucide React (完全對應 UI Prototype)。
+* **State Management**: Zustand (管理選取的 Project ID, Prompt ID, UI 面板狀態)。
+* **Editor**: `@uiw/react-codemirror` (支援 Markdown 語法高亮)。
 
-# Architecture
-* **Pattern**: Electron IPC (Inter-Process Communication)
-    * **Main Process (Backend)**: 負責所有「副作用」操作，包括讀寫本地檔案、執行 Git 指令、系統對話框。
-    * **Renderer Process (Frontend)**: 負責 UI 呈現、編輯器互動、資料過濾與搜尋邏輯。
-* **Data Flow**:
-    * 啟動時，Main Process 掃描指定根目錄 (Root Dir)，解析所有資料夾與 `.md` 檔。
-    * 將解析後的 Metadata (JSON tree) 傳送給 Renderer 渲染。
-    * Renderer 觸發存檔時，透過 IPC 通知 Main Process 寫入磁碟。
+# Architecture: The Hybrid Store
 
-# Database & Storage Design
-* **Storage Strategy**: File-System-as-Database (無傳統 DB)。
-* **Directory Structure**:
-    ```text
-    ~/My-Prompts/                  # 使用者指定的根目錄
-      ├── .settings.json           # 應用程式設定 (片語庫存於此或獨立 JSON)
-      ├── snippets.json            # 片語資料庫 (JSON 格式以便快速讀取)
-      ├── Project-A/               # 專案資料夾
-      │     ├── .project-meta.json # (Optional) 專案額外資訊
-      │     ├── prompt-1.md
-      │     └── prompt-2.md
-      └── Project-B/
-    ```
-* **File Format (Prompt)**:
-    * 使用 **YAML Frontmatter** 儲存元數據 (標籤、狀態、模型)。
-    * 範例：
-      ```markdown
-      ---
-      title: "RAG 實作說明"
-      type: "RAG 調教"
-      status: "active"
-      tags: ["RAG", "教學"]
-      model: "Gemini"
-      updatedAt: "2025-12-09"
-      ---
-      # 角色設定
-      ...
-      ```
+該系統不依賴外部資料庫，而是結合「檔案系統」與「JSON DB」。
 
-# 3rd Party Libraries
-* **File System & Formatting**:
-    * `gray-matter`: 用於解析與字串化 Markdown 檔案中的 YAML Frontmatter。
-    * `chokidar`: 監聽檔案系統變更，實現外部修改時的即時同步。
-* **Editor**:
-    * `react-markdown` (預覽用) 或 `monaco-editor` / `@uiw/react-codemirror` (編輯用)。建議使用 CodeMirror 以獲得較好的 Markdown 編輯體驗 (高亮、折疊)。
-* **Version Control**:
-    * `simple-git`: 在 Electron Main Process 中執行 Git 指令 (add, commit, log, status)。
-* **UI Components**:
-    * `lucide-react`: 圖示庫 (符合 Prototype 風格)。
-    * `clsx` / `tailwind-merge`: 處理 CSS class 條件渲染。
+```text
+[UI Layer: React Components]
+       |
+[Zustand Store] <--- (Sync UI State)
+       |
+[Next.js API Routes / Server Actions]
+       |
+       +--- (A) LowDB Adapter (db.json)
+       |      - Stores: Projects List, Inbox Drafts, Snippets, User Settings
+       |      - Why: Fast read/write for metadata & UI config.
+       |
+       +--- (B) File System Adapter (Native FS)
+              - Stores: /Prompts/{ProjectName}/{Title}.md
+              - Why: Git-friendly, portable content.
+              - Format: Frontmatter (YAML) + Markdown Body.
+
+# Component Architecture (Based on UI Prototype)
+
+將 `ui_prototype.jsx` 拆解為以下獨立元件：
+
+1. `layout.tsx`：包含全域結構。
+2. `TopBar.tsx`：
+   - 顯示 App Title, Breadcrumbs。
+   - Actions: "今日變更報告", "新增提示詞"。
+3. `Sidebar.tsx`：
+   - `ProjectList`：讀取 LowDB `projects`，支援選取狀態樣式（`bg-slate-900 text-white`）。
+   - `InboxList`：讀取 LowDB `inbox`，渲染黃色虛線框樣式（`border-dashed border-amber-300`）。
+4. `PromptListPanel.tsx` (Middle Column):
+   - `SearchBar`：搜尋框與篩選按鈕。
+   - `PromptList`：渲染 Prompt Items，處理選取狀態（`bg-slate-900/5`）。
+5. `WorkspacePanel.tsx` (Right Column):
+   - `PromptHeader`：顯示 Meta (Type/Status/Model) 與 複製按鈕（`navigator.clipboard`）。
+   - `Editor`：整合 CodeMirror，設定高度 `flex-1`。
+   - `SnippetPanel`：
+     - 右下角獨立區塊。
+     - 包含搜尋框（`input`）。
+     - 列表渲染（顯示 `usage` 次數）。
+     - 點擊事件：`onInsert(content)`。           
+
+
+# Database Schema (LowDB: db.json)
+
+```ts
+interface DB {
+  projects: {
+    id: string;
+    name: string;
+    status: '進行中' | '規劃中' | '已結案';
+    // promptCount 與 updatedAt 需在讀取時動態計算或快取
+    lastSyncedAt: string;
+  }[];
+
+  inbox: {
+    id: string;
+    title: string;
+    content: string; // Draft content
+    hint: string;
+    createdAt: string;
+  }[];
+
+  snippets: {
+    id: string;
+    name: string;
+    category: string;
+    content: string;
+    usage: number;
+  }[];
+
+  settings: {
+    rootPath: string; // Markdown 檔案的根目錄路徑
+  };
+}
+```
 
 # Implementation Steps
-1.  **Project Initialization**: 設定 Electron + Vite + React + TypeScript 專案結構。
-2.  **Layout Migration**: 將 `ui_prototype.jsx` 移植為 React Components (`Sidebar`, `PromptList`, `Editor`, `SnippetPanel`)。
-3.  **File System Service (Main Process)**:
-    * 實作 `scanDirectory()`: 遞迴讀取資料夾與 MD 檔。
-    * 實作 `saveFile()`: 整合 `gray-matter` 寫入 Frontmatter 與內容。
-4.  **State Management Integration**: 使用 Zustand 串接 UI 與檔案資料流。
-5.  **Editor Enhancement**: 整合 CodeMirror，實作語法高亮與 Snippet 插入功能。
-6.  **Search & Filter Logic**: 在前端實作基於記憶體的全文搜尋 (可搭配 `fuse.js` 模糊搜尋)。
-7.  **Git Integration**: 實作基礎 Git 狀態讀取 (顯示這份 Prompt 是否有未 Commit 的變更)。
+
+1. **Project Init:** 建立 Next.js 專案，安裝 `lowdb`, `nanoid`, `gray-matter`, `lucide-react`, `clsx`, `tailwind-merge`。
+2. **Styles Migration:** 將 `ui_prototype.jsx` 中的 Tailwind Classes 提取到各個 Component 中，確保視覺還原度 100%。
+3. **Backend Setup (LowDB):**
+   - 建立 `lib/db.ts` 初始化 JSON DB。
+   - 寫入 `ui_prototype.jsx` 中的 `projects` 和 `snippets` 假資料作為初始種子資料 (Seed Data)。
+4. **API Development:**
+   - `GET /api/projects`：回傳專案列表。
+   - `GET /api/prompts?projectId=...`：掃描檔案系統，解析 Frontmatter 回傳列表。
+   - `POST /api/snippets/usage`：增加使用計數。
+5. **Editor Integration:** 實作 CodeMirror 元件，並建立 `useEditorRef` 以便讓 `SnippetPanel` 觸發文字插入。
+6. **File System Sync:** 實作「儲存」功能，將編輯器內容轉為 YAML Frontmatter + Markdown 並寫入硬碟。
+
+# Special Handling
+
+- **Inbox to Project:** 當使用者將 Inbox Item 轉為正式 Prompt 時，需執行：
+  1. `db.inbox.remove(id)`
+  2. `fs.writeFile(newPath, content)`
+  3. 前端重新抓取 Prompt List。

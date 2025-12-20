@@ -1,68 +1,87 @@
 # High-Level Goal
-建立一個專為個人打造的「專案導向」提示詞管理桌面應用程式。目標是透過低摩擦的草稿機制、結構化的專案分類、以及 Markdown 檔案管理，解決提示詞分散、難以查找與版本混亂的問題，並提供一個舒適的撰寫與整理環境。
+建立一個**本機執行 (Localhost Only)** 的個人提示詞管理系統。
+系統核心為「雙層儲存架構」：使用 Markdown 檔案儲存提示詞內容以確保通用性與版控能力，並使用輕量化 JSON 資料庫管理系統狀態、統計數據與快取索引。
+介面需完全參照提供的 UI Prototype 設計，提供無縫的「收件匣草稿 → 專案歸檔 → 片語組裝」工作流。
 
 # User Stories
 
-## 專案與結構管理
-* As a User, 我想要建立「專案 (Project)」，以便將相關的提示詞依據客戶或任務目標進行群組。
-* As a User, 我想要設定專案的狀態 (進行中/已結案)，以便在儀表板上優先關注活躍中的專案。
-* As a User, 我希望每個提示詞 (Prompt) 都是一個獨立的文件，並隸屬於特定專案。
+## 1. 專案與工作區概覽
+* As a User, 我希望在左側側邊欄看到我的「專案列表」，並能一眼看出每個專案的狀態 (進行中/規劃中) 與提示詞數量。
+* As a User, 我希望看到「未歸檔收件匣 (Inbox)」，並顯示待整理的草稿數量 (如 "2 筆待整理")，以提醒我處理散落的想法。
+* As a User, 我希望介面頂部顯示「今日變更報告」與「新增提示詞」的快速按鈕。
 
-## 編輯與草稿 (Core Workflow)
-* As a User, 我想要一個「收件匣 (Inbox/Draft)」工作區，讓我能快速紀錄靈感，而不需要立刻決定分類。
-* As a User, 我想要在編輯器中使用 Markdown 語法撰寫提示詞，並支援語法高亮。
-* As a User, 我想要將收件匣中的草稿「轉正」為正式提示詞，並指定專案、標籤與狀態。
-* As a User, 我想要一鍵複製提示詞內容，且能選擇「完整複製」或「僅複製內容 (去除元數據)」。
+## 2. 提示詞列表與篩選
+* As a User, 我希望中間欄位顯示目前選取專案 (或全部) 的提示詞列表。
+* As a User, 我希望列表項目能顯示豐富的 Metadata：標題、類型 (如: 簡報生成)、狀態 (如: 使用中)、模型 (如: ChatGPT)、標籤 (Tags) 與更新時間。
+* As a User, 我希望透過關鍵字搜尋 (標題/內容/標籤) 或點擊篩選器 (進行中/全部) 來過濾列表。
 
-## 剪貼簿與片語 (Snippets)
-* As a User, 我想要維護一個「常用片語庫 (Snippet Library)」，儲存如角色設定、輸出限制等重複性文字。
-* As a User, 我想要在編輯提示詞時，透過點擊快速將片語插入目前的游標位置。
-* As a User, 我想要追蹤片語的使用頻率，以便知道哪些模組最常被使用。
+## 3. 編輯與組裝 (核心體驗)
+* As a User, 我希望右側編輯區顯示當前提示詞的「Markdown 編輯器」，並支援語法高亮。
+* As a User, 我希望看到編輯區上方顯示提示詞的完整資訊 (標題、狀態、所屬專案)，並提供「複製完整提示詞」與「複製給模型用 (精簡)」的一鍵操作。
+* As a User, 我希望編輯器具備「自動儲存」功能，並顯示最後編輯時間。
 
-## 查找與分類
-* As a User, 我想要透過「標籤 (Tags)」(如：RAG、產碼、文案) 來跨專案篩選提示詞。
-* As a User, 我想要進行全文搜尋，能同時搜尋標題、內容與標籤。
-* As a User, 我想要在儀表板查看「最近編輯」與「待整理草稿」，以快速恢復工作狀態。
-
-## 版本與檔案控制
-* As a User, 我希望系統能讀取並顯示檔案的修改歷史 (基於版本控制概念)，以便回溯先前的提示詞版本。
-* As a User, 我希望所有的資料都以標準 Markdown 格式儲存在我的本地資料夾中，不依賴專有資料庫格式。
+## 4. 片語剪貼簿 (Snippet Library)
+* As a User, 我希望在編輯器右側常駐「常用片語剪貼簿」。
+* As a User, 我希望片語列表顯示「使用次數 (Usage)」，讓我能快速找到高頻使用的模組。
+* As a User, 我希望點擊片語後，內容能直接插入到左側編輯器的游標位置。
 
 # Domain Models
 
 ## Project (專案)
-* **Definition**: 提示詞的最高層級容器，對應實際的業務目標或客戶。
-* **Attributes**: 名稱、描述、狀態 (Active/Archived)、關聯的檔案路徑、建立時間、最後更新時間。
+* **Definition**: 業務目標或任務的容器。
+* **Attributes**:
+    * `id`: Unique String (e.g., "proj-1")
+    * `name`: String (專案名稱)
+    * `status`: Enum (進行中, 規劃中, 已結案)
+    * `promptCount`: Number (計算欄位)
+    * `updatedAt`: DateTime String
+
+## InboxItem (收件匣草稿)
+* **Definition**: 尚未歸檔的靈感或臨時草稿。
+* **Attributes**:
+    * `id`: Unique String
+    * `title`: String
+    * `content`: String (Markdown)
+    * `hint`: String (系統建議或備註，如 "候選：AI 工作流課程")
+    * `createdAt`: DateTime String
 
 ## Prompt (提示詞)
-* **Definition**: 最小的運作單位，對應一個 Markdown 檔案。
-* **Attributes**: 標題 (Title)、所屬專案 (Project Ref)、類型 (Type)、狀態 (Draft/Stable/Deprecated)、標籤 (Tags)、目標模型 (Model)、內容本體 (Body)、備註 (Notes)。
+* **Definition**: 正式歸檔的 Markdown 檔案。
+* **Attributes**:
+    * `id`: Unique String
+    * `projectId`: Reference ID
+    * `title`: String
+    * `content`: String (Markdown Body)
+    * `type`: String (e.g., "簡報生成", "RAG 調教")
+    * `status`: Enum (草稿, 使用中, 拋棄)
+    * `model`: String (e.g., "ChatGPT", "Gemini")
+    * `tags`: Array<String>
+    * `updatedAt`: DateTime String
 
 ## Snippet (片語)
-* **Definition**: 可重複使用的文字區塊，用於快速組裝提示詞。
-* **Attributes**: 名稱、類別 (Category)、內容 (Content)、使用次數 (Usage Count)。
-
-## Workspace (工作區狀態)
-* **Definition**: 使用者當前的編輯狀態與未歸檔內容。
-* **Attributes**: 收件匣列表 (Inbox List)、當前選取的專案、當前編輯中的內容。
+* **Definition**: 可重複使用的文字模組。
+* **Attributes**:
+    * `id`: Unique String
+    * `name`: String
+    * `category`: String (e.g., "角色設定", "輸出格式")
+    * `content`: String
+    * `usage`: Number (使用次數統計)
 
 # Workflows
 
-## 1. 快速草稿流程 (The Inbox Flow)
-1. 使用者打開應用程式，直接進入「收件匣」或點擊「新增草稿」。
-2. 使用者在編輯區輸入不完整的提示詞想法。
-3. 系統自動儲存內容以防遺失。
-4. 使用者決定歸檔：選擇目標專案、輸入標題、設定標籤。
-5. 系統將草稿移動至專案資料夾下，轉為正式 Prompt。
+## 1. 收件匣歸檔流程
+1. 使用者點擊側邊欄的 Inbox Item。
+2. 系統在編輯區開啟該草稿。
+3. 使用者完善內容後，選擇「指派專案」並填寫 Type/Status/Model。
+4. 系統將資料從 Inbox (LowDB) 移除，並在目標專案資料夾建立 `.md` 檔案 (File System)。
 
-## 2. 提示詞組裝流程
-1. 使用者進入特定專案，開啟一個現有的提示詞。
-2. 在編輯區編寫核心邏輯。
-3. 使用者從右側「片語庫」搜尋 "RAG 限制"，點擊插入標準化的限制條件。
-4. 使用者儲存檔案。
-5. 使用者點擊「複製給模型用」，將處理過的純文字貼上到 ChatGPT/Gemini。
+## 2. 片語插入流程
+1. 使用者在 Markdown 編輯區輸入文字。
+2. 使用者瀏覽右側 Snippet Panel，或使用搜尋框過濾片語。
+3. 使用者點擊某個片語。
+4. 系統將 `snippet.content` 插入游標處。
+5. 系統背景更新該 Snippet 的 `usage + 1` (寫入 LowDB)。
 
-# Predefined Data
-* **預設專案狀態**: 規劃中, 進行中, 已結案, 暫停。
-* **預設提示詞類型**: 角色設定, 產碼, 文案, RAG 調教, 結構分析。
-* **預設片語分類**: 角色, 格式, 限制, 語氣。
+# Predefined Data (UI Mock)
+* **預設專案**: "AI 工作流課程", "企業資金詢價平台".
+* **預設片語**: "角色設定－資深系統分析顧問", "輸出格式－Markdown＋表格".
