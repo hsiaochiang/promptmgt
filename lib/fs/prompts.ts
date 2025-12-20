@@ -10,6 +10,11 @@ async function ensureDir(path: string) {
 
 export async function listPrompts(rootPath: string): Promise<PromptListItem[]> {
   if (!rootPath) return [];
+  try {
+    await fs.access(rootPath);
+  } catch {
+    return [];
+  }
   const entries = await fs.readdir(rootPath, { withFileTypes: true });
   const prompts: PromptListItem[] = [];
 
@@ -24,7 +29,7 @@ export async function listPrompts(rootPath: string): Promise<PromptListItem[]> {
       const parsed = parsePrompt(raw);
       if (!parsed.frontmatter) continue;
       prompts.push({
-        id: fullPath,
+        id: Buffer.from(fullPath, "utf8").toString("base64url"),
         projectId: entry.name,
         ...parsed.frontmatter
       });
