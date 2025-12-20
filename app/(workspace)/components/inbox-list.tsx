@@ -8,6 +8,7 @@ interface Props {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onLoaded: (items: InboxItem[]) => void;
+  refreshKey?: number;
 }
 
 function formatPreview(text: string) {
@@ -15,7 +16,7 @@ function formatPreview(text: string) {
   return text.length > 50 ? `${text.slice(0, 50)}…` : text;
 }
 
-export default function InboxList({ selectedId, onSelect, onLoaded }: Props) {
+export default function InboxList({ selectedId, onSelect, onLoaded, refreshKey = 0 }: Props) {
   const [items, setItems] = useState<InboxItem[]>([]);
   const [loading, setLoading] = useState(true);
   const setInboxCount = useWorkspaceStore((s) => s.setInboxCount);
@@ -47,7 +48,7 @@ export default function InboxList({ selectedId, onSelect, onLoaded }: Props) {
   useEffect(() => {
     fetchList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refreshKey]);
 
   return (
     <div className="flex-1 overflow-auto px-3 py-3 space-y-3">

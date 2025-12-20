@@ -16,8 +16,12 @@ import { useSnippetInsert } from "./hooks/useSnippetInsert";
 export default function WorkspaceShell() {
   const [inboxItems, setInboxItems] = useState<InboxItem[]>([]);
   const [selectedInboxId, setSelectedInboxId] = useState<string | null>(null);
+  const [inboxRefreshKey, setInboxRefreshKey] = useState(0);
+  const [creatingDraft, setCreatingDraft] = useState(false);
+  const [showChangeLog, setShowChangeLog] = useState(false);
   const selectedPromptId = useWorkspaceStore((s) => s.selectedPromptId);
   const setEditorDirty = useWorkspaceStore((s) => s.setEditorDirty);
+  const setSelectedProjectId = useWorkspaceStore((s) => s.setSelectedProjectId);
 
   const [promptFrontmatter, setPromptFrontmatter] = useState<PromptFrontmatter | null>(null);
   const [promptBody, setPromptBody] = useState<string>("");
@@ -58,9 +62,33 @@ export default function WorkspaceShell() {
     loadPrompt();
   }, [selectedPromptId, setEditorDirty]);
 
+  const handleCreatePrompt = async () => {
+    try {
+      setCreatingDraft(true);
+      const res = await fetch("/api/inbox", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "新草稿", content: "", hint: "" })
+      });
+      if (!res.ok) throw new Error("建立草稿失敗");
+      const created = (await res.json()) as InboxItem;
+      setSelectedInboxId(created.id);
+      setSelectedProjectId(null);
+      setInboxRefreshKey((k) => k + 1);
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "建立草稿失敗");
+    } finally {
+      setCreatingDraft(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col">
-      <TopBar />
+      <TopBar
+        onShowChangeReport={() => setShowChangeLog(true)}
+        onCreatePrompt={handleCreatePrompt}
+        creating={creatingDraft}
+      />
       <div className="flex flex-1 overflow-hidden">
         <aside className="flex-shrink-0 basis-72 border-r border-slate-200 bg-white flex flex-col">
           <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
@@ -81,6 +109,7 @@ export default function WorkspaceShell() {
                     setSelectedInboxId(list[0].id);
                   }
                 }}
+                refreshKey={inboxRefreshKey}
               />
             </div>
           </div>
@@ -134,6 +163,32 @@ export default function WorkspaceShell() {
           </div>
         </section>
       </div>
+      {showChangeLog && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="font-semibold text-sm text-slate-800">今日變更報告</div>
+              <button
+                onClick={() => setShowChangeLog(false)}
+                className="text-slate-500 hover:text-slate-800 text-sm"
+              >
+                關閉
+              </button>
+            </div>
+            <div className="text-sm text-slate-600 leading-relaxed">
+              目前暫無變更報告，後續將在此顯示今日的提示詞增修與同步紀錄。
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowChangeLog(false)}
+                className="px-3 py-1 rounded-full bg-slate-900 text-white text-xs"
+              >
+                知道了
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

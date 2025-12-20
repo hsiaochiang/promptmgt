@@ -36,7 +36,14 @@ export async function listPrompts(rootPath: string): Promise<PromptListItem[]> {
     }
   }
 
-  return prompts;
+  return prompts.sort((a, b) => {
+    const aTime = new Date(a.updatedAt ?? 0).getTime();
+    const bTime = new Date(b.updatedAt ?? 0).getTime();
+    if (Number.isNaN(aTime) && Number.isNaN(bTime)) return 0;
+    if (Number.isNaN(aTime)) return 1;
+    if (Number.isNaN(bTime)) return -1;
+    return bTime - aTime;
+  });
 }
 
 export async function readPrompt(filePath: string) {

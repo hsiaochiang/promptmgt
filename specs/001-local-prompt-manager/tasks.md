@@ -85,10 +85,10 @@ description: "Task list for 001-local-prompt-manager"
 - [x] T021 [P] [US2] Implement archiveDraft server action in app/(workspace)/actions/archiveDraft.ts (remove inbox entry, write prompt Markdown, update counts)
 - [x] T021a [US2] Integration test：archiveDraft moves inbox→file 並更新專案計數（tests/integration/us2-archive-draft.test.ts）
 - [x] T022 [P] [US2] Implement prompts listing API scanning filesystem in app/api/prompts/route.ts returning type/status/model/tags/updatedAt/projectId
-- [ ] T022a [P] [US2] Contract test：prompts listing API 回傳欄位與排序正確（tests/contract/prompts-listing.test.ts）
+- [x] T022a [P] [US2] Contract test：prompts listing API 回傳欄位與排序正確（tests/contract/prompts-listing.test.ts）
 - [x] T023 [US2] Build ProjectList component with selection styling per prototype in app/(workspace)/components/project-list.tsx
 - [x] T024 [US2] Build PromptList panel with filters/status/model/tag chips in app/(workspace)/components/prompt-list.tsx
-- [ ] T024a [US2] Wire TopBar actions：開啟變更報告（placeholder modal）與新建提示詞流程（建立草稿/導向編輯）
+- [x] T024a [US2] Wire TopBar actions：開啟變更報告（placeholder modal）與新建提示詞流程（建立草稿/導向編輯）
 - [x] T025 [US2] Add root-path missing alert/relocation UI in app/(workspace)/components/root-path-alert.tsx triggered on invalid project path
 
 **Checkpoint**: 草稿可轉正並出現在專案列表與提示詞清單中；缺路徑時有提示。
@@ -105,9 +105,9 @@ description: "Task list for 001-local-prompt-manager"
 
 - [x] T026 [P] [US3] Integrate CodeMirror Markdown editor in app/(workspace)/components/prompt-editor.tsx
 - [x] T027 [P] [US3] Implement prompt read/write API with conflict checks in app/api/prompts/[id]/route.ts
-- [ ] T027a [P] [US3] Contract test：prompt read/write API（含衝突偵測）
+- [x] T027a [P] [US3] Contract test：prompt read/write API（含衝突偵測）
 - [x] T028 [P] [US3] Implement clipboard utils for full vs trimmed (no frontmatter) copy in lib/utils/clipboard.ts
-- [ ] T028a [P] [US3] Unit test：clipboard trims frontmatter for slim copy
+- [x] T028a [P] [US3] Unit test：clipboard trims frontmatter for slim copy
 - [x] T029 [US3] Build PromptHeader actions (copy buttons, status/model/project pills) in app/(workspace)/components/prompt-header.tsx
 - [x] T030 [US3] Add useAutosavePrompt hook with lastSaved indicator in app/(workspace)/hooks/useAutosavePrompt.ts
 
@@ -124,10 +124,10 @@ description: "Task list for 001-local-prompt-manager"
 ### Implementation for User Story 4
 
 - [x] T031 [P] [US4] Implement snippets API with usage increment in app/api/snippets/route.ts and app/api/snippets/[id]/usage/route.ts
-- [ ] T031a [P] [US4] Contract test：snippets usage increment endpoint
+- [x] T031a [P] [US4] Contract test：snippets usage increment endpoint
 - [x] T032 [P] [US4] Build SnippetPanel UI per prototype (search, usage, category pills) in app/(workspace)/components/snippet-panel.tsx
 - [x] T033 [US4] Wire snippet insert via editor ref bridge in app/(workspace)/hooks/useSnippetInsert.ts
-- [ ] T033a [US4] Integration test：click-to-insert updates usage count
+ - [x] T033a [US4] Integration test：click-to-insert updates usage count
  - [x] T034 [US4] Trigger usage increment on click and refresh list in app/(workspace)/components/snippet-panel.tsx
 
 **Checkpoint**: 片語可搜尋、插入並記錄使用次數。
@@ -136,9 +136,9 @@ description: "Task list for 001-local-prompt-manager"
 
 ## Phase 7: Polish & Cross-Cutting
 
-- [ ] T035 [P] Add telemetry/update setting toggles UI in app/(workspace)/settings/page.tsx respecting NFR-001
-- [ ] T035a [P] Implement telemetry sender + update checker honoring settings（telemetryEnabled/updateCheckEnabled），遵守 payload whitelist（不得含提示內容）；可停用
-- [ ] T035b Add unit tests for telemetry opt-out and payload sanitization
+- [x] T035 [P] Add telemetry/update setting toggles UI in app/(workspace)/settings/page.tsx respecting NFR-001
+- [x] T035a [P] Implement telemetry sender + update checker honoring settings（telemetryEnabled/updateCheckEnabled），遵守 payload whitelist（不得含提示內容）；可停用
+- [x] T035b Add unit tests for telemetry opt-out and payload sanitization
 - [ ] T036 Cache prompt counts/updatedAt post-scan for projects API in lib/services/cache.ts
 - [ ] T037 [P] Add docs for setup/run and API overview in README.md
 - [ ] T037a [P] Perf check scripts：SC-003/004（複製/搜尋延遲）、SC-008（啟動 50/500 資料集）、SC-006（外部修改提示 ≤5s）

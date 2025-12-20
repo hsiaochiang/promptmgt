@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { markdown } from "@codemirror/lang-markdown";
 import type { PromptFrontmatter } from "@/lib/types/schema";
