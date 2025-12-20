@@ -7,7 +7,8 @@ import PromptList from "./components/prompt-list";
 import PromptHeader from "./components/prompt-header";
 import PromptEditor from "./components/prompt-editor";
 import SnippetPanel from "./components/snippet-panel";
-import { useEffect, useState } from "react";
+import { AsyncBoundary, ErrorBoundary } from "./components/error-boundary";
+import { useCallback, useEffect, useState } from "react";
 import type { InboxItem, PromptFrontmatter, Snippet } from "@/lib/types/schema";
 import RootPathAlert from "./components/root-path-alert";
 import { useWorkspaceStore } from "./store/useWorkspaceStore";
@@ -32,35 +33,37 @@ export default function WorkspaceShell() {
   const { insertSnippet } = useSnippetInsert((content) => setPendingInsert(content));
   const inboxCount = useWorkspaceStore((s) => s.inboxCount);
 
-  useEffect(() => {
-    const loadPrompt = async () => {
-      if (!selectedPromptId) {
-        setPromptFrontmatter(null);
-        setPromptBody("");
-        setPromptHash(null);
-        return;
-      }
-      setPromptLoading(true);
+  const loadPrompt = useCallback(async () => {
+    if (!selectedPromptId) {
+      setPromptFrontmatter(null);
+      setPromptBody("");
+      setPromptHash(null);
+      setPromptLoading(false);
       setPromptError(null);
-      try {
-        const res = await fetch(`/api/prompts/${selectedPromptId}`);
-        if (!res.ok) {
-          setPromptError("無法讀取提示詞");
-          return;
-        }
-        const data = await res.json();
-        setPromptFrontmatter(data.frontmatter);
-        setPromptBody(data.body);
-        setPromptHash(data.hash);
-        setEditorDirty(false);
-      } catch (err) {
-        setPromptError(err instanceof Error ? err.message : "讀取失敗");
-      } finally {
-        setPromptLoading(false);
+      return;
+    }
+    setPromptLoading(true);
+    setPromptError(null);
+    try {
+      const res = await fetch(`/api/prompts/${selectedPromptId}`);
+      if (!res.ok) {
+        throw new Error("無法讀取提示詞");
       }
-    };
-    loadPrompt();
+      const data = await res.json();
+      setPromptFrontmatter(data.frontmatter);
+      setPromptBody(data.body);
+      setPromptHash(data.hash);
+      setEditorDirty(false);
+    } catch (err) {
+      setPromptError(err instanceof Error ? err.message : "讀取失敗");
+    } finally {
+      setPromptLoading(false);
+    }
   }, [selectedPromptId, setEditorDirty]);
+
+  useEffect(() => {
+    loadPrompt();
+  }, [loadPrompt]);
 
   const handleCreatePrompt = async () => {
     try {
@@ -130,36 +133,39 @@ export default function WorkspaceShell() {
           <div className="px-4 pt-4">
             <RootPathAlert />
           </div>
-          <PromptList />
+          <ErrorBoundary label="提示詞列表">
+            <PromptList />
+          </ErrorBoundary>
         </main>
         <div className="w-[3px] cursor-col-resize bg-slate-200/70" />
         <section className="flex-[1.8] flex flex-col p-4 bg-slate-50">
           <div className="flex flex-col gap-3 h-full">
-            {promptLoading && <div className="text-xs text-slate-400">載入提示詞中…</div>}
-            {promptError && (
-              <div className="text-xs text-amber-600 border border-amber-200 bg-amber-50 px-3 py-2 rounded">
-                {promptError}
+            <AsyncBoundary
+              loading={promptLoading}
+              error={promptError}
+              onRetry={loadPrompt}
+              label="提示詞內容"
+            >
+              <div className="flex h-full gap-3">
+                <div className="flex-1 flex flex-col gap-3">
+                  <PromptHeader
+                    title={promptFrontmatter?.title ?? "尚未選擇提示詞"}
+                    frontmatter={promptFrontmatter}
+                    body={promptBody}
+                  />
+                  <PromptEditor
+                    promptId={selectedPromptId}
+                    initialFrontmatter={promptFrontmatter}
+                    initialBody={promptBody}
+                    clientHash={promptHash}
+                    insertText={pendingInsert}
+                    onInserted={() => setPendingInsert(null)}
+                    onBodyChange={(body) => setPromptBody(body)}
+                  />
+                </div>
+                <SnippetPanel onInsert={(snippet: Snippet) => insertSnippet(snippet)} />
               </div>
-            )}
-            <div className="flex h-full gap-3">
-              <div className="flex-1 flex flex-col gap-3">
-                <PromptHeader
-                  title={promptFrontmatter?.title ?? "尚未選擇提示詞"}
-                  frontmatter={promptFrontmatter}
-                  body={promptBody}
-                />
-                <PromptEditor
-                  promptId={selectedPromptId}
-                  initialFrontmatter={promptFrontmatter}
-                  initialBody={promptBody}
-                  clientHash={promptHash}
-                  insertText={pendingInsert}
-                  onInserted={() => setPendingInsert(null)}
-                  onBodyChange={(body) => setPromptBody(body)}
-                />
-              </div>
-              <SnippetPanel onInsert={(snippet: Snippet) => insertSnippet(snippet)} />
-            </div>
+            </AsyncBoundary>
           </div>
         </section>
       </div>

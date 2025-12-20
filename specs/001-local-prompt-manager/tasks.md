@@ -139,13 +139,13 @@ description: "Task list for 001-local-prompt-manager"
 - [x] T035 [P] Add telemetry/update setting toggles UI in app/(workspace)/settings/page.tsx respecting NFR-001
 - [x] T035a [P] Implement telemetry sender + update checker honoring settings（telemetryEnabled/updateCheckEnabled），遵守 payload whitelist（不得含提示內容）；可停用
 - [x] T035b Add unit tests for telemetry opt-out and payload sanitization
-- [ ] T036 Cache prompt counts/updatedAt post-scan for projects API in lib/services/cache.ts
-- [ ] T037 [P] Add docs for setup/run and API overview in README.md
-- [ ] T037a [P] Perf check scripts：SC-003/004（複製/搜尋延遲）、SC-008（啟動 50/500 資料集）、SC-006（外部修改提示 ≤5s）
-- [ ] T037b UX check：SC-009/010 首次體驗成功率與卡頓回報率（手動腳本/調查）
-- [ ] T038 [P] Add error boundary/loading states for editor and lists in app/(workspace)/components/error-boundary.tsx
-- [ ] T039 Verify search cap, large-paste loading, filename sanitizer coverage across flows in app/(workspace)/ and lib/utils
-- [ ] T039a [P] Coverage gate enforcement in CI（>=80%，critical path 100%），確保測試未通過時阻擋
+- [x] T036 Cache prompt counts/updatedAt post-scan for projects API in lib/services/cache.ts
+- [x] T037 [P] Add docs for setup/run and API overview in README.md
+- [x] T037a [P] Perf check scripts：SC-003/004（複製/搜尋延遲）、SC-008（啟動 50/500 資料集）、SC-006（外部修改提示 ≤5s）
+- [x] T037b UX check：SC-009/010 首次體驗成功率與卡頓回報率（手動腳本/調查）
+- [x] T038 [P] Add error boundary/loading states for editor and lists in app/(workspace)/components/error-boundary.tsx
+- [x] T039 Verify search cap, large-paste loading, filename sanitizer coverage across flows in app/(workspace)/ and lib/utils
+- [x] T039a [P] Coverage gate enforcement in CI（>=80%，critical path 100%），確保測試未通過時阻擋
 
 ---
 

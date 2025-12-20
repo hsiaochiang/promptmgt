@@ -187,6 +187,24 @@ describe("search service", () => {
     const empty = searchPrompts(prompts, "", 5);
     expect(empty).toHaveLength(0);
   });
+
+  it("stops when reaching the result cap", async () => {
+    const { searchPrompts } = await import("@/lib/services/search");
+    const prompts = Array.from({ length: 5 }).map((_, i) => ({
+      id: `${i + 1}`,
+      projectId: "p1",
+      project: "p1",
+      title: `Sample prompt ${i}`,
+      type: "其他" as const,
+      status: "使用中" as const,
+      model: "gpt-4",
+      tags: ["match"],
+      updatedAt: "2024-01-01T00:00:00.000Z"
+    }));
+
+    const capped = searchPrompts(prompts, "match", 2);
+    expect(capped).toHaveLength(2);
+  });
 });
 
 describe("filename sanitizer", () => {

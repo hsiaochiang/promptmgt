@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import { getDb } from "@/lib/db";
+import { applyPromptMeta } from "@/lib/services/cache";
 
 function now() {
   return new Date().toISOString();
@@ -8,7 +9,8 @@ function now() {
 
 export async function GET() {
   const db = await getDb();
-  return NextResponse.json(db.data!.projects);
+  const projects = db.data!.projects;
+  return NextResponse.json(applyPromptMeta(projects));
 }
 
 export async function POST(request: Request) {
