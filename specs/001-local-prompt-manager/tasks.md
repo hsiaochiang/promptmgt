@@ -83,7 +83,7 @@ description: "Task list for 001-local-prompt-manager"
 
  - [x] T020 [P] [US2] Implement projects API (GET/POST/PATCH status) in app/api/projects/route.ts using LowDB
 - [x] T021 [P] [US2] Implement archiveDraft server action in app/(workspace)/actions/archiveDraft.ts (remove inbox entry, write prompt Markdown, update counts)
-- [ ] T021a [US2] Integration test：archiveDraft moves inbox→file 並更新專案計數（tests/integration/us2-archive-draft.test.ts）
+- [x] T021a [US2] Integration test：archiveDraft moves inbox→file 並更新專案計數（tests/integration/us2-archive-draft.test.ts）
 - [x] T022 [P] [US2] Implement prompts listing API scanning filesystem in app/api/prompts/route.ts returning type/status/model/tags/updatedAt/projectId
 - [ ] T022a [P] [US2] Contract test：prompts listing API 回傳欄位與排序正確（tests/contract/prompts-listing.test.ts）
 - [x] T023 [US2] Build ProjectList component with selection styling per prototype in app/(workspace)/components/project-list.tsx
