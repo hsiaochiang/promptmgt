@@ -95,4 +95,49 @@ describe("useAutosaveDraft Hook 節奏測試", () => {
     });
     expect(fetch).toHaveBeenCalledTimes(1);
   });
+
+  it("無輸入時不重複儲存，恢復輸入後重新計時", async () => {
+    const { rerender } = renderHook(
+      (props) => useAutosaveDraft(props),
+      {
+        initialProps: {
+          draftId: "1",
+          title: "Title",
+          content: "A",
+          hint: "Hint",
+          delay: 2000,
+        },
+      }
+    );
+
+    await act(async () => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+
+    // 無輸入期間不應重複自動儲存
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+
+    // 恢復輸入後重新計時
+    rerender({
+      draftId: "1",
+      title: "Title",
+      content: "AB",
+      hint: "Hint",
+      delay: 2000,
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      vi.advanceTimersByTime(500);
+    });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
 });

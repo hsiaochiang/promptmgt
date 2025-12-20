@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setupIsolatedWorkspace } from "../utils/testEnv";
+import { buildFullContent } from "@/lib/utils/clipboard";
 import { promises as fs } from "fs";
 import path from "path";
 
@@ -87,5 +88,30 @@ describe("US2 - 衝突處理整合測試", () => {
     expect(saveRes.status).toBe(200);
     const finalContent = await fs.readFile(filePath, "utf8");
     expect(finalContent).toContain("Local Overwrite");
+  });
+
+  it("載入外部內容並可生成差異預覽字串", async () => {
+    const { GET: readPrompt } = await import("@/app/api/prompts/[id]/route");
+
+    const filePath = path.join(process.cwd(), "test-prompts", "preview.md");
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    await fs.writeFile(filePath, "---\nproject: Test\nstatus: Stable\n---\nOriginal", "utf8");
+    const id = encodeId(filePath);
+
+    const firstRead = await readPrompt(new Request(`http://localhost/api/prompts/${id}`), { params: { id } });
+    const firstData = await firstRead.json();
+
+    // 外部變更
+    await fs.writeFile(filePath, "---\nproject: Test\nstatus: Stable\n---\nExternal change", "utf8");
+
+    const reloadRes = await readPrompt(new Request(`http://localhost/api/prompts/${id}`), { params: { id } });
+    const reloadData = await reloadRes.json();
+
+    expect(reloadData.body).toBe("External change");
+    expect(reloadData.hash).not.toBe(firstData.hash);
+
+    const preview = buildFullContent(reloadData.frontmatter, reloadData.body);
+    expect(preview).toContain("project: Test");
+    expect(preview).toContain("External change");
   });
 });

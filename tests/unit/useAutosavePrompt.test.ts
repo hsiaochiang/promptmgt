@@ -64,10 +64,11 @@ describe("useAutosavePrompt Hook 節奏與 Hash 傳遞測試", () => {
   it("偵測到 409 衝突時應設定錯誤訊息且不呼叫 onSaved", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => new Response(JSON.stringify({ message: "Conflict" }), { status: 409 }))
+      vi.fn(async () => new Response(JSON.stringify({ message: "Conflict", currentHash: "server-hash" }), { status: 409 }))
     );
 
     const onSaved = vi.fn();
+    const onConflict = vi.fn();
     const { result, rerender } = renderHook(
       (props) => useAutosavePrompt(props),
       {
@@ -76,7 +77,8 @@ describe("useAutosavePrompt Hook 節奏與 Hash 傳遞測試", () => {
           frontmatter: { project: "Test" } as any,
           body: "Initial",
           clientHash: "hash",
-          onSaved
+          onSaved,
+          onConflict
         },
       }
     );
@@ -86,7 +88,8 @@ describe("useAutosavePrompt Hook 節奏與 Hash 傳遞測試", () => {
       frontmatter: { project: "Test" } as any,
       body: "Conflict Change",
       clientHash: "hash",
-      onSaved
+      onSaved,
+      onConflict
     });
 
     await act(async () => {
@@ -95,5 +98,49 @@ describe("useAutosavePrompt Hook 節奏與 Hash 傳遞測試", () => {
 
     expect(result.current.error).toContain("發現外部變更");
     expect(onSaved).not.toHaveBeenCalled();
+    expect(onConflict).toHaveBeenCalledWith("server-hash");
+  });
+
+  it("無輸入時不重複儲存，恢復輸入後重新計時", async () => {
+    const { rerender } = renderHook(
+      (props) => useAutosavePrompt(props),
+      {
+        initialProps: {
+          promptId: "p1",
+          frontmatter: { project: "Test" } as any,
+          body: "Initial",
+          clientHash: "hash",
+          delay: 2000,
+        },
+      }
+    );
+
+    await act(async () => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+
+    rerender({
+      promptId: "p1",
+      frontmatter: { project: "Test" } as any,
+      body: "Changed again",
+      clientHash: "hash",
+      delay: 2000,
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      vi.advanceTimersByTime(500);
+    });
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 });

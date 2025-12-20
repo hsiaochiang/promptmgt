@@ -65,15 +65,15 @@ export function sanitizeTelemetryPayload(input: Record<string, unknown>): Teleme
     return null;
   }
 
-  const output: Record<string, unknown> = {};
+  const output: Partial<TelemetryPayload> = {};
   for (const key of Object.keys(input)) {
     if (!ALLOWED_ROOT_KEYS.has(key)) continue;
     const value = input[key];
     if (value === undefined) continue;
-    output[key] = value;
+    output[key as keyof TelemetryPayload] = value as any;
   }
 
-  if (!output.event || !output.timestamp) return null;
+  if (typeof output.event !== "string" || typeof output.timestamp !== "string") return null;
   return output as TelemetryPayload;
 }
 

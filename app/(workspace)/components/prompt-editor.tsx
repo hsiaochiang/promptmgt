@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { markdown } from "@codemirror/lang-markdown";
 import type { PromptFrontmatter } from "@/lib/types/schema";
+import { buildFullContent } from "@/lib/utils/clipboard";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 import { useAutosavePrompt } from "../hooks/useAutosavePrompt";
 
@@ -31,8 +32,9 @@ export default function PromptEditor({
   const [body, setBody] = useState(initialBody);
   const [frontmatter, setFrontmatter] = useState<PromptFrontmatter | null>(initialFrontmatter);
   const [hash, setHash] = useState<string | null>(clientHash);
-  const [showConflict, setShowConflict] = useState(false);
-  const [externalContent, setExternalContent] = useState<{ frontmatter: any; body: string; hash: string } | null>(null);
+  const [conflictHash, setConflictHash] = useState<string | null>(null);
+  const [externalPreview, setExternalPreview] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const setEditorDirty = useWorkspaceStore((s) => s.setEditorDirty);
   const lastSavedAt = useWorkspaceStore((s) => s.lastSavedAt);
@@ -44,58 +46,89 @@ export default function PromptEditor({
     clientHash: hash,
     onSaved: (nextHash) => {
       setHash(nextHash);
-      setShowConflict(false);
-    }
+      setConflictHash(null);
+    },
+    onConflict: (serverHash) => setConflictHash(serverHash)
   });
-
-  useEffect(() => {
-    if (error && error.includes("發現外部變更")) {
-      setShowConflict(true);
-    }
-  }, [error]);
 
   useEffect(() => {
     setBody(initialBody);
     setHash(clientHash);
-    setShowConflict(false);
+    setConflictHash(null);
+    setExternalPreview(null);
   }, [initialBody, clientHash]);
 
   useEffect(() => {
     setFrontmatter(initialFrontmatter);
   }, [initialFrontmatter]);
 
-  const handleLoadExternal = async () => {
-    if (!promptId) return;
-    const res = await fetch(`/api/prompts/${promptId}`);
-    const data = await res.json();
-    setBody(data.body);
-    setFrontmatter(data.frontmatter);
-    setHash(data.hash);
-    setShowConflict(false);
-    setEditorDirty(false);
-  };
-
-  const handleOverwrite = async () => {
-    if (!promptId) return;
-    // To overwrite, we need the latest hash from server to pass the check
-    const res = await fetch(`/api/prompts/${promptId}`);
-    const data = await res.json();
-    setHash(data.hash);
-    // useAutosavePrompt will trigger again with new hash
-    setShowConflict(false);
-  };
-
   useEffect(() => {
     if (!insertText) return;
     setBody((prev) => {
-      const prefix = prev ? `${prev}\n` : "";
-      const next = `${prefix}${insertText}`;
-      onBodyChange?.(next);
+      const next = `${(prev ?? "").length ? `${prev}\n` : ""}${insertText}`;
+      // Defer parent updates to avoid setState during render warnings
+      setTimeout(() => {
+        onBodyChange?.(next);
+        setEditorDirty(true);
+        onInserted?.();
+      }, 0);
       return next;
     });
-    setEditorDirty(true);
-    onInserted?.();
   }, [insertText, onInserted, onBodyChange, setEditorDirty]);
+
+  const reloadExternal = async () => {
+    if (!promptId) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/prompts/${promptId}`);
+      const data = await res.json();
+      setFrontmatter(data.frontmatter);
+      setBody(data.body);
+      setHash(data.hash);
+      onBodyChange?.(data.body);
+      setConflictHash(null);
+      setExternalPreview(null);
+      setEditorDirty(false);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const overwriteWithLocal = async () => {
+    if (!promptId || !frontmatter || !conflictHash) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/prompts/${promptId}`);
+      const current = await res.json();
+      const forceHash = current?.hash ?? conflictHash;
+      const saveRes = await fetch(`/api/prompts/${promptId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ frontmatter, body, clientHash: forceHash })
+      });
+      const data = await saveRes.json();
+      if (data.hash) {
+        setHash(data.hash);
+        setConflictHash(null);
+        setExternalPreview(null);
+        setEditorDirty(false);
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const previewExternal = async () => {
+    if (!promptId) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/prompts/${promptId}`);
+      const data = await res.json();
+      setExternalPreview(buildFullContent(data.frontmatter, data.body));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   if (!promptId || !frontmatter) {
     return (
@@ -107,7 +140,7 @@ export default function PromptEditor({
 
   return (
     <div className="flex-1 border border-slate-200 rounded-lg overflow-hidden bg-white flex flex-col relative">
-      {showConflict && (
+      {conflictHash && (
         <div className="absolute inset-x-0 top-0 z-10 bg-amber-50 border-b border-amber-200 p-3 shadow-sm animate-in fade-in slide-in-from-top-1">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-amber-800 text-sm">
@@ -116,31 +149,39 @@ export default function PromptEditor({
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={handleLoadExternal}
-                className="px-3 py-1 bg-white border border-amber-300 text-amber-800 rounded text-xs hover:bg-amber-100 transition-colors"
+                onClick={reloadExternal}
+                disabled={busy}
+                className="px-3 py-1 bg-white border border-amber-300 text-amber-800 rounded text-xs hover:bg-amber-100 transition-colors disabled:opacity-60"
               >
                 載入外部變更
               </button>
               <button
-                onClick={handleOverwrite}
-                className="px-3 py-1 bg-amber-600 text-white rounded text-xs hover:bg-amber-700 transition-colors"
+                onClick={overwriteWithLocal}
+                disabled={busy}
+                className="px-3 py-1 bg-amber-600 text-white rounded text-xs hover:bg-amber-700 transition-colors disabled:opacity-60"
               >
                 保留本地(覆寫)
               </button>
               <button
-                onClick={() => alert("差異檢視功能開發中，請先手動對比。")}
-                className="px-3 py-1 text-amber-700 text-xs hover:underline"
+                onClick={previewExternal}
+                disabled={busy}
+                className="px-3 py-1 text-amber-700 text-xs hover:underline disabled:opacity-60"
               >
                 檢視差異
               </button>
             </div>
           </div>
+          {externalPreview && (
+            <div className="mt-2 text-[11px] text-amber-900 bg-white border border-amber-200 rounded p-2 max-h-32 overflow-auto whitespace-pre-wrap">
+              {externalPreview}
+            </div>
+          )}
         </div>
       )}
       <div className="h-10 px-3 flex items-center justify-between text-[12px] text-slate-500 border-b border-slate-200 bg-slate-50">
         <span>提示詞內容（Markdown 編輯區）</span>
         <span className="flex items-center gap-2">
-          {error && !showConflict && <span className="text-amber-600">{error}</span>}
+          {error && !conflictHash && <span className="text-amber-600">{error}</span>}
           {isSaving ? "自動儲存中…" : lastSavedAt ? `已儲存：${lastSavedAt}` : "等待編輯"}
         </span>
       </div>

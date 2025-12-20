@@ -37,7 +37,7 @@ export default function PromptList() {
     } finally {
       setLoading(false);
     }
-  }, [selectedProjectId, selectedPromptId, setSelectedPromptId]);
+  }, [selectedProjectId, setSelectedPromptId]);
 
   useEffect(() => {
     fetchPrompts();

@@ -7,8 +7,9 @@ import PromptList from "./components/prompt-list";
 import PromptHeader from "./components/prompt-header";
 import PromptEditor from "./components/prompt-editor";
 import SnippetPanel from "./components/snippet-panel";
+import DraftEditor from "./components/draft-editor";
 import { AsyncBoundary, ErrorBoundary } from "./components/error-boundary";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { InboxItem, PromptFrontmatter, Snippet } from "@/lib/types/schema";
 import RootPathAlert from "./components/root-path-alert";
 import { useWorkspaceStore } from "./store/useWorkspaceStore";
@@ -23,6 +24,8 @@ export default function WorkspaceShell() {
   const selectedPromptId = useWorkspaceStore((s) => s.selectedPromptId);
   const setEditorDirty = useWorkspaceStore((s) => s.setEditorDirty);
   const setSelectedProjectId = useWorkspaceStore((s) => s.setSelectedProjectId);
+  const setSelectedPromptId = useWorkspaceStore((s) => s.setSelectedPromptId);
+  const selectedProjectId = useWorkspaceStore((s) => s.selectedProjectId);
 
   const [promptFrontmatter, setPromptFrontmatter] = useState<PromptFrontmatter | null>(null);
   const [promptBody, setPromptBody] = useState<string>("");
@@ -65,6 +68,11 @@ export default function WorkspaceShell() {
     loadPrompt();
   }, [loadPrompt]);
 
+  useEffect(() => {
+    // 切換專案時退出草稿模式
+    setSelectedInboxId(null);
+  }, [selectedProjectId]);
+
   const handleCreatePrompt = async () => {
     try {
       setCreatingDraft(true);
@@ -76,6 +84,7 @@ export default function WorkspaceShell() {
       if (!res.ok) throw new Error("建立草稿失敗");
       const created = (await res.json()) as InboxItem;
       setSelectedInboxId(created.id);
+      setSelectedPromptId(null);
       setSelectedProjectId(null);
       setInboxRefreshKey((k) => k + 1);
     } catch (err) {
@@ -105,11 +114,15 @@ export default function WorkspaceShell() {
             <div className="pt-2 border-t border-slate-200 mt-2">
               <InboxList
                 selectedId={selectedInboxId}
-                onSelect={setSelectedInboxId}
+                onSelect={(id) => {
+                  setSelectedInboxId(id);
+                  setSelectedPromptId(null);
+                }}
                 onLoaded={(list) => {
                   setInboxItems(list);
                   if (!selectedInboxId && list.length > 0) {
                     setSelectedInboxId(list[0].id);
+                    setSelectedPromptId(null);
                   }
                 }}
                 refreshKey={inboxRefreshKey}
@@ -140,32 +153,36 @@ export default function WorkspaceShell() {
         <div className="w-[3px] cursor-col-resize bg-slate-200/70" />
         <section className="flex-[1.8] flex flex-col p-4 bg-slate-50">
           <div className="flex flex-col gap-3 h-full">
-            <AsyncBoundary
-              loading={promptLoading}
-              error={promptError}
-              onRetry={loadPrompt}
-              label="提示詞內容"
-            >
-              <div className="flex h-full gap-3">
-                <div className="flex-1 flex flex-col gap-3">
-                  <PromptHeader
-                    title={promptFrontmatter?.title ?? "尚未選擇提示詞"}
-                    frontmatter={promptFrontmatter}
-                    body={promptBody}
-                  />
-                  <PromptEditor
-                    promptId={selectedPromptId}
-                    initialFrontmatter={promptFrontmatter}
-                    initialBody={promptBody}
-                    clientHash={promptHash}
-                    insertText={pendingInsert}
-                    onInserted={() => setPendingInsert(null)}
-                    onBodyChange={(body) => setPromptBody(body)}
-                  />
+            {selectedInboxId ? (
+              <DraftEditor draft={inboxItems.find((i) => i.id === selectedInboxId) ?? null} />
+            ) : (
+              <AsyncBoundary
+                loading={promptLoading}
+                error={promptError}
+                onRetry={loadPrompt}
+                label="提示詞內容"
+              >
+                <div className="flex h-full gap-3">
+                  <div className="flex-1 flex flex-col gap-3">
+                    <PromptHeader
+                      title={promptFrontmatter?.title ?? "尚未選擇提示詞"}
+                      frontmatter={promptFrontmatter}
+                      body={promptBody}
+                    />
+                    <PromptEditor
+                      promptId={selectedPromptId}
+                      initialFrontmatter={promptFrontmatter}
+                      initialBody={promptBody}
+                      clientHash={promptHash}
+                      insertText={pendingInsert}
+                      onInserted={() => setPendingInsert(null)}
+                      onBodyChange={(body) => setPromptBody(body)}
+                    />
+                  </div>
+                  <SnippetPanel onInsert={(snippet: Snippet) => insertSnippet(snippet)} />
                 </div>
-                <SnippetPanel onInsert={(snippet: Snippet) => insertSnippet(snippet)} />
-              </div>
-            </AsyncBoundary>
+              </AsyncBoundary>
+            )}
           </div>
         </section>
       </div>

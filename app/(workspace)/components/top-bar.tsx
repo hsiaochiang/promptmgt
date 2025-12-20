@@ -1,3 +1,4 @@
+import Link from "next/link";
 interface Props {
   onShowChangeReport: () => void;
   onCreatePrompt: () => void;
@@ -17,6 +18,12 @@ export default function TopBar({ onShowChangeReport, onCreatePrompt, creating }:
         </div>
       </div>
       <div className="flex items-center gap-3 text-xs">
+          <Link
+            href="/settings"
+            className="px-3 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-50"
+          >
+            設定
+          </Link>
         <button
           onClick={onShowChangeReport}
           className="px-3 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-50"
