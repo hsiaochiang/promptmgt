@@ -62,7 +62,7 @@ description: "Task list for 001-local-prompt-manager"
 ### Implementation for User Story 1
 
 - [x] T015 [P] [US1] Implement inbox API (GET/POST/PATCH/DELETE) with autosave timestamps in app/api/inbox/route.ts and app/api/inbox/[id]/route.ts
-- [ ] T015a [P] [US1] Integration test：autosave + reopen restores draft（tests/integration/us1-draft-autosave.test.ts）
+- [x] T015a [P] [US1] Integration test：autosave + reopen restores draft（tests/integration/us1-draft-autosave.test.ts）
 - [x] T016 [P] [US1] Build InboxList component per prototype in app/(workspace)/components/inbox-list.tsx (sorted by updatedAt, show hint/createdAt)
 - [x] T017 [P] [US1] Implement DraftEditor with autosave + large-paste loading indicator in app/(workspace)/components/draft-editor.tsx
 - [ ] T017a [P] [US1] Unit test：large paste shows loading indicator（tests/unit/draft-editor-loading.test.ts）
