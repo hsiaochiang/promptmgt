@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { InboxItem } from "@/lib/types/schema";
 import { useAutosaveDraft } from "../hooks/useAutosaveDraft";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
