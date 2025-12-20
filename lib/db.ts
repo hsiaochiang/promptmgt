@@ -5,6 +5,7 @@ import { JSONFile } from "lowdb/node";
 import type { DatabaseSchema } from "./types/schema";
 
 const DB_FILE = join(process.cwd(), "db.json");
+const DEFAULT_ROOT = join(process.cwd(), "Prompts");
 
 const seedData: DatabaseSchema = {
   projects: [
@@ -73,7 +74,7 @@ const seedData: DatabaseSchema = {
     }
   ],
   settings: {
-    rootPath: null,
+    rootPath: DEFAULT_ROOT,
     telemetryEnabled: true,
     updateCheckEnabled: true
   }
