@@ -20,7 +20,8 @@ describe("US2 - 專案刪除 API", () => {
     const { DELETE, GET } = await import("@/app/api/projects/route");
 
     const db = await getDb();
-    const rootPath = db.data!.settings.rootPath;
+    const rootPath = db.data!.settings.rootPath ?? process.env.DEFAULT_ROOT;
+    if (!rootPath) throw new Error("missing rootPath for test setup");
 
     await writePrompt(
       rootPath,

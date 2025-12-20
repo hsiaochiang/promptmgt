@@ -6,7 +6,12 @@ import ProjectList from "@/app/(workspace)/components/project-list";
 import { useWorkspaceStore } from "@/app/(workspace)/store/useWorkspaceStore";
 import type { Project } from "@/lib/types/schema";
 
-function makeProject(id: string, name: string, status = "規劃中", promptCount = 0): Project {
+function makeProject(
+  id: string,
+  name: string,
+  status: Project["status"] = "規劃中",
+  promptCount = 0
+): Project {
   return { id, name, status, promptCount, updatedAt: "2025-01-01" };
 }
 

@@ -52,14 +52,15 @@ describe("PromptList 行為", () => {
     fireEvent.click(screen.getByText("提示 2"));
     expect(useWorkspaceStore.getState().selectedPromptId).toBe("p-2");
 
-    fireEvent.click(screen.getAllByText("刪除")[0]);
+    const deleteButtons = await screen.findAllByRole("button", { name: "刪除" });
+    fireEvent.click(deleteButtons[0]);
     expect(onDelete).toHaveBeenCalledWith("p-1");
   });
 
   it("刪除選取提示詞後刷新列表並選取下一筆", async () => {
     const responses = [prompts, [prompts[1]]];
     const fetchMock = vi.fn(async () => {
-      const payload = responses.shift() ?? [];
+      const payload = responses.length > 0 ? responses.shift()! : [prompts[1]];
       return new Response(JSON.stringify(payload), { status: 200 });
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -85,9 +86,11 @@ describe("PromptList 行為", () => {
     await screen.findByText("提示 1");
     expect(useWorkspaceStore.getState().selectedPromptId).toBe("p-1");
 
-    fireEvent.click(screen.getAllByText("刪除")[0]);
+    const deleteButtons = await screen.findAllByRole("button", { name: "刪除" });
+    fireEvent.click(deleteButtons[0]);
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    await screen.findByText("提示 2");
     await waitFor(() => expect(useWorkspaceStore.getState().selectedPromptId).toBe("p-2"));
     expect(screen.queryByText("提示 1")).not.toBeInTheDocument();
     expect(screen.getByText("共 1 篇提示詞")).toBeInTheDocument();

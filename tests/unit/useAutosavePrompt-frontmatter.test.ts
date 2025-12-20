@@ -35,30 +35,28 @@ describe("useAutosavePrompt 前言自動保存", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    const { rerender } = renderHook(
-      (props) => useAutosavePrompt(props),
-      {
-        initialProps: {
-          promptId: "p-1",
-          frontmatter: fm,
-          body: "body",
-          clientHash: "old-hash",
-          delay: 10,
-          onSaved: vi.fn(),
-          onConflict: vi.fn()
-        }
-      }
-    );
-
-    // frontmatter 更新
-    rerender({
+    type HookProps = Parameters<typeof useAutosavePrompt>[0];
+    const initialProps: HookProps = {
       promptId: "p-1",
-      frontmatter: { ...fm, status: "草稿" },
+      frontmatter: fm,
       body: "body",
       clientHash: "old-hash",
       delay: 10,
       onSaved: vi.fn(),
       onConflict: vi.fn()
+    };
+
+    const { rerender } = renderHook(
+      (props: HookProps) => useAutosavePrompt(props),
+      {
+        initialProps
+      }
+    );
+
+    // frontmatter 更新
+    rerender({
+      ...initialProps,
+      frontmatter: { ...fm, status: "草稿" }
     });
 
     await act(async () => {
