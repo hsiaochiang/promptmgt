@@ -8,7 +8,7 @@ description: "Task list for 001-local-prompt-manager"
 **Input**: Design documents from `/specs/001-local-prompt-manager/`
 **Prerequisites**: plan.md (required), spec.md (required), research.md (n/a), data-model.md (n/a), contracts/ (n/a)
 
-**Tests**: Not explicitly requested; omit test tasks unless added later.
+**Tests**: 必須包含 unit/contract/integration；覆蓋率需 ≥80%，關鍵路徑 100%。
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing.
 
@@ -66,8 +66,9 @@ description: "Task list for 001-local-prompt-manager"
 - [x] T016 [P] [US1] Build InboxList component per prototype in app/(workspace)/components/inbox-list.tsx (sorted by updatedAt, show hint/createdAt)
 - [x] T017 [P] [US1] Implement DraftEditor with autosave + large-paste loading indicator in app/(workspace)/components/draft-editor.tsx
 - [x] T017a [P] [US1] Unit test：large paste shows loading indicator（tests/unit/draft-editor-loading.test.ts）
+- [x] T017b [P] [US1] Unit/Integration：autosave 節奏 2 秒＋無輸入暫停＋恢復後重啟計時（Draft），覆蓋 /api/inbox/[id] 節流寫入
 - [x] T018 [US1] Add useAutosaveDraft hook throttling calls to inbox API and updating store in app/(workspace)/hooks/useAutosaveDraft.ts
- - [x] T019 [US1] Wire inbox count badge in sidebar header in app/(workspace)/components/sidebar-header.tsx
+- [x] T019 [US1] Wire inbox count badge in top bar in app/(workspace)/components/top-bar.tsx
 
 **Checkpoint**: 收件匣草稿可自動保存、排序、預覽並可復原。
 
@@ -90,6 +91,8 @@ description: "Task list for 001-local-prompt-manager"
 - [x] T024 [US2] Build PromptList panel with filters/status/model/tag chips in app/(workspace)/components/prompt-list.tsx
 - [x] T024a [US2] Wire TopBar actions：開啟變更報告（placeholder modal）與新建提示詞流程（建立草稿/導向編輯）
 - [x] T025 [US2] Add root-path missing alert/relocation UI in app/(workspace)/components/root-path-alert.tsx triggered on invalid project path
+- [x] T025b [US2] 衝突處理 UI：提示詞編輯器外部變更警告，提供「載入外部 / 保留本地 / 檢視差異」三選行為
+- [x] T025c [P] [US2] Integration/contract：模擬 hash/mtime 衝突，驗證三選流程與結果（載入/覆寫/差異檢視）
 
 **Checkpoint**: 草稿可轉正並出現在專案列表與提示詞清單中；缺路徑時有提示。
 
@@ -110,6 +113,7 @@ description: "Task list for 001-local-prompt-manager"
 - [x] T028a [P] [US3] Unit test：clipboard trims frontmatter for slim copy
 - [x] T029 [US3] Build PromptHeader actions (copy buttons, status/model/project pills) in app/(workspace)/components/prompt-header.tsx
 - [x] T030 [US3] Add useAutosavePrompt hook with lastSaved indicator in app/(workspace)/hooks/useAutosavePrompt.ts
+- [x] T030a [P] [US3] Unit/Integration：autosave 節奏 2 秒＋無輸入暫停＋恢復後重啟計時（Prompt），含 hash 傳遞
 
 **Checkpoint**: 提示詞可編輯、保存、完整/精簡複製並顯示狀態。
 
@@ -146,6 +150,7 @@ description: "Task list for 001-local-prompt-manager"
 - [x] T038 [P] Add error boundary/loading states for editor and lists in app/(workspace)/components/error-boundary.tsx
 - [x] T039 Verify search cap, large-paste loading, filename sanitizer coverage across flows in app/(workspace)/ and lib/utils
 - [x] T039a [P] Coverage gate enforcement in CI（>=80%，critical path 100%），確保測試未通過時阻擋
+- [x] T039b [P] [Phase 7] 覆蓋率驗證：含 autosave 節奏、衝突處理 UI、搜尋上限、檔名合法化皆達覆蓋門檻
 
 ---
 

@@ -31,6 +31,9 @@ export default function PromptEditor({
   const [body, setBody] = useState(initialBody);
   const [frontmatter, setFrontmatter] = useState<PromptFrontmatter | null>(initialFrontmatter);
   const [hash, setHash] = useState<string | null>(clientHash);
+  const [showConflict, setShowConflict] = useState(false);
+  const [externalContent, setExternalContent] = useState<{ frontmatter: any; body: string; hash: string } | null>(null);
+
   const setEditorDirty = useWorkspaceStore((s) => s.setEditorDirty);
   const lastSavedAt = useWorkspaceStore((s) => s.lastSavedAt);
   const extensions = useMemo(() => [markdown()], []);
@@ -39,17 +42,48 @@ export default function PromptEditor({
     frontmatter,
     body,
     clientHash: hash,
-    onSaved: (nextHash) => setHash(nextHash)
+    onSaved: (nextHash) => {
+      setHash(nextHash);
+      setShowConflict(false);
+    }
   });
+
+  useEffect(() => {
+    if (error && error.includes("發現外部變更")) {
+      setShowConflict(true);
+    }
+  }, [error]);
 
   useEffect(() => {
     setBody(initialBody);
     setHash(clientHash);
+    setShowConflict(false);
   }, [initialBody, clientHash]);
 
   useEffect(() => {
     setFrontmatter(initialFrontmatter);
   }, [initialFrontmatter]);
+
+  const handleLoadExternal = async () => {
+    if (!promptId) return;
+    const res = await fetch(`/api/prompts/${promptId}`);
+    const data = await res.json();
+    setBody(data.body);
+    setFrontmatter(data.frontmatter);
+    setHash(data.hash);
+    setShowConflict(false);
+    setEditorDirty(false);
+  };
+
+  const handleOverwrite = async () => {
+    if (!promptId) return;
+    // To overwrite, we need the latest hash from server to pass the check
+    const res = await fetch(`/api/prompts/${promptId}`);
+    const data = await res.json();
+    setHash(data.hash);
+    // useAutosavePrompt will trigger again with new hash
+    setShowConflict(false);
+  };
 
   useEffect(() => {
     if (!insertText) return;
@@ -72,11 +106,41 @@ export default function PromptEditor({
   }
 
   return (
-    <div className="flex-1 border border-slate-200 rounded-lg overflow-hidden bg-white flex flex-col">
+    <div className="flex-1 border border-slate-200 rounded-lg overflow-hidden bg-white flex flex-col relative">
+      {showConflict && (
+        <div className="absolute inset-x-0 top-0 z-10 bg-amber-50 border-b border-amber-200 p-3 shadow-sm animate-in fade-in slide-in-from-top-1">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-amber-800 text-sm">
+              <span className="font-semibold">⚠️ 衝突警報：</span>
+              <span>偵測到外部變更，自動儲存已暫停。</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleLoadExternal}
+                className="px-3 py-1 bg-white border border-amber-300 text-amber-800 rounded text-xs hover:bg-amber-100 transition-colors"
+              >
+                載入外部變更
+              </button>
+              <button
+                onClick={handleOverwrite}
+                className="px-3 py-1 bg-amber-600 text-white rounded text-xs hover:bg-amber-700 transition-colors"
+              >
+                保留本地(覆寫)
+              </button>
+              <button
+                onClick={() => alert("差異檢視功能開發中，請先手動對比。")}
+                className="px-3 py-1 text-amber-700 text-xs hover:underline"
+              >
+                檢視差異
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="h-10 px-3 flex items-center justify-between text-[12px] text-slate-500 border-b border-slate-200 bg-slate-50">
         <span>提示詞內容（Markdown 編輯區）</span>
         <span className="flex items-center gap-2">
-          {error && <span className="text-amber-600">{error}</span>}
+          {error && !showConflict && <span className="text-amber-600">{error}</span>}
           {isSaving ? "自動儲存中…" : lastSavedAt ? `已儲存：${lastSavedAt}` : "等待編輯"}
         </span>
       </div>
