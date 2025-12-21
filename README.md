@@ -12,7 +12,7 @@ npm install
 npm run dev
 ```
 - 預設使用 `http://localhost:3000`
-- 首次啟動會在專案根目錄生成 `db.json`（LowDB）與 `Prompts/` 目錄（若環境變數未覆寫）
+- 首次啟動會在專案根目錄生成 `db.json`（LowDB）；提示詞根路徑預設為使用者目錄的隱藏資料夾 `.promptmgt`，啟動時自動建立
 
 ## 常用指令
 - 開發伺服器：`npm run dev`
@@ -25,11 +25,11 @@ npm run dev
 ## 設定與資料位置
 - 環境變數
   - `DB_FILE`: LowDB 檔案路徑，預設 `<repo>/db.json`
-  - `DEFAULT_ROOT`: 提示詞檔案根目錄，預設 `<repo>/Prompts`（建議改為 `%USERPROFILE%/.promptmgt` 或 `~/.promptmgt` 隱藏資料夾）
+  - `DEFAULT_ROOT`: 提示詞檔案根目錄，預設 `%USERPROFILE%/.promptmgt` 或 `~/.promptmgt`（啟動時自動建立）
 - 進入 Workspace 後可於 Settings 頁切換
   - 根路徑（Root Path）：缺路徑會出現 RootPathAlert 導引設定；失效時可重新定位或建立預設資料夾
   - 遙測（Telemetry Enabled）：本機匿名紀錄，5MB 環迴、無外傳，可隨時停用
-  - 遙測匯出（Export Telemetry）：於設定頁匯出診斷檔，檔案大小應 ≤5MB
+  - 遙測匯出（Export Telemetry）：於設定頁匯出診斷檔，預設寫入 `rootPath/telemetry.log`，檔案大小應 ≤5MB
   - 更新檢查（Update Check Enabled）
 - 提示詞儲存在 `DEFAULT_ROOT/{ProjectName}/{SafeTitle}.md`，含 YAML frontmatter（title/project/type/status/model/tags/updatedAt/notes）；資料沿用 OS 權限，預設無應用層加密。
 

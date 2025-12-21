@@ -6,8 +6,8 @@
 
 ## 安裝與啟動
 1) 安裝依賴：`npm install`。  
-2) 設定根路徑：在 UI 設定頁輸入 `rootPath`，建議使用者目錄下隱藏資料夾（例：`%USERPROFILE%/.promptmgt` 或 `~/.promptmgt`）；若不存在應用會引導建立。  
-3) 遙測設定：於設定頁可關閉「Telemetry Enabled」，並可「Export Telemetry」匯出本機匿名紀錄（5MB 環迴、無外傳）；如無需遙測可直接停用。  
+2) 設定根路徑：預設為使用者目錄下隱藏資料夾（例：`%USERPROFILE%/.promptmgt` 或 `~/.promptmgt`），啟動時自動建立；可在設定頁修改 `rootPath`。  
+3) 遙測與更新：設定頁可關閉「Telemetry Enabled」與「Update Check Enabled」，並可「Export Telemetry」匯出本機匿名紀錄（5MB 環迴、無外傳，預設寫入 `rootPath/telemetry.log`）。如無需遙測可直接停用。  
 4) 啟動開發伺服：`npm run dev` → http://localhost:3000。  
 5) 首次載入確認 RootPathAlert 無錯誤；若路徑失效，依提示重新定位。
 

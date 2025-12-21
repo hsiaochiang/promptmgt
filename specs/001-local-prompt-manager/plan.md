@@ -12,7 +12,7 @@
 ## Technical Context
 
 **Language/Version**: TypeScript 5.x、Next.js 14（App Router）、Node.js 18  
-**Primary Dependencies**: Next.js / React 18、Tailwind CSS、lowdb、fs/promises、zod（schema 驗證）、localStorage（用戶端偏好）、React Query / SWR 類型資料抓取（現況待確認，若無則補）  
+**Primary Dependencies**: Next.js / React 18、Tailwind CSS、lowdb、fs/promises、zod（schema 驗證）、localStorage（用戶端偏好）；資料抓取採原生 fetch（目前不新增 React Query/SWR 依賴）  
 **Storage**: 檔案系統（專案資料夾內的 Markdown 檔）＋ LowDB JSON（db.json）＋ localStorage（Pin/寬度/快捷偏好）  
 **Testing**: Vitest（單元/整合）、React Testing Library（元件）、契約測試（tests/contract）、整合測試（tests/integration）；需維持 TDD、覆蓋率 ≥80%  
 **Target Platform**: 桌面瀏覽器（Chromium/Edge）在本機 localhost 執行，Windows/macOS；Node 18 runtime  
