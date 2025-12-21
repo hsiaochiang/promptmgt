@@ -10,6 +10,8 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [rootPathInput, setRootPathInput] = useState("");
   const [pathExists, setPathExists] = useState<boolean | null>(null);
+  const [updateStatus, setUpdateStatus] = useState<string>("");
+  const [updateChecking, setUpdateChecking] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -55,6 +57,28 @@ export default function SettingsPage() {
   const toggle = (key: keyof Settings) => {
     if (!settings) return;
     update({ [key]: !settings[key] } as Partial<Settings>);
+  };
+
+  const checkUpdate = async () => {
+    setUpdateChecking(true);
+    setUpdateStatus("");
+    try {
+      const res = await fetch("/api/settings/update-check");
+      const data = await res.json();
+      if (data.status === "update-available") {
+        setUpdateStatus(`有新版本：${data.latestVersion ?? "unknown"}`);
+      } else if (data.status === "up-to-date") {
+        setUpdateStatus("已是最新版本");
+      } else if (data.status === "skipped") {
+        setUpdateStatus(data.reason === "disabled" ? "已停用更新檢查" : "已略過（非安全端點/未設定）");
+      } else {
+        setUpdateStatus(`檢查失敗：${data.reason ?? "未知原因"}`);
+      }
+    } catch (err) {
+      setUpdateStatus(err instanceof Error ? `檢查失敗：${err.message}` : "檢查失敗");
+    } finally {
+      setUpdateChecking(false);
+    }
   };
 
   return (
@@ -134,6 +158,22 @@ export default function SettingsPage() {
               checked={settings.updateCheckEnabled}
               onToggle={() => toggle("updateCheckEnabled")}
             />
+            <div className="p-4 border border-slate-200 rounded-lg space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-semibold text-sm">手動檢查更新</div>
+                  <div className="text-sm text-slate-500">透過設定的安全端點檢查最新版本；若已停用將直接略過。</div>
+                </div>
+                <button
+                  onClick={checkUpdate}
+                  disabled={updateChecking}
+                  className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                >
+                  {updateChecking ? "檢查中…" : "立即檢查"}
+                </button>
+              </div>
+              {updateStatus ? <div className="text-sm text-slate-600">{updateStatus}</div> : null}
+            </div>
           </div>
         )}
       </div>

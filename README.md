@@ -30,7 +30,7 @@ npm run dev
   - 根路徑（Root Path）：缺路徑會出現 RootPathAlert 導引設定；失效時可重新定位或建立預設資料夾
   - 遙測（Telemetry Enabled）：本機匿名紀錄，5MB 環迴、無外傳，可隨時停用
   - 遙測匯出（Export Telemetry）：於設定頁匯出診斷檔，預設寫入 `rootPath/telemetry.log`，檔案大小應 ≤5MB
-  - 更新檢查（Update Check Enabled）
+  - 更新檢查（Update Check Enabled）：預設開啟，可停用避免對外連線；可於設定頁「手動檢查更新」呼叫安全端點（`UPDATE_CHECK_ENDPOINT`）。
 - 提示詞儲存在 `DEFAULT_ROOT/{ProjectName}/{SafeTitle}.md`，含 YAML frontmatter（title/project/type/status/model/tags/updatedAt/notes）；資料沿用 OS 權限，預設無應用層加密。
 
 ## API 概覽（App Router route handlers）
