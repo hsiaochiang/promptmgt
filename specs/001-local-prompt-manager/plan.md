@@ -18,7 +18,7 @@
 **Target Platform**: 桌面瀏覽器（Chromium/Edge）在本機 localhost 執行，Windows/macOS；Node 18 runtime  
 **Project Type**: Web（Next.js 全端：App Router + Route Handlers）  
 **Performance Goals**: 啟動/載入 50 專案 + 500 提示詞 ≤5 秒；搜尋 p95 ≤2 秒（1000 筆內）；自動儲存持續 2 秒節奏；Pin 收合動畫 150–250ms；精簡複製 ≤3 秒；草稿→轉正流程 ≤30 秒  
-**Constraints**: 離線優先（不依賴雲端），檔案系統權限沿用 OS 帳戶；localStorage 持久化佈局/Pin；需處理檔案衝突偵測與使用者決策；前端需符合 WCAG 2.1 AA（字級 +2px、不裁切）；資料僅單機存放，無應用層加密；觀測性/遙測在本機情境下的記錄/管道 **NEEDS CLARIFICATION**  
+**Constraints**: 離線優先（不依賴雲端），檔案系統權限沿用 OS 帳戶；localStorage 持久化佈局/Pin；需處理檔案衝突偵測與使用者決策；前端需符合 WCAG 2.1 AA（字級 +2px、不裁切）；資料僅單機存放，無應用層加密；觀測性/遙測採本機匿名暫存（5MB 環迴、無外傳）、可停用、可匯出，設定頁需提供開關與匯出入口  
 **Scale/Scope**: 目標資料量：專案 ~50、提示詞 ~500、收件匣草稿 100+（需分頁/搜尋），片語庫數百筆；單機單用戶並發，前後端同機
 
 ## Constitution Check

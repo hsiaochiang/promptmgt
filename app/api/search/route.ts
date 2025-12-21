@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { searchPrompts } from "@/lib/services/search";
+import { searchPromptsWithTruncation } from "@/lib/services/search";
 import { listPrompts } from "@/lib/fs/prompts";
 import { getDb } from "@/lib/db";
 
@@ -11,8 +11,11 @@ export async function GET(request: Request) {
   const limit = Math.min(parseInt(searchParams.get("limit") ?? "1000", 10) || 1000, 1000);
   const db = await getDb();
   const rootPath = db.data!.settings.rootPath;
-  if (!rootPath) return NextResponse.json([]);
+  if (!rootPath) return NextResponse.json({ results: [], truncated: false });
   const prompts = await listPrompts(rootPath);
-  const results = searchPrompts(prompts, query, limit, { projectId, status: status ?? undefined });
-  return NextResponse.json(results);
+  const { results, truncated } = searchPromptsWithTruncation(prompts, query, limit, {
+    projectId,
+    status: status ?? undefined
+  });
+  return NextResponse.json({ results, truncated });
 }

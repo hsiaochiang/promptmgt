@@ -25,12 +25,13 @@ npm run dev
 ## 設定與資料位置
 - 環境變數
   - `DB_FILE`: LowDB 檔案路徑，預設 `<repo>/db.json`
-  - `DEFAULT_ROOT`: 提示詞檔案根目錄，預設 `<repo>/Prompts`
+  - `DEFAULT_ROOT`: 提示詞檔案根目錄，預設 `<repo>/Prompts`（建議改為 `%USERPROFILE%/.promptmgt` 或 `~/.promptmgt` 隱藏資料夾）
 - 進入 Workspace 後可於 Settings 頁切換
-  - 根路徑（Root Path）
-  - 遙測（Telemetry Enabled）
+  - 根路徑（Root Path）：缺路徑會出現 RootPathAlert 導引設定；失效時可重新定位或建立預設資料夾
+  - 遙測（Telemetry Enabled）：本機匿名紀錄，5MB 環迴、無外傳，可隨時停用
+  - 遙測匯出（Export Telemetry）：於設定頁匯出診斷檔，檔案大小應 ≤5MB
   - 更新檢查（Update Check Enabled）
-- 提示詞儲存在 `DEFAULT_ROOT/{ProjectName}/{SafeTitle}.md`，含 YAML frontmatter（title/project/type/status/model/tags/updatedAt/notes）。
+- 提示詞儲存在 `DEFAULT_ROOT/{ProjectName}/{SafeTitle}.md`，含 YAML frontmatter（title/project/type/status/model/tags/updatedAt/notes）；資料沿用 OS 權限，預設無應用層加密。
 
 ## API 概覽（App Router route handlers）
 - Projects

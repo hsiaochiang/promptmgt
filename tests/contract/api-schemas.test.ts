@@ -549,9 +549,10 @@ describe("API contracts", () => {
     );
 
     const response = await GET(new Request("http://localhost/api/search?q=search"));
-    const results = await response.json();
-    expect(results.length).toBeGreaterThan(0);
-    expect(results[0]).toMatchObject({
+    const payload = await response.json();
+    expect(payload.truncated).toBe(false);
+    expect(payload.results.length).toBeGreaterThan(0);
+    expect(payload.results[0]).toMatchObject({
       id: expect.any(String),
       snippet: expect.any(String),
       title: expect.stringContaining("Searchable")
@@ -561,8 +562,9 @@ describe("API contracts", () => {
   it("search endpoint handles missing query parameter", async () => {
     const { GET } = await import("@/app/api/search/route");
     const response = await GET(new Request("http://localhost/api/search"));
-    const results = await response.json();
-    expect(Array.isArray(results)).toBe(true);
+    const payload = await response.json();
+    expect(payload.results).toEqual([]);
+    expect(payload.truncated).toBe(false);
   });
 
   it("search endpoint returns empty when rootPath missing", async () => {
@@ -571,8 +573,9 @@ describe("API contracts", () => {
 
     await updateSettings({ rootPath: null });
     const response = await GET(new Request("http://localhost/api/search?q=anything"));
-    const results = await response.json();
-    expect(results).toEqual([]);
+    const payload = await response.json();
+    expect(payload.results).toEqual([]);
+    expect(payload.truncated).toBe(false);
   });
 
   it("snippets endpoints expose usage info", async () => {

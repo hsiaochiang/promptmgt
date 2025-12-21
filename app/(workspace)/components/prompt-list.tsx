@@ -16,10 +16,13 @@ interface Props {
 
 export default function PromptList({ refreshKey = 0, onDeletePrompt, onSelectedWhileUnpinned, searchInputRef, pinned = true, onTogglePinned }: Props) {
   const [prompts, setPrompts] = useState<PromptListItem[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [batchMessage, setBatchMessage] = useState<string | null>(null);
+  const [restoreQueue, setRestoreQueue] = useState<Array<{ frontmatter: any; body: string }>>([]);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedProjectId = useWorkspaceStore((s) => s.selectedProjectId);
   const selectedPromptId = useWorkspaceStore((s) => s.selectedPromptId);
@@ -46,6 +49,7 @@ export default function PromptList({ refreshKey = 0, onDeletePrompt, onSelectedW
       if (!res.ok) throw new Error("無法載入提示詞列表");
       const data = (await res.json()) as PromptListItem[];
       setPrompts(data);
+      setSelectedIds(new Set());
       const hasSelected = data.some((p) => p.id === selectedPromptId);
       if (data.length === 0) {
         setSelectedPromptId(null);
@@ -58,7 +62,7 @@ export default function PromptList({ refreshKey = 0, onDeletePrompt, onSelectedW
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, searchQuery, selectedProjectId, selectedPromptId, setSelectedPromptId]);
+  }, [filterStatus, searchQuery, selectedProjectId, setSelectedPromptId]);
 
   useEffect(() => {
     fetchPrompts();
@@ -69,6 +73,175 @@ export default function PromptList({ refreshKey = 0, onDeletePrompt, onSelectedW
       if (undoTimer.current) clearTimeout(undoTimer.current);
     };
   }, []);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const fetchPromptDetail = async (id: string) => {
+    const res = await fetch(`/api/prompts/${id}`);
+    if (!res.ok) throw new Error("讀取提示詞失敗");
+    const data = await res.json();
+    return data as { frontmatter: any; body: string; hash?: string };
+  };
+
+  const restoreDeleted = async () => {
+    if (restoreQueue.length === 0) return;
+    const queue = [...restoreQueue];
+    setRestoreQueue([]);
+    for (const item of queue) {
+      await fetch("/api/prompts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ frontmatter: item.frontmatter, body: item.body })
+      });
+    }
+    await fetchPrompts();
+    setBatchMessage(null);
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!window.confirm(`確定刪除選取的 ${selectedIds.size} 筆提示詞？`)) return;
+    const backups: Array<{ frontmatter: any; body: string }> = prompts
+      .filter((p) => selectedIds.has(p.id))
+      .map((p) => ({
+        frontmatter: {
+          title: p.title,
+          project: (p as any).projectId ?? (p as any).project,
+          type: p.type,
+          status: p.status,
+          model: p.model,
+          tags: p.tags,
+          updatedAt: p.updatedAt
+        },
+        body: ""
+      }));
+
+    for (const id of selectedIds) {
+      try {
+        await fetch(`/api/prompts/${id}`, { method: "DELETE" });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    setRestoreQueue(backups);
+    setBatchMessage("已刪除，5 秒內可復原");
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    undoTimer.current = setTimeout(() => {
+      setBatchMessage(null);
+      setRestoreQueue([]);
+    }, 5000);
+    await fetchPrompts();
+  };
+
+  const handleBatchArchive = async () => {
+    if (selectedIds.size === 0) return;
+    if (!window.confirm(`確定將 ${selectedIds.size} 筆提示詞歸檔？`)) return;
+    const backups: Array<{ frontmatter: any; body: string }> = [];
+    for (const id of selectedIds) {
+      try {
+        const detail = await fetchPromptDetail(id);
+        backups.push({ frontmatter: detail.frontmatter, body: detail.body });
+        await fetch(`/api/prompts/${id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            frontmatter: { ...detail.frontmatter, status: "已封存" },
+            body: detail.body,
+            clientHash: detail.hash
+          })
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    setRestoreQueue(backups);
+    setBatchMessage("已歸檔，5 秒內可復原");
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    undoTimer.current = setTimeout(() => {
+      setBatchMessage(null);
+      setRestoreQueue([]);
+    }, 5000);
+    await fetchPrompts();
+  };
+
+  const handleBatchDuplicate = async () => {
+    if (selectedIds.size === 0) return;
+    for (const id of selectedIds) {
+      try {
+        const detail = await fetchPromptDetail(id);
+        const title = `${detail.frontmatter?.title ?? "未命名"} 副本`;
+        await fetch("/api/prompts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            frontmatter: { ...detail.frontmatter, title, updatedAt: new Date().toISOString() },
+            body: detail.body
+          })
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    await fetchPrompts();
+    setBatchMessage("已建立副本");
+  };
+
+  const handleBatchMove = async () => {
+    if (selectedIds.size === 0) return;
+    const targetProject = window.prompt("輸入要移動到的專案名稱", selectedProjectId ?? "");
+    if (!targetProject || !targetProject.trim()) return;
+    for (const id of selectedIds) {
+      try {
+        const detail = await fetchPromptDetail(id);
+        await fetch("/api/prompts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            frontmatter: { ...detail.frontmatter, project: targetProject, updatedAt: new Date().toISOString() },
+            body: detail.body
+          })
+        });
+        await fetch(`/api/prompts/${id}`, { method: "DELETE" });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    await fetchPrompts();
+    setBatchMessage("已移動選取提示詞");
+  };
+
+  const handleBatchRename = async () => {
+    if (selectedIds.size === 0) return;
+    const newTitle = window.prompt("輸入新標題（套用於所有選取項）");
+    if (!newTitle || !newTitle.trim()) return;
+    for (const id of selectedIds) {
+      try {
+        const detail = await fetchPromptDetail(id);
+        await fetch("/api/prompts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            frontmatter: { ...detail.frontmatter, title: newTitle.trim(), updatedAt: new Date().toISOString() },
+            body: detail.body
+          })
+        });
+        await fetch(`/api/prompts/${id}`, { method: "DELETE" });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    await fetchPrompts();
+    setBatchMessage("已重新命名");
+  };
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -166,6 +339,43 @@ export default function PromptList({ refreshKey = 0, onDeletePrompt, onSelectedW
           {loading && <span className="text-[11px] text-slate-400">載入中…</span>}
         </div>
       </div>
+
+      {selectedIds.size > 0 && (
+        <div className="mb-3 flex flex-wrap gap-2 text-[11px] items-center bg-slate-50 border border-slate-200 px-3 py-2 rounded">
+          <span>已選 {selectedIds.size} 筆</span>
+          <button data-testid="batch-rename" onClick={handleBatchRename} className="px-2 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-100">
+            批次重新命名
+          </button>
+          <button data-testid="batch-duplicate" onClick={handleBatchDuplicate} className="px-2 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-100">
+            批次複製
+          </button>
+          <button data-testid="batch-move" onClick={handleBatchMove} className="px-2 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-100">
+            批次移動
+          </button>
+          <button data-testid="batch-archive" onClick={handleBatchArchive} className="px-2 py-1 rounded-full border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100">
+            批次歸檔
+          </button>
+          <button data-testid="batch-delete" onClick={handleBatchDelete} className="px-2 py-1 rounded-full border border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100">
+            批次刪除
+          </button>
+          <button onClick={clearSelection} className="px-2 py-1 rounded-full border border-slate-200 bg-white hover:bg-slate-50">
+            取消選取
+          </button>
+        </div>
+      )}
+
+      {batchMessage && (
+        <div className="mb-2 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 px-3 py-2 rounded flex items-center justify-between">
+          <span>{batchMessage}</span>
+          <button
+            className="px-2 py-1 rounded-full border border-amber-300 bg-white hover:bg-amber-100"
+            onClick={restoreDeleted}
+          >
+            Undo
+          </button>
+        </div>
+      )}
+
       {error ? <div className="mb-2 text-[11px] text-amber-700">{error}</div> : null}
       {pendingDelete && (
         <div className="mb-2 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 px-3 py-2 rounded flex items-center justify-between">
@@ -206,7 +416,19 @@ export default function PromptList({ refreshKey = 0, onDeletePrompt, onSelectedW
               }
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="font-semibold truncate">{prompt.title}</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    data-testid={`select-${prompt.id}`}
+                    checked={selectedIds.has(prompt.id)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      toggleSelect(prompt.id);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <span className="font-semibold truncate">{prompt.title}</span>
+                </div>
                 <span className="text-[10px] text-slate-400">更新：{prompt.updatedAt}</span>
               </div>
               <div className="flex items-center justify-between text-[11px]">

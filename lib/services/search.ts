@@ -41,6 +41,22 @@ export function searchPrompts(
   return results;
 }
 
+export function searchPromptsWithTruncation(
+  prompts: PromptListItem[],
+  query: string,
+  limit = 1000,
+  filter: SearchFilter = {}
+): { results: SearchResult[]; truncated: boolean } {
+  // 嘗試抓取 limit+1 筆以判斷是否截斷，再回傳前 limit 筆
+  const hardLimit = Math.min(limit, 1000);
+  const buffer = searchPrompts(prompts, query, hardLimit + 1, filter);
+  const truncated = buffer.length > hardLimit;
+  return {
+    results: buffer.slice(0, hardLimit),
+    truncated
+  };
+}
+
 function createSnippet(text: string, query: string, radius = 30) {
   const idx = text.toLowerCase().indexOf(query.toLowerCase());
   if (idx === -1) return text.slice(0, radius * 2);
