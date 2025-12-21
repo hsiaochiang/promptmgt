@@ -1,9 +1,28 @@
-import { describe, it } from 'vitest';
+import { mkdtemp } from "fs/promises";
+import { existsSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { describe, expect, it, vi } from "vitest";
 
-// TODO: 驗證預設儲存路徑建立與權限沿用（NFR-002），可搭配路徑工具或啟動檢查邏輯
+describe("storage-path", () => {
+  it("ensures default hidden directory is created under user home when DEFAULT_ROOT not provided", async () => {
+    const originalDefaultRoot = process.env.DEFAULT_ROOT;
+    const originalDbFile = process.env.DB_FILE;
 
-describe('storage-path', () => {
-  it.skip('ensures default hidden directory is created under user home with inherited permissions', () => {
-    // 待補：mock 環境變數與 fs，驗證路徑 `%USERPROFILE%/.promptmgt` 或 `~/.promptmgt` 的建立與權限沿用
+    const tempDir = await mkdtemp(join(tmpdir(), "pmgt-storage-test-"));
+    process.env.DB_FILE = join(tempDir, "db.json");
+    delete process.env.DEFAULT_ROOT;
+
+    vi.resetModules();
+    const { getDb } = await import("@/lib/db");
+    const db = await getDb();
+    const defaultRoot = db.data!.settings.rootPath!;
+
+    expect(defaultRoot.endsWith(".promptmgt")).toBe(true);
+    expect(existsSync(defaultRoot)).toBe(true);
+
+    process.env.DEFAULT_ROOT = originalDefaultRoot;
+    process.env.DB_FILE = originalDbFile;
+    vi.resetModules();
   });
 });

@@ -1,11 +1,12 @@
 import { existsSync, mkdirSync } from "fs";
 import { dirname, join } from "path";
+import { homedir } from "os";
 import { Low } from "lowdb";
 import { JSONFile } from "lowdb/node";
 import { databaseSchema, type DatabaseSchema } from "./types/schema";
 
 const DB_FILE = process.env.DB_FILE || join(process.cwd(), "db.json");
-const DEFAULT_ROOT = process.env.DEFAULT_ROOT || join(process.cwd(), "Prompts");
+const DEFAULT_ROOT = process.env.DEFAULT_ROOT || join(homedir(), ".promptmgt");
 
 const seedData: DatabaseSchema = {
   projects: [
@@ -111,6 +112,9 @@ async function initDb() {
       }
 
       const shouldSeedFile = !existsSync(DB_FILE);
+      if (!existsSync(DEFAULT_ROOT)) {
+        mkdirSync(DEFAULT_ROOT, { recursive: true });
+      }
       const adapter = new JSONFile<DatabaseSchema>(DB_FILE);
       const db = new Low<DatabaseSchema>(adapter, seedData);
       await db.read();
