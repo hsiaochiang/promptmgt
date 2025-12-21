@@ -6,6 +6,7 @@ import InboxList from "./components/inbox-list";
 import PromptList from "./components/prompt-list";
 import PromptHeader from "./components/prompt-header";
 import PromptEditor from "./components/prompt-editor";
+import ChangeReportModal, { ChangeReportItem } from "./components/change-report-modal";
 import SnippetPanel from "./components/snippet-panel";
 import DraftEditor from "./components/draft-editor";
 import { AsyncBoundary, ErrorBoundary } from "./components/error-boundary";
@@ -42,6 +43,7 @@ export default function WorkspaceShell() {
   const inboxCount = useWorkspaceStore((s) => s.inboxCount);
   const focusMode = useWorkspaceStore((s) => s.focusMode);
   const toggleFocusMode = useWorkspaceStore((s) => s.toggleFocusMode);
+  const setFocusModeState = useWorkspaceStore((s) => s.setFocusMode);
   const isSnippetPanelOpen = useWorkspaceStore((s) => s.isSnippetPanelOpen);
   const toggleSnippetPanel = useWorkspaceStore((s) => s.toggleSnippetPanel);
   const pinned = useWorkspaceStore((s) => s.pinned);
@@ -170,15 +172,23 @@ export default function WorkspaceShell() {
     setInboxRefreshKey((k) => k + 1);
   };
 
-  const handleCreatePrompt = async () => {
+  const createPrompt = async (options?: { title?: string; skipPrompt?: boolean }) => {
     const projectName = selectedProjectId ?? projects[0]?.name;
     if (!projectName) {
       window.alert("請先建立並選擇專案");
       return;
     }
 
-    const title = window.prompt("輸入提示詞標題", "新提示詞");
-    if (!title) return;
+    let resolvedTitle = options?.title?.trim();
+    if (!resolvedTitle) {
+      if (options?.skipPrompt) {
+        resolvedTitle = `快速新增 ${new Date().toLocaleTimeString()}`;
+      } else {
+        const input = window.prompt("輸入提示詞標題", "新提示詞");
+        resolvedTitle = (input ?? "").trim();
+      }
+    }
+    if (!resolvedTitle) return;
 
     try {
       setCreatingPrompt(true);
@@ -188,13 +198,14 @@ export default function WorkspaceShell() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           frontmatter: {
-            title,
+            title: resolvedTitle,
             project: projectName,
             type: "其他" as PromptType,
             status: "使用中" as PromptStatus,
             model: "gpt-4o-mini",
             tags: [],
-            updatedAt: now
+            updatedAt: now,
+            createdAt: now
           },
           body: ""
         })
@@ -208,11 +219,21 @@ export default function WorkspaceShell() {
       setPromptHash(data.hash ?? null);
       setPromptRefreshKey((k) => k + 1);
       setProjectRefreshKey((k) => k + 1);
+      setListCollapsed(false);
     } catch (err) {
       window.alert(err instanceof Error ? err.message : "建立提示詞失敗");
     } finally {
       setCreatingPrompt(false);
     }
+  };
+
+  const handleCreatePrompt = async () => {
+    await createPrompt();
+  };
+
+  const handleQuickAddPrompt = async () => {
+    await createPrompt({ skipPrompt: true });
+    setShowChangeLog(false);
   };
 
   const handleCreateDraft = async () => {
@@ -230,6 +251,20 @@ export default function WorkspaceShell() {
     } catch (err) {
       window.alert(err instanceof Error ? err.message : "建立草稿失敗");
     }
+  };
+
+  const handleChangeReportSelect = (item: ChangeReportItem) => {
+    setFocusModeState(false);
+    setListCollapsed(false);
+    if (item.kind === "prompt") {
+      if (item.projectId) setSelectedProjectId(item.projectId);
+      setSelectedInboxId(null);
+      setSelectedPromptId(item.id);
+    } else {
+      setSelectedPromptId(null);
+      setSelectedInboxId(item.id);
+    }
+    setShowChangeLog(false);
   };
 
   const startResize = (target: "left" | "middle") => (event: React.MouseEvent<HTMLDivElement>) => {
@@ -416,32 +451,12 @@ export default function WorkspaceShell() {
           </div>
         </section>
       </div>
-      {showChangeLog && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="font-semibold text-sm text-slate-800">今日變更報告</div>
-              <button
-                onClick={() => setShowChangeLog(false)}
-                className="text-slate-500 hover:text-slate-800 text-sm"
-              >
-                關閉
-              </button>
-            </div>
-            <div className="text-sm text-slate-600 leading-relaxed">
-              目前暫無變更報告，後續將在此顯示今日的提示詞增修與同步紀錄。
-            </div>
-            <div className="flex justify-end">
-              <button
-                onClick={() => setShowChangeLog(false)}
-                className="px-3 py-1 rounded-full bg-slate-900 text-white text-xs"
-              >
-                知道了
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ChangeReportModal
+        open={showChangeLog}
+        onClose={() => setShowChangeLog(false)}
+        onSelect={handleChangeReportSelect}
+        onQuickAdd={handleQuickAddPrompt}
+      />
     </div>
   );
 }

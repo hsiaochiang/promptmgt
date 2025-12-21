@@ -1,6 +1,8 @@
+import React from "react";
 import Link from "next/link";
+
 interface Props {
-  onShowChangeReport: () => void;
+  onShowChangeReport?: () => void;
   onCreatePrompt: () => void;
   creating?: boolean;
   onToggleSnippetPanel: () => void;
@@ -34,7 +36,9 @@ export default function TopBar({ onShowChangeReport, onCreatePrompt, creating, o
             設定
           </Link>
         <button
-          onClick={onShowChangeReport}
+          onClick={() => {
+            onShowChangeReport?.();
+          }}
           className="px-3 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-50"
         >
           今日變更報告
