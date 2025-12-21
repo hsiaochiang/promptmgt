@@ -97,13 +97,13 @@
 **Independent Test**: 「新增片語 → 搜尋 → 插入 → 查看使用次數」可獨立驗證。
 
 ### Tests
-- [ ] T032 [P] [US4] 契約測試 /api/snippets (CRUD/搜尋/usage) 於 tests/contract/api-snippets.test.ts
-- [ ] T033 [P] [US4] 整合測試 Drawer 插入與 usageCount 更新於 tests/integration/us4-snippet-insert.test.tsx
+- [X] T032 [P] [US4] 契約測試 /api/snippets (CRUD/搜尋/usage) 於 tests/contract/api-snippets.test.ts
+- [X] T033 [P] [US4] 整合測試 Drawer 插入與 usageCount 更新於 tests/integration/us4-snippet-insert.test.tsx
 
 ### Implementation
-- [ ] T034 [P] [US4] 實作 Snippet API 於 app/api/snippets/route.ts 與 app/api/snippets/[id]/route.ts，插入時更新 usageCount/lastUsedAt
-- [ ] T035 [US4] 更新片語面板/Drawer 於 app/(workspace)/components/snippet-panel.tsx（Alt+S、overlay/Esc 關閉、保持游標）
-- [ ] T036 [US4] 更新 useSnippetInsert hook 與右側工具列觸發於 app/(workspace)/hooks/useSnippetInsert.ts、top-bar.tsx
+- [X] T034 [P] [US4] 實作 Snippet API 於 app/api/snippets/route.ts 與 app/api/snippets/[id]/route.ts，插入時更新 usageCount/lastUsedAt
+- [X] T035 [US4] 更新片語面板/Drawer 於 app/(workspace)/components/snippet-panel.tsx（Alt+S、overlay/Esc 關閉、保持游標）
+- [X] T036 [US4] 更新 useSnippetInsert hook 與右側工具列觸發於 app/(workspace)/hooks/useSnippetInsert.ts、top-bar.tsx
 
 **Checkpoint**: US4 完成片語搜尋/插入/統計且不影響編輯器狀態。
 
@@ -116,15 +116,15 @@
 **Independent Test**: UI 交互即可驗證（無後端依賴）。
 
 ### Tests
-- [ ] T037 [P] [US5] UI 整合測試 Pin 收合/召回與拖曳寬度持久化於 tests/integration/us5-layout-pin.test.tsx
-- [ ] T038 [P] [US5] 單元測試快捷鍵映射與狀態持久化於 tests/unit/shortcuts.test.ts
+- [X] T037 [P] [US5] UI 整合測試 Pin 收合/召回與拖曳寬度持久化於 tests/integration/us5-layout-pin.test.tsx
+- [X] T038 [P] [US5] 單元測試快捷鍵映射與狀態持久化於 tests/unit/shortcuts.test.ts
 
 ### Implementation
-- [ ] T039 [P] [US5] 實作三欄寬度拖曳持久化（localStorage）於 app/(workspace)/components/workspace-shell.tsx，符合 150–250ms 收合 SLA
-- [ ] T040 [US5] 實作 Pin 切換預設 ON、OFF 後點選自動收合/Alt+L 召回於 app/(workspace)/components/prompt-list.tsx 與 store/useWorkspaceStore.ts
-- [ ] T041 [US5] 實作快捷鍵處理（Alt+L/P/N/Shift+N、Ctrl+K、Ctrl+Shift+C）於 app/(workspace)/components/top-bar.tsx 或全域 hotkey handler
-- [ ] T042 [US5] 危險操作二段式確認 + Undo snackbar（5–10 秒）於 app/(workspace)/components/prompt-list.tsx、project-list.tsx、snackbars
-- [ ] T043 [US5] 全站字級 +2px 與行高調整於 app/globals.css，確保不裁切並通過 docs/ux-checks.md 檢核
+- [X] T039 [P] [US5] 實作三欄寬度拖曳持久化（localStorage）於 app/(workspace)/components/workspace-shell.tsx，符合 150–250ms 收合 SLA
+- [X] T040 [US5] 實作 Pin 切換預設 ON、OFF 後點選自動收合/Alt+L 召回於 app/(workspace)/components/prompt-list.tsx 與 store/useWorkspaceStore.ts
+- [X] T041 [US5] 實作快捷鍵處理（Alt+L/P/N/Shift+N、Ctrl+K、Ctrl+Shift+C）於 app/(workspace)/components/top-bar.tsx 或全域 hotkey handler
+- [X] T042 [US5] 危險操作二段式確認 + Undo snackbar（5–10 秒）於 app/(workspace)/components/prompt-list.tsx、project-list.tsx、snackbars
+- [X] T043 [US5] 全站字級 +2px 與行高調整於 app/globals.css，確保不裁切並通過 docs/ux-checks.md 檢核
 
 **Checkpoint**: US5 完成佈局/快捷鍵/Undo 體驗，可與其他故事並行驗證。
 

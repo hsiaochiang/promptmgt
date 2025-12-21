@@ -9,12 +9,13 @@ import PromptEditor from "./components/prompt-editor";
 import SnippetPanel from "./components/snippet-panel";
 import DraftEditor from "./components/draft-editor";
 import { AsyncBoundary, ErrorBoundary } from "./components/error-boundary";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { InboxItem, PromptFrontmatter, Project, PromptStatus, PromptType, Snippet } from "@/lib/types/schema";
 import RootPathAlert from "./components/root-path-alert";
 import { useWorkspaceStore } from "./store/useWorkspaceStore";
 import { useSnippetInsert } from "./hooks/useSnippetInsert";
 import FrontmatterAccordion from "./components/frontmatter-accordion";
+import { useWorkspaceHotkeys } from "./hooks/useWorkspaceHotkeys";
 
 export default function WorkspaceShell() {
   const [inboxItems, setInboxItems] = useState<InboxItem[]>([]);
@@ -41,6 +42,21 @@ export default function WorkspaceShell() {
   const inboxCount = useWorkspaceStore((s) => s.inboxCount);
   const focusMode = useWorkspaceStore((s) => s.focusMode);
   const toggleFocusMode = useWorkspaceStore((s) => s.toggleFocusMode);
+  const isSnippetPanelOpen = useWorkspaceStore((s) => s.isSnippetPanelOpen);
+  const toggleSnippetPanel = useWorkspaceStore((s) => s.toggleSnippetPanel);
+  const pinned = useWorkspaceStore((s) => s.pinned);
+  const setPinned = useWorkspaceStore((s) => s.setPinned);
+  const listCollapsed = useWorkspaceStore((s) => s.listCollapsed);
+  const setListCollapsed = useWorkspaceStore((s) => s.setListCollapsed);
+  const toggleListCollapsed = useWorkspaceStore((s) => s.toggleListCollapsed);
+  const layout = useWorkspaceStore((s) => s.layout);
+  const setLayout = useWorkspaceStore((s) => s.setLayout);
+  const hydratePreferences = useWorkspaceStore((s) => s.hydratePreferences);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const [leftWidth, setLeftWidth] = useState<number>(layout.leftWidth ?? 320);
+  const [middleWidth, setMiddleWidth] = useState<number>(layout.middleWidth ?? 520);
+  const leftWidthRef = useRef(leftWidth);
+  const middleWidthRef = useRef(middleWidth);
 
   const loadPrompt = useCallback(async () => {
     if (!selectedPromptId) {
@@ -71,8 +87,42 @@ export default function WorkspaceShell() {
   }, [selectedPromptId, setEditorDirty]);
 
   useEffect(() => {
+    hydratePreferences();
+    setLeftWidth(layout.leftWidth ?? 320);
+    setMiddleWidth(layout.middleWidth ?? 520);
+    leftWidthRef.current = layout.leftWidth ?? 320;
+    middleWidthRef.current = layout.middleWidth ?? 520;
+  }, [hydratePreferences, layout.leftWidth, layout.middleWidth]);
+
+  useEffect(() => {
+    leftWidthRef.current = leftWidth;
+  }, [leftWidth]);
+
+  useEffect(() => {
+    middleWidthRef.current = middleWidth;
+  }, [middleWidth]);
+
+  useEffect(() => {
     loadPrompt();
   }, [loadPrompt]);
+
+  useWorkspaceHotkeys({
+    onNewPrompt: () => handleCreatePrompt(),
+    onNewDraft: () => handleCreateDraft(),
+    focusSearch: () => searchInputRef.current?.focus(),
+    toggleSnippets: () => toggleSnippetPanel()
+  });
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      if (key === "escape" && isSnippetPanelOpen) {
+        toggleSnippetPanel(false);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isSnippetPanelOpen, toggleSnippetPanel]);
 
   useEffect(() => {
     // 切換專案時退出草稿模式
@@ -88,7 +138,6 @@ export default function WorkspaceShell() {
 
   const handleDeletePrompt = async (promptId: string) => {
     if (!promptId) return;
-    if (!window.confirm("確定刪除此提示詞？")) return;
     try {
       const res = await fetch(`/api/prompts/${promptId}`, { method: "DELETE" });
       if (!res.ok) throw new Error("刪除提示詞失敗");
@@ -166,15 +215,64 @@ export default function WorkspaceShell() {
     }
   };
 
+  const handleCreateDraft = async () => {
+    try {
+      const res = await fetch("/api/inbox", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "快速草稿", content: "" })
+      });
+      if (!res.ok) throw new Error("建立草稿失敗");
+      const created = await res.json();
+      setSelectedInboxId(created.id);
+      setSelectedPromptId(null);
+      setInboxRefreshKey((k) => k + 1);
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "建立草稿失敗");
+    }
+  };
+
+  const startResize = (target: "left" | "middle") => (event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const startX = event.clientX;
+    const baseLeft = leftWidth;
+    const baseMiddle = middleWidth;
+
+    const onMove = (e: MouseEvent) => {
+      const delta = e.clientX - startX;
+      if (target === "left") {
+        const next = Math.max(220, baseLeft + delta);
+        setLeftWidth(next);
+      } else {
+        const next = Math.max(240, baseMiddle + delta);
+        setMiddleWidth(next);
+      }
+    };
+
+    const onUp = () => {
+      setLayout({ leftWidth: leftWidthRef.current, middleWidth: middleWidthRef.current });
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col">
       <TopBar
         onShowChangeReport={() => setShowChangeLog(true)}
         onCreatePrompt={handleCreatePrompt}
         creating={creatingPrompt}
+        onToggleSnippetPanel={() => toggleSnippetPanel()}
+        snippetOpen={isSnippetPanelOpen}
       />
       <div className="flex flex-1 overflow-hidden">
-        <aside className="flex-shrink-0 basis-72 border-r border-slate-200 bg-white flex flex-col">
+        <aside
+          className="flex-shrink-0 border-r border-slate-200 bg-white flex flex-col transition-all duration-200"
+          style={{ width: leftWidth }}
+        >
           <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
             <div className="font-semibold text-xs tracking-wide text-slate-600">專案與收件匣</div>
             <div className="text-[10px] rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 border border-amber-200">
@@ -210,9 +308,12 @@ export default function WorkspaceShell() {
             </div>
           </div>
         </aside>
-        <div className="w-[3px] cursor-col-resize bg-slate-200/70" />
+        <div className="w-[6px] cursor-col-resize bg-slate-200/70" onMouseDown={startResize("left")} role="separator" />
         <main
-          className={`flex-[1.2] flex flex-col border-r border-slate-200 ${focusMode ? "hidden" : ""}`}
+          className={`flex flex-col border-r border-slate-200 transition-all duration-200 ${focusMode ? "hidden" : ""} ${
+            listCollapsed ? "hidden" : ""
+          }`}
+          style={{ width: middleWidth }}
           data-testid="prompt-list-panel"
         >
           <div className="h-16 bg-slate-50 border-b border-slate-200 px-4 flex items-center justify-between gap-4">
@@ -230,12 +331,28 @@ export default function WorkspaceShell() {
             <RootPathAlert />
           </div>
           <ErrorBoundary label="提示詞列表">
-            <PromptList refreshKey={promptRefreshKey} onDeletePrompt={handleDeletePrompt} />
+            <PromptList
+              refreshKey={promptRefreshKey}
+              onDeletePrompt={handleDeletePrompt}
+              onSelectedWhileUnpinned={() => setListCollapsed(true)}
+              searchInputRef={searchInputRef}
+              pinned={pinned}
+              onTogglePinned={() => setPinned(!pinned)}
+            />
           </ErrorBoundary>
         </main>
-        <div className="w-[3px] cursor-col-resize bg-slate-200/70" />
+        {listCollapsed && !focusMode && (
+          <button
+            className="absolute left-2 top-16 z-30 px-3 py-1 rounded-full bg-white shadow border border-slate-200 text-[11px]"
+            onClick={() => setListCollapsed(false)}
+            data-testid="list-recall"
+          >
+            顯示列表 (Alt+L)
+          </button>
+        )}
+        <div className="w-[6px] cursor-col-resize bg-slate-200/70" onMouseDown={startResize("middle")} role="separator" />
         <section
-          className={`flex flex-col p-4 bg-slate-50 transition-all ${focusMode ? "flex-[1_1_100%]" : "flex-[1.8]"}`}
+          className={`relative flex flex-col p-4 bg-slate-50 transition-all ${focusMode ? "flex-[1_1_100%]" : "flex-[1.8]"}`}
           data-testid="editor-panel"
         >
           <div className="flex flex-col gap-3 h-full">
@@ -253,7 +370,7 @@ export default function WorkspaceShell() {
                 onRetry={loadPrompt}
                 label="提示詞內容"
               >
-                <div className="flex h-full gap-3">
+                <div className={`flex h-full gap-3 relative ${isSnippetPanelOpen ? "md:pr-[320px]" : ""}`}>
                   <div className="flex-1 flex flex-col gap-3">
                     {promptFrontmatter && (
                       <FrontmatterAccordion
@@ -279,7 +396,20 @@ export default function WorkspaceShell() {
                       onFrontmatterChange={(fm) => setPromptFrontmatter(fm)}
                     />
                   </div>
-                  <SnippetPanel onInsert={(snippet: Snippet) => insertSnippet(snippet)} />
+                  <div
+                    className={`fixed md:static top-14 md:top-0 right-0 md:right-auto bottom-0 md:bottom-auto z-30 md:z-0 w-[320px] md:w-72 transition-transform duration-200 ${isSnippetPanelOpen ? "translate-x-0" : "translate-x-full"}`}
+                    data-testid="snippet-drawer"
+                    data-open={isSnippetPanelOpen}
+                  >
+                    <SnippetPanel onInsert={(snippet: Snippet) => insertSnippet(snippet)} onClose={() => toggleSnippetPanel(false)} />
+                  </div>
+                  {isSnippetPanelOpen && (
+                    <div
+                      className="fixed inset-0 top-14 bg-black/10 md:hidden"
+                      onClick={() => toggleSnippetPanel(false)}
+                      data-testid="snippet-overlay"
+                    />
+                  )}
                 </div>
               </AsyncBoundary>
             )}

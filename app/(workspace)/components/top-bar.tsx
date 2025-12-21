@@ -3,9 +3,11 @@ interface Props {
   onShowChangeReport: () => void;
   onCreatePrompt: () => void;
   creating?: boolean;
+  onToggleSnippetPanel: () => void;
+  snippetOpen: boolean;
 }
 
-export default function TopBar({ onShowChangeReport, onCreatePrompt, creating }: Props) {
+export default function TopBar({ onShowChangeReport, onCreatePrompt, creating, onToggleSnippetPanel, snippetOpen }: Props) {
   return (
     <header className="h-14 border-b border-slate-200 bg-white px-4 flex items-center justify-between">
       <div className="flex items-center gap-3">
@@ -18,6 +20,13 @@ export default function TopBar({ onShowChangeReport, onCreatePrompt, creating }:
         </div>
       </div>
       <div className="flex items-center gap-3 text-xs">
+          <button
+            onClick={onToggleSnippetPanel}
+            className="px-3 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-50"
+            data-testid="snippet-toggle"
+          >
+            {snippetOpen ? "隱藏片語" : "開啟片語"}
+          </button>
           <Link
             href="/settings"
             className="px-3 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-50"

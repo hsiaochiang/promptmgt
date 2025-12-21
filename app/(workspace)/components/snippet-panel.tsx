@@ -5,6 +5,7 @@ import type { Snippet } from "@/lib/types/schema";
 
 interface Props {
   onInsert: (snippet: Snippet) => Promise<Snippet | void>;
+  onClose?: () => void;
 }
 
 interface SnippetForm {
@@ -14,7 +15,7 @@ interface SnippetForm {
   content: string;
 }
 
-export default function SnippetPanel({ onInsert }: Props) {
+export default function SnippetPanel({ onInsert, onClose }: Props) {
   const [snippets, setSnippets] = useState<Snippet[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,26 +27,19 @@ export default function SnippetPanel({ onInsert }: Props) {
 
   const fetchSnippets = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/snippets");
+    const query = search.trim();
+    const url = query ? `/api/snippets?q=${encodeURIComponent(query)}` : "/api/snippets";
+    const res = await fetch(url);
     const data = (await res.json()) as Snippet[];
     setSnippets(data);
     setLoading(false);
-  }, []);
+  }, [search]);
 
   useEffect(() => {
     fetchSnippets();
   }, [fetchSnippets]);
 
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    if (!q) return snippets;
-    return snippets.filter(
-      (s) =>
-        s.name.toLowerCase().includes(q) ||
-        s.category.toLowerCase().includes(q) ||
-        s.content.toLowerCase().includes(q)
-    );
-  }, [snippets, search]);
+  const filtered = useMemo(() => snippets, [snippets]);
 
   const startCreate = () => {
     setForm({ name: "", category: "其他", content: "" });
@@ -62,10 +56,10 @@ export default function SnippetPanel({ onInsert }: Props) {
   const saveSnippet = async () => {
     setError(null);
     const payload = { ...form };
-    const method = formMode === "create" ? "POST" : "PATCH";
     try {
-      const res = await fetch("/api/snippets", {
-        method,
+      const target = formMode === "create" ? "/api/snippets" : `/api/snippets/${form.id}`;
+      const res = await fetch(target, {
+        method: formMode === "create" ? "POST" : "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
@@ -85,10 +79,8 @@ export default function SnippetPanel({ onInsert }: Props) {
   const deleteSnippet = async (snippet: Snippet) => {
     if (!window.confirm(`刪除片語「${snippet.name}」？`)) return;
     try {
-      const res = await fetch("/api/snippets", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: snippet.id })
+      const res = await fetch(`/api/snippets/${snippet.id}`, {
+        method: "DELETE"
       });
       if (!res.ok) throw new Error("刪除失敗");
       setSnippets((prev) => prev.filter((s) => s.id !== snippet.id));
@@ -103,6 +95,15 @@ export default function SnippetPanel({ onInsert }: Props) {
         <span>常用片語剪貼簿</span>
         <div className="flex items-center gap-1">
           <span className="text-[10px] text-slate-400">{snippets.length} 條</span>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="px-2 py-0.5 rounded-full border border-slate-300 bg-white hover:bg-slate-50"
+              data-testid="snippet-close"
+            >
+              關閉
+            </button>
+          )}
           <button
             onClick={startCreate}
             data-testid="snippet-add-trigger"
@@ -178,7 +179,7 @@ export default function SnippetPanel({ onInsert }: Props) {
             <div className="flex items-center justify-between gap-1">
               <span className="font-semibold truncate">{s.name}</span>
               <span className="text-[9px] text-slate-400 flex items-center gap-1">
-                使用 {s.usage}
+                使用 {s.usageCount ?? s.usage ?? 0}
                 {busyId === s.id && <span className="text-amber-600">更新中…</span>}
               </span>
             </div>
@@ -200,7 +201,14 @@ export default function SnippetPanel({ onInsert }: Props) {
                       } else {
                         setSnippets((prev) =>
                           prev.map((item) =>
-                            item.id === s.id ? { ...item, usage: item.usage + 1, lastUsedAt: new Date().toISOString() } : item
+                            item.id === s.id
+                              ? {
+                                  ...item,
+                                  usage: (item.usageCount ?? item.usage ?? 0) + 1,
+                                  usageCount: (item.usageCount ?? item.usage ?? 0) + 1,
+                                  lastUsedAt: new Date().toISOString()
+                                }
+                              : item
                           )
                         );
                       }

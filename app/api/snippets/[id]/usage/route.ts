@@ -6,7 +6,10 @@ export async function POST(_: Request, { params }: { params: { id: string } }) {
   const db = await getDb();
   const snippet = db.data!.snippets.find((s) => s.id === params.id);
   if (!snippet) return notFound("Snippet not found");
-  snippet.usage += 1;
+  const current = typeof snippet.usageCount === "number" ? snippet.usageCount : snippet.usage ?? 0;
+  const nextCount = Number.isFinite(current) && current >= 0 ? current + 1 : 1;
+  snippet.usage = nextCount;
+  snippet.usageCount = nextCount;
   snippet.lastUsedAt = new Date().toISOString();
   await db.write();
   return NextResponse.json(snippet);

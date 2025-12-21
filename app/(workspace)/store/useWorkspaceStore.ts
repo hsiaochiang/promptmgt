@@ -85,6 +85,7 @@ interface WorkspaceState {
   isLoading: boolean;
   focusMode: boolean;
   pinned: boolean;
+  listCollapsed: boolean;
   layout: { leftWidth?: number; middleWidth?: number };
   fontScale: number;
   setSelectedProjectId: (id: string | null) => void;
@@ -99,6 +100,8 @@ interface WorkspaceState {
   setLoading: (loading: boolean) => void;
   hydratePreferences: () => void;
   setPinned: (value: boolean) => void;
+  setListCollapsed: (collapsed: boolean) => void;
+  toggleListCollapsed: () => void;
   setLayout: (layout: { leftWidth?: number; middleWidth?: number }) => void;
   setFontScale: (fontScale: number) => void;
   setFocusMode: (focus: boolean) => void;
@@ -118,6 +121,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   isLoading: false,
   focusMode: false,
   pinned: defaultPreferences.pinned,
+  listCollapsed: false,
   layout: defaultPreferences.layout,
   fontScale: defaultPreferences.fontScale,
   setSelectedProjectId: (id) => set({ selectedProjectId: id }),
@@ -144,9 +148,11 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
         fontScale: state.fontScale
       };
       queuePersist(next);
-      return { pinned: value };
+      return { pinned: value, listCollapsed: value ? false : state.listCollapsed };
     });
   },
+  setListCollapsed: (collapsed) => set({ listCollapsed: collapsed }),
+  toggleListCollapsed: () => set((state) => ({ listCollapsed: !state.listCollapsed })),
   setLayout: (layout) => {
     const sanitized = {
       leftWidth: layout.leftWidth ?? defaultPreferences.layout.leftWidth,

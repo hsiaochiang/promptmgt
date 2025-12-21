@@ -36,6 +36,22 @@ describe("Settings API", () => {
     expect(res.status).toBe(400);
   });
 
+  it("allows updating toggles without changing rootPath", async () => {
+    const { POST } = await import("@/app/api/settings/route");
+
+    const res = await POST(
+      new Request("http://localhost/api/settings", {
+        method: "POST",
+        body: JSON.stringify({ telemetryEnabled: false, updateCheckEnabled: false })
+      })
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.telemetryEnabled).toBe(false);
+    expect(data.updateCheckEnabled).toBe(false);
+  });
+
   it("saves provided rootPath and ensures accessibility", async () => {
     const { POST } = await import("@/app/api/settings/route");
     const targetRoot = join(process.env.DEFAULT_ROOT!, "new-root");
@@ -49,5 +65,16 @@ describe("Settings API", () => {
     const data = await res.json();
     expect(data.rootPath).toBe(targetRoot);
     expect(data.pathExists).toBe(true);
+  });
+
+  it("reports pathExists false when rootPath is unset", async () => {
+    const { updateSettings } = await import("@/lib/services/settings");
+    const { GET } = await import("@/app/api/settings/route");
+
+    await updateSettings({ rootPath: null });
+    const res = await GET(new Request("http://localhost/api/settings"));
+    const data = await res.json();
+
+    expect(data.pathExists).toBe(false);
   });
 });

@@ -8,14 +8,4 @@ out/
 .vercel/
 package-lock.json
 yarn.lock
-pnpm-lock.yamlnode_modules/
-.next/
-dist/
-build/
-out/
-.turbo/
-.vercel/
-coverage/
-package-lock.json
-yarn.lock
 pnpm-lock.yaml

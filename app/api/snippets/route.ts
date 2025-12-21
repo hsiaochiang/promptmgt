@@ -11,27 +11,53 @@ function conflictResponse() {
   return conflict("snippet name already exists");
 }
 
-export async function GET() {
+function toUsageCount(snippet: any) {
+  const current = typeof snippet.usageCount === "number" ? snippet.usageCount : snippet.usage ?? 0;
+  return Number.isFinite(current) && current >= 0 ? current : 0;
+}
+
+export async function GET(request?: Request) {
   const db = await getDb();
-  return NextResponse.json(db.data!.snippets);
+  const url = request ? new URL(request.url) : new URL("http://localhost/api/snippets");
+  const keyword = url.searchParams.get("q")?.toLowerCase().trim();
+  const snippets = db.data!.snippets.filter((snippet) => {
+    if (!keyword) return true;
+    const haystack = `${snippet.name}${snippet.category}${snippet.content}`.toLowerCase();
+    return haystack.includes(keyword);
+  });
+  return NextResponse.json(
+    snippets.map((snippet) => ({
+      ...snippet,
+      usageCount: toUsageCount(snippet),
+      usage: toUsageCount(snippet)
+    }))
+  );
 }
 
 export async function POST(request: Request) {
   const payload = await request.json();
   const db = await getDb();
 
-  const name = payload.name?.trim() || "新片語";
-  const conflict = db.data!.snippets.find((s) => normalizeName(s.name) === normalizeName(name));
-  if (conflict) {
+  const rawName = payload.name?.trim();
+  if (!rawName) {
+    return badRequest("name is required", { field: "name" });
+  }
+
+  const name = rawName;
+  const category = payload.category?.trim() || "其他";
+  const content = typeof payload.content === "string" ? payload.content : "";
+  const hasConflict = db.data!.snippets.find((s) => normalizeName(s.name) === normalizeName(name));
+  if (hasConflict) {
     return conflictResponse();
   }
 
   const snippet = {
     id: payload.id ?? `snip-${nanoid(6)}`,
     name,
-    category: payload.category?.trim() || "其他",
-    content: payload.content ?? "",
+    category,
+    content,
     usage: 0,
+    usageCount: 0,
     lastUsedAt: undefined
   };
 
@@ -43,43 +69,35 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   const payload = await request.json();
   const { id, name, category, content } = payload;
-
   if (!id) {
     return badRequest("id is required", { field: "id" });
   }
-
   const db = await getDb();
-  const snippet = db.data!.snippets.find((s) => s.id === id);
-  if (!snippet) return notFound("Snippet not found");
+  const target = db.data!.snippets.find((s) => s.id === id);
+  if (!target) return notFound("Snippet not found");
 
   if (name !== undefined) {
     const nextName = name.trim();
+    if (!nextName) return badRequest("name is required", { field: "name" });
     const conflict = db.data!.snippets.find((s) => s.id !== id && normalizeName(s.name) === normalizeName(nextName));
-    if (conflict) {
-      return conflictResponse();
-    }
-    snippet.name = nextName || snippet.name;
+    if (conflict) return conflictResponse();
+    target.name = nextName;
   }
-
-  if (category !== undefined) snippet.category = category.trim() || snippet.category;
-  if (content !== undefined) snippet.content = content;
-
+  if (category !== undefined) target.category = category.trim() || target.category;
+  if (content !== undefined) target.content = typeof content === "string" ? content : target.content;
   await db.write();
-  return NextResponse.json(snippet);
+  return NextResponse.json({ ...target, usageCount: toUsageCount(target), usage: toUsageCount(target) });
 }
 
 export async function DELETE(request: Request) {
-  const payload = await request.json();
-  const { id } = payload;
-
+  const payload = await request.json().catch(() => ({}));
+  const { id } = payload as { id?: string };
   if (!id) {
     return badRequest("id is required", { field: "id" });
   }
-
   const db = await getDb();
-  const existing = db.data!.snippets.find((s) => s.id === id);
-  if (!existing) return notFound("Snippet not found");
-
+  const exists = db.data!.snippets.some((s) => s.id === id);
+  if (!exists) return notFound("Snippet not found");
   db.data!.snippets = db.data!.snippets.filter((s) => s.id !== id);
   await db.write();
   return NextResponse.json({ ok: true });

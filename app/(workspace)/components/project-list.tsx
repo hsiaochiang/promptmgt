@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { Project, ProjectStatus } from "@/lib/types/schema";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 
@@ -14,6 +14,8 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedProjectId = useWorkspaceStore((s) => s.selectedProjectId);
   const setSelectedProjectId = useWorkspaceStore((s) => s.setSelectedProjectId);
 
@@ -34,6 +36,10 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
     fetchProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
+
+  useEffect(() => () => {
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+  }, []);
 
   const handleAdd = async () => {
     const name = window.prompt("輸入新專案名稱", "新專案");
@@ -94,7 +100,6 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
   };
 
   const handleDelete = async (project: Project) => {
-    if (!window.confirm(`確定刪除專案「${project.name}」？`)) return;
     setBusy(true);
     setNotice(null);
     try {
@@ -130,6 +135,20 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
         </div>
       </div>
       {notice ? <div className="text-[11px] text-amber-700 mb-1">{notice}</div> : null}
+      {pendingDelete && (
+        <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 px-3 py-2 rounded mb-1 flex items-center justify-between">
+          <span>專案刪除待確認，5 秒內可復原。</span>
+          <button
+            className="px-2 py-1 rounded-full border border-amber-300 bg-white hover:bg-amber-100"
+            onClick={() => {
+              if (undoTimer.current) clearTimeout(undoTimer.current);
+              setPendingDelete(null);
+            }}
+          >
+            Undo
+          </button>
+        </div>
+      )}
       {loading && <div className="text-[11px] text-slate-400">載入中…</div>}
       <div className="space-y-1.5">
         {projects.map((p) => (
@@ -173,6 +192,9 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDelete(p);
+                  setPendingDelete(p.id);
+                  if (undoTimer.current) clearTimeout(undoTimer.current);
+                  undoTimer.current = setTimeout(() => setPendingDelete(null), 5000);
                 }}
                 className="px-2 py-0.5 rounded-full border border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100"
                 disabled={busy}
