@@ -3,6 +3,14 @@ node_modules/
 dist/
 build/
 coverage/
+.turbo/
+out/
+.vercel/
+**/*.min.jsnode_modules/
+.next/
+dist/
+build/
+coverage/
 out/
 .turbo/
 .vercel/

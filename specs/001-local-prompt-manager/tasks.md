@@ -1,196 +1,156 @@
----
-
-description: "Task list for 001-local-prompt-manager"
----
-
 # Tasks: 本機提示詞管理系統（雙層儲存＋UI Prototype 對應）
 
-**Input**: Design documents from `/specs/001-local-prompt-manager/`
-**Prerequisites**: plan.md (required), spec.md (required), research.md (n/a), data-model.md (n/a), contracts/ (n/a)
+**Input**: specs/001-local-prompt-manager/
+**Prerequisites**: plan.md、spec.md（User Stories）、research.md、data-model.md、contracts/
 
-**Tests**: 必須包含 unit/contract/integration；覆蓋率需 ≥80%，關鍵路徑 100%。
+## Phase 1: Setup
 
-**Organization**: Tasks are grouped by user story to enable independent implementation and testing.
+**Purpose**: 專案啟動與環境基線
 
-## Format: `[ID] [P?] [Story] Description`
-
-- **[P]**: Can run in parallel (different files, no dependencies)
-- **[Story]**: US1, US2, US3, US4 (from spec)
-- Include exact file paths in descriptions
-
-## Phase 1: Setup (Shared Infrastructure)
-
-**Purpose**: Project initialization and base structure
-
-- [x] T000 [P] Add test tooling setup與覆蓋率門檻（80% min，critical path 100%）於 package.json（建議 vitest/playwright）
-- [x] T001 Initialize Next.js 14 App Router project with TypeScript and workspace layout in package.json/app/
-- [x] T002 [P] Configure Tailwind (tailwind.config.js, postcss.config.js) and global styles in app/globals.css to match prototype base styles
-- [x] T003 [P] Add shadcn/ui setup (components.json), install lucide-react, clsx, tailwind-merge, @uiw/react-codemirror in package.json
-- [x] T004 [P] Configure lint/format (eslint, prettier, .editorconfig) with TypeScript/Next rules
-- [x] T005 [P] Scaffold folders app/(workspace)/components, app/(workspace)/hooks, app/(workspace)/actions, app/(workspace)/store, lib/{db,fs,services,utils,types}
-- [x] T005a [P] Add TopBar component scaffold in app/(workspace)/components/top-bar.tsx（含「今日變更報告」「新增提示詞」按鈕，依 prototype class）
+- [X] T001 確認與安裝開發依賴（Node 18、Next.js/Tailwind/Vitest）於 package.json
+- [X] T002 建立預設本機根路徑設定說明與範例於 docs/startup-guide.md（含 `%USERPROFILE%/.promptmgt`）
+- [X] T003 [P] 校驗專案 lint/test 腳本可執行並記錄於 docs/env-setup.md
 
 ---
 
-## Phase 2: Foundational (Blocking Prerequisites)
+## Phase 2: Foundational
 
-**Purpose**: Core infrastructure that MUST be complete before any user story
+**Purpose**: 所有使用者故事依賴的底層能力（完成前不得開始故事）
 
-- [x] T006 Define TypeScript schemas for LowDB and Frontmatter in lib/types/schema.ts (projects/inbox/snippets/settings + prompt frontmatter)
-- [x] T006a [P] Add contract tests for API schemas（projects/inbox/prompts/snippets/settings/search）in tests/contract/*.test.ts
-- [x] T006b [P] Add unit tests for adapters/utils（LowDB, fs, frontmatter, conflict, search）in tests/unit/*
-- [x] T007 [P] Implement LowDB adapter with seed data from ui_prototype.jsx in lib/db.ts (projects/inbox/snippets/settings)
-- [x] T008 [P] Implement file system adapter for prompts in lib/fs/prompts.ts (read/write Markdown with gray-matter) using lib/utils/sanitizeFilename.ts
-- [x] T009 [P] Implement frontmatter parser/serializer with damaged-YAML fallback in lib/utils/frontmatter.ts
-- [x] T010 Implement settings service for rootPath, telemetryEnabled, updateCheckEnabled in lib/services/settings.ts
-- [x] T010a Define telemetry/update payload whitelist（不得包含提示詞內容/檔名全文）、頻率與停用行為，記錄於 docs/settings（或 README 設定章節）
-- [x] T011 Implement conflict detection (mtime/hash) utilities in lib/services/conflict.ts for external-change prompts
-- [x] T012 Implement search service with 1000-result cap and snippet highlight in lib/services/search.ts
-- [x] T013 Wire API route skeletons (app/api/projects/route.ts, app/api/inbox/route.ts, app/api/prompts/route.ts, app/api/snippets/route.ts, app/api/settings/route.ts, app/api/search/route.ts)
-- [x] T014 Add Zustand store scaffolding for selection/filter/editor state in app/(workspace)/store/useWorkspaceStore.ts
-
-**Checkpoint**: Foundation ready — user stories can start.
+- [X] T004 建立共用 zod schema（Project/Prompt/Inbox/Snippet/Settings）於 lib/types/schema.ts，覆蓋 data-model 欄位與驗證規則
+- [X] T005 實作檔案與 LowDB 存取抽象（序列化佇列 + mtime/hash 驗證）於 lib/db.ts 與 lib/db/fs/prompts.ts
+- [X] T006 實作檔名清理與 Frontmatter 處理流程於 lib/utils/sanitizeFilename.ts、lib/utils/frontmatter.ts，對應 Edge Case 禁用字元與降級模式
+- [X] T007 建立衝突偵測/決策服務於 lib/services/conflict.ts（載入外部/保留目前/檢視差異 事件介面）
+- [X] T008 實作本機觀測性（5MB 環迴、可匯出、可停用）於 lib/services/telemetry.ts，並在 docs/settings/telemetry.md 補充使用方式
+- [X] T009 [P] 建立 localStorage 偏好封裝（Pin/寬度/字級）於 app/(workspace)/store/useWorkspaceStore.ts，含 schema 驗證與 fallback
+- [X] T010 [P] 更新錯誤格式與處理管線（{code,message,details}）於 app/api/_middleware 或共用 handler util，並覆蓋所有 Route Handlers 使用
 
 ---
 
 ## Phase 3: User Story 1 - 收件匣快速草稿捕捉 (Priority: P1) 🎯 MVP
 
-**Goal**: 低摩擦收件匣草稿輸入與自動儲存，列表排序與預覽
+**Goal**: 允許在收件匣快速輸入 Markdown 草稿並自動儲存，關閉重開可復原。
 
-**Independent Test**: 開啟應用→輸入草稿→關閉→重開，草稿與最後時間仍在；貼上大段文字時有 loading，不凍結。
+**Independent Test**: 僅收件匣與自動儲存；流程「開啟 → 輸入 → 關閉 → 重開」內容完整。
 
-### Implementation for User Story 1
+### Tests
+- [X] T011 [P] [US1] 契約測試 /api/inbox (列表/新增/更新/刪除) 於 tests/contract/api-inbox.test.ts
+- [X] T012 [P] [US1] 整合測試自動儲存與復原流程於 tests/integration/us1-draft-autosave.test.ts
+- [X] T013 [P] [US1] 元件/Hook 單元測試（useAutosaveDraft、draft-editor）於 tests/unit/draft-editor-loading.test.tsx
 
-- [x] T015 [P] [US1] Implement inbox API (GET/POST/PATCH/DELETE) with autosave timestamps in app/api/inbox/route.ts and app/api/inbox/[id]/route.ts
-- [x] T015a [P] [US1] Integration test：autosave + reopen restores draft（tests/integration/us1-draft-autosave.test.ts）
-- [x] T016 [P] [US1] Build InboxList component per prototype in app/(workspace)/components/inbox-list.tsx (sorted by updatedAt, show hint/createdAt)
-- [x] T017 [P] [US1] Implement DraftEditor with autosave + large-paste loading indicator in app/(workspace)/components/draft-editor.tsx
-- [x] T017a [P] [US1] Unit test：large paste shows loading indicator（tests/unit/draft-editor-loading.test.ts）
-- [x] T017b [P] [US1] Unit/Integration：autosave 節奏 2 秒＋無輸入暫停＋恢復後重啟計時（Draft），覆蓋 /api/inbox/[id] 節流寫入
-- [x] T017c [P] [US1] 草稿刪除：在 app/api/inbox/[id]/route.ts 與 InboxList/DraftEditor 增加刪除操作後刷新列表與 inbox 計數，含回歸測試
-- [x] T017d [P] [US1] 收件匣 100+ 筆：列表提供分頁或搜尋提示並顯示整理建議，覆蓋 app/api/inbox/route.ts 與 InboxList 行為，含整合/回歸測試
-- [x] T018 [US1] Add useAutosaveDraft hook throttling calls to inbox API and updating store in app/(workspace)/hooks/useAutosaveDraft.ts
-- [x] T019 [US1] Wire inbox count badge in top bar in app/(workspace)/components/top-bar.tsx
+### Implementation
+- [X] T014 [P] [US1] 實作收件匣資料層（列表/新增/更新/刪除）於 lib/db/fs/prompts.ts 與 lib/services/cache.ts（草稿部分）
+- [X] T015 [P] [US1] 實作 Route Handlers /app/api/inbox/route.ts 與 /app/api/inbox/[id]/route.ts（含 debounce 2 秒與 mtime 衝突 409）
+- [X] T016 [US1] 更新前端收件匣列表與編輯器（app/(workspace)/components/inbox-list.tsx、draft-editor.tsx）支援 autosave/loading 指示
+- [X] T017 [US1] 提供刪除草稿操作與即時計數更新於 app/(workspace)/actions/archiveDraft.ts
 
-**Checkpoint**: 收件匣草稿可自動保存、排序、預覽並可復原。
+**Checkpoint**: US1 可獨立驗證捕捉/自動儲存/復原。
 
 ---
 
 ## Phase 4: User Story 2 - 專案歸檔與列表總覽 (Priority: P1)
 
-**Goal**: 草稿轉正為專案提示詞，專案列表與狀態顯示、提示詞列表檢視
+**Goal**: 草稿轉正為正式提示詞，維護專案列表與計數，處理外部路徑失效。
 
-**Independent Test**: 草稿轉正→專案列表數量更新→檔案生成；切換狀態與缺路徑提示均可獨立驗證。
+**Independent Test**: 「草稿轉正 → 專案列表更新 → 檔案生成」可獨立運作。
 
-### Implementation for User Story 2
+### Tests
+- [X] T018 [P] [US2] 契約測試 /api/projects 與 /api/prompts（新增/更新/刪除/轉正）於 tests/contract/api-projects-prompts.test.ts
+- [X] T019 [P] [US2] 整合測試草稿轉正與專案計數更新於 tests/integration/us2-archive-draft.test.ts
+- [X] T020 [P] [US2] 單元測試檔名清理與 Frontmatter 生成於 tests/unit/adapters-utils.test.ts
 
- - [x] T020 [P] [US2] Implement projects API (GET/POST/PATCH status) in app/api/projects/route.ts using LowDB
-- [x] T020b [P] [US2] 專案刪除 API：/api/projects DELETE 合約與回歸，更新 cache 計數
-- [x] T021 [P] [US2] Implement archiveDraft server action in app/(workspace)/actions/archiveDraft.ts (remove inbox entry, write prompt Markdown, update counts)
-- [x] T021a [US2] Integration test：archiveDraft moves inbox→file 並更新專案計數（tests/integration/us2-archive-draft.test.ts）
-- [x] T022 [P] [US2] Implement prompts listing API scanning filesystem in app/api/prompts/route.ts returning type/status/model/tags/updatedAt/projectId
-- [x] T022a [P] [US2] Contract test：prompts listing API 回傳欄位與排序正確（tests/contract/prompts-listing.test.ts）
-- [x] T023 [US2] Build ProjectList component with selection styling per prototype in app/(workspace)/components/project-list.tsx
- - [x] T023b [US2] 專案 CRUD UI：project-list.tsx 增加新增/編輯/刪除與計數同步、選取重設回歸
-- [x] T024 [US2] Build PromptList panel with filters/status/model/tag chips in app/(workspace)/components/prompt-list.tsx
-- [x] T024a [US2] Wire TopBar actions：開啟變更報告（placeholder modal）與新建提示詞流程（建立草稿/導向編輯）
-- [x] T024b [US2] 直接新增提示詞：/api/prompts POST + TopBar 入口，建立空白提示詞並選取，含回歸測試
-- [x] T024c [US2] 提示詞刪除：/api/prompts/[id] DELETE 與 PromptList 刪除按鈕，刪除後計數/列表/選取同步回歸
-- [x] T024d [US2] 前言編輯 UI：在 prompt 前言區塊編輯並自動保存 Frontmatter（標題/狀態/類型/模型/標籤/備註）回歸
-- [x] T025 [US2] Add root-path missing alert/relocation UI in app/(workspace)/components/root-path-alert.tsx triggered on invalid project path
-- [x] T025b [US2] 衝突處理 UI：提示詞編輯器外部變更警告，提供「載入外部 / 保留本地 / 檢視差異」三選行為
-- [x] T025c [P] [US2] Integration/contract：模擬 hash/mtime 衝突，驗證三選流程與結果（載入/覆寫/差異檢視）
-- [x] T025d [US2] RootPath 導引測試：設定頁 rootPath 輸入儲存流程，RootPathAlert 導向設定頁行為回歸
+### Implementation
+- [X] T021 [P] [US2] 實作 Project 管理 API 於 app/api/projects/route.ts（列表/新增）與 app/api/projects/[id]/route.ts（更新/刪除）
+- [X] T022 [P] [US2] 實作 Prompt CRUD/轉正 API 於 app/api/prompts/route.ts 與 app/api/prompts/[id]/route.ts（含路徑失效與重定位提示）
+- [X] T023 [US2] 更新 lib/services/search.ts 與 lib/services/cache.ts 以支援專案/狀態篩選與計數刷新
+- [X] T024 [US2] 更新前端專案列表與提示詞列表（app/(workspace)/components/project-list.tsx、prompt-list.tsx、prompt-header.tsx）含轉正表單與重複名稱提示
+- [X] T025 [US2] 處理外部移動/刪除路徑提示於 app/(workspace)/components/root-path-alert.tsx 與 settings/page.tsx（重新定位/移除）
 
-**Checkpoint**: 草稿可轉正並出現在專案列表與提示詞清單中；缺路徑時有提示。
+**Checkpoint**: US1+US2 可獨立運行，專案計數與檔案寫入一致。
 
 ---
 
 ## Phase 5: User Story 3 - Markdown 編輯與精準複製 (Priority: P1)
 
-**Goal**: 具語法高亮的編輯器、自動保存、完整/精簡複製
+**Goal**: 提供 Markdown 編輯/預覽與完整/精簡複製，支持專注模式與前言 accordion。
 
-**Independent Test**: 開啟提示詞→編輯→預覽→精簡複製；重新載入仍保留改動。
+**Independent Test**: 「開啟提示詞 → 編輯 → 預覽 → 精簡複製」可單獨驗證。
 
-### Implementation for User Story 3
+### Tests
+- [X] T026 [P] [US3] 契約測試 /api/prompts/{id} 更新/讀取含 Frontmatter 於 tests/contract/api-prompts-detail.test.ts
+- [X] T027 [P] [US3] 整合測試精簡/完整複製與專注模式於 tests/integration/us3-copy-focus.test.tsx
+- [X] T028 [P] [US3] 單元測試 clipboard/frontmatter utilities 於 tests/unit/clipboard.test.ts
 
-- [x] T026 [P] [US3] Integrate CodeMirror Markdown editor in app/(workspace)/components/prompt-editor.tsx
-- [x] T027 [P] [US3] Implement prompt read/write API with conflict checks in app/api/prompts/[id]/route.ts
-- [x] T027a [P] [US3] Contract test：prompt read/write API（含衝突偵測）
-- [x] T028 [P] [US3] Implement clipboard utils for full vs trimmed (no frontmatter) copy in lib/utils/clipboard.ts
-- [x] T028a [P] [US3] Unit test：clipboard trims frontmatter for slim copy
-- [x] T029 [US3] Build PromptHeader actions (copy buttons, status/model/project pills) in app/(workspace)/components/prompt-header.tsx
-- [x] T030 [US3] Add useAutosavePrompt hook with lastSaved indicator in app/(workspace)/hooks/useAutosavePrompt.ts
-- [x] T030a [P] [US3] Unit/Integration：autosave 節奏 2 秒＋無輸入暫停＋恢復後重啟計時（Prompt），含 hash 傳遞
+### Implementation
+- [X] T029 [P] [US3] 增強 lib/utils/clipboard.ts 與 lib/utils/frontmatter.ts 支援精簡/完整複製與錯誤處理
+- [X] T030 [US3] 更新 app/(workspace)/components/prompt-editor.tsx 與 prompt-header.tsx，加入專注模式、前言 accordion 預設收合、儲存狀態顯示
+- [X] T031 [US3] 確保自動儲存與快捷鍵（Ctrl+Shift+C 精簡複製）在 app/(workspace)/hooks/useAutosavePrompt.ts 與 useSnippetInsert.ts 正常運作
 
-**Checkpoint**: 提示詞可編輯、保存、完整/精簡複製並顯示狀態。
+**Checkpoint**: US1-3 可獨立驗證，複製/專注/accordion 體驗完成。
 
 ---
 
 ## Phase 6: User Story 4 - 片語剪貼簿插入與統計 (Priority: P2)
 
-**Goal**: 片語搜尋、點擊插入游標、使用次數追蹤
+**Goal**: 搜尋/插入片語至游標並記錄使用次數，Drawer 開關不重置編輯器。
 
-**Independent Test**: 建立片語→搜尋→點擊插入→使用次數+1。
+**Independent Test**: 「新增片語 → 搜尋 → 插入 → 查看使用次數」可獨立驗證。
 
-### Implementation for User Story 4
+### Tests
+- [ ] T032 [P] [US4] 契約測試 /api/snippets (CRUD/搜尋/usage) 於 tests/contract/api-snippets.test.ts
+- [ ] T033 [P] [US4] 整合測試 Drawer 插入與 usageCount 更新於 tests/integration/us4-snippet-insert.test.tsx
 
-- [x] T031 [P] [US4] Implement snippets API with usage increment in app/api/snippets/route.ts and app/api/snippets/[id]/usage/route.ts
-- [x] T031a [P] [US4] Contract test：snippets usage increment endpoint
-- [x] T032 [P] [US4] Build SnippetPanel UI per prototype (search, usage, category pills) in app/(workspace)/components/snippet-panel.tsx
-- [x] T033 [US4] Wire snippet insert via editor ref bridge in app/(workspace)/hooks/useSnippetInsert.ts
- - [x] T033a [US4] Integration test：click-to-insert updates usage count
- - [x] T034 [US4] Trigger usage increment on click and refresh list in app/(workspace)/components/snippet-panel.tsx
- - [x] T034b [US4] 片語 CRUD：/api/snippets POST/PATCH/DELETE 合約與 SnippetPanel 新增/編輯/刪除流程回歸（含重名阻擋）
+### Implementation
+- [ ] T034 [P] [US4] 實作 Snippet API 於 app/api/snippets/route.ts 與 app/api/snippets/[id]/route.ts，插入時更新 usageCount/lastUsedAt
+- [ ] T035 [US4] 更新片語面板/Drawer 於 app/(workspace)/components/snippet-panel.tsx（Alt+S、overlay/Esc 關閉、保持游標）
+- [ ] T036 [US4] 更新 useSnippetInsert hook 與右側工具列觸發於 app/(workspace)/hooks/useSnippetInsert.ts、top-bar.tsx
 
-**Checkpoint**: 片語可搜尋、插入並記錄使用次數。
+**Checkpoint**: US4 完成片語搜尋/插入/統計且不影響編輯器狀態。
 
 ---
 
-## Phase 7: Polish & Cross-Cutting
+## Phase 7: User Story 5 - 佈局與操作效率 (Priority: P1)
 
-- [x] T035 [P] Add telemetry/update setting toggles UI in app/(workspace)/settings/page.tsx respecting NFR-001
-- [x] T035a [P] Implement telemetry sender + update checker honoring settings（telemetryEnabled/updateCheckEnabled），遵守 payload whitelist（不得含提示內容）；可停用
-- [x] T035b Add unit tests for telemetry opt-out and payload sanitization
-- [x] T036 Cache prompt counts/updatedAt post-scan for projects API in lib/services/cache.ts
-- [x] T037 [P] Add docs for setup/run and API overview in README.md
-- [x] T037a [P] Perf check scripts：SC-003/004（複製/搜尋延遲）、SC-008（啟動 50/500 資料集）、SC-006（外部修改提示 ≤5s）
-- [x] T037b UX check：SC-009/010 首次體驗成功率與卡頓回報率（手動腳本/調查）
-- [x] T038 [P] Add error boundary/loading states for editor and lists in app/(workspace)/components/error-boundary.tsx
-- [x] T038a [P] 刪除後同步：刪除專案/提示詞時列表、計數、選取狀態同步的回歸測試
-- [x] T039 Verify search cap, large-paste loading, filename sanitizer coverage across flows in app/(workspace)/ and lib/utils
-- [x] T039a [P] Coverage gate enforcement in CI（>=80%，critical path 100%），確保測試未通過時阻擋
-- [x] T039b [P] [Phase 7] 覆蓋率驗證：自動化檢查 autosave 節奏、衝突 UI、搜尋上限、檔名合法化，覆蓋率達 80%/critical path 100%
+**Goal**: 三欄拖曳持久化、Pin 切換/召回、快捷鍵與危險操作 Undo，字級 +2px 不裁切。
+
+**Independent Test**: UI 交互即可驗證（無後端依賴）。
+
+### Tests
+- [ ] T037 [P] [US5] UI 整合測試 Pin 收合/召回與拖曳寬度持久化於 tests/integration/us5-layout-pin.test.tsx
+- [ ] T038 [P] [US5] 單元測試快捷鍵映射與狀態持久化於 tests/unit/shortcuts.test.ts
+
+### Implementation
+- [ ] T039 [P] [US5] 實作三欄寬度拖曳持久化（localStorage）於 app/(workspace)/components/workspace-shell.tsx，符合 150–250ms 收合 SLA
+- [ ] T040 [US5] 實作 Pin 切換預設 ON、OFF 後點選自動收合/Alt+L 召回於 app/(workspace)/components/prompt-list.tsx 與 store/useWorkspaceStore.ts
+- [ ] T041 [US5] 實作快捷鍵處理（Alt+L/P/N/Shift+N、Ctrl+K、Ctrl+Shift+C）於 app/(workspace)/components/top-bar.tsx 或全域 hotkey handler
+- [ ] T042 [US5] 危險操作二段式確認 + Undo snackbar（5–10 秒）於 app/(workspace)/components/prompt-list.tsx、project-list.tsx、snackbars
+- [ ] T043 [US5] 全站字級 +2px 與行高調整於 app/globals.css，確保不裁切並通過 docs/ux-checks.md 檢核
+
+**Checkpoint**: US5 完成佈局/快捷鍵/Undo 體驗，可與其他故事並行驗證。
+
+---
+
+## Final Phase: Polish & Cross-Cutting Concerns
+
+- [ ] T044 [P] 更新 quickstart.md 與 README.md 以反映根路徑、觀測性、快捷鍵與片語 Drawer 操作
+- [ ] T045 [P] 效能回歸檢查與調優（搜尋截斷、autosave 節流、Pin 動畫 p95）於 docs/perf-checks.md
+- [ ] T046 安全與復原檢查（檔名禁用字元、路徑失效、衝突對話框）於 docs/ux-checks.md
+- [ ] T047 [P] 覆蓋率稽核與補齊關鍵路徑測試（≥80%，關鍵 100%）於 coverage/lcov-report/index.html 參考
 
 ---
 
 ## Dependencies & Execution Order
+- Phase 1 → Phase 2 → User Stories（3→4→5→6→7）→ Final Phase。
+- User Stories 可在 Phase 2 完成後並行，但交付順序建議 US1 → US2 → US3 → US5 → US4（依優先級與依賴）。
 
-- Setup (Phase 1) → Foundational (Phase 2) → User Stories (Phases 3-6) → Polish (Phase 7)
-- User stories unlock after Phase 2; US1, US2, US3 (all P1) can run in parallel if capacity, US4 (P2) follows once base stories stable.
-- Within each story: services/serverside before UI wiring; autosave hooks after API ready; copy/snippet utilities after editor ref is exposed.
-
-### User Story Completion Order (graph)
-- US1 (P1) → US2 (P1) → US3 (P1) → US4 (P2)
-- US1/US2/US3 may run in parallel after Phase 2; US4 depends on editor ref from US3.
-
-### Parallel Execution Examples
-- US1: T016 InboxList and T017 DraftEditor in parallel (distinct files); T015 API can start concurrently with UI.
-- US2: T020 projects API and T022 prompts list API in parallel; T023 ProjectList UI can start once T020 response shape fixed.
-- US3: T026 editor integration and T028 clipboard utils in parallel; T027 API can proceed independently.
-- US4: T031 snippets API and T032 SnippetPanel in parallel; T033 insert hook after editor ref (US3) ready.
+## Parallel Execution Examples
+- Foundational：T009 與 T010 可併行；T004~T006 可併行後由 T007/T008 彙整。
+- US1：T011~T013 測試可併行；T014/T015 可併行後再進行 T016/T017。
+- US2：T018/T019/T020 併行；T021/T022 併行後再做 T023/T024/T025。
+- US3：T026/T027/T028 併行；T029 併行後再進行 T030/T031。
+- US4：T032/T033 併行；T034 併行後再做 T035/T036。
+- US5：T037/T038 併行；T039/T040/T041 併行，最後 T042/T043。
 
 ## Implementation Strategy
-
-### MVP First (US1 only)
-1) Finish Phases 1-2
-2) Deliver Phase 3 (US1) → validate autosave/restore + loading indicator
-
-### Incremental Delivery
-1) US1 (MVP) → demo
-2) US2 (archive + lists) → demo
-3) US3 (editor + copy) → demo
-4) US4 (snippets) → demo
-
-### Parallel Team Strategy
-- After Phase 2: Dev A: US1, Dev B: US2, Dev C: US3; Dev D picks US4 after editor ref stable.
+- MVP：完成 Phase 1–2 後優先交付 US1（收件匣捕捉），驗證自動儲存與復原。
+- Incremental：依序交付 US2（轉正/專案）、US3（編輯/複製）、US5（佈局/快捷鍵）、US4（片語 Drawer）。每階段完成即跑對應測試回歸。

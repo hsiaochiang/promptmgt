@@ -14,6 +14,7 @@ import type { InboxItem, PromptFrontmatter, Project, PromptStatus, PromptType, S
 import RootPathAlert from "./components/root-path-alert";
 import { useWorkspaceStore } from "./store/useWorkspaceStore";
 import { useSnippetInsert } from "./hooks/useSnippetInsert";
+import FrontmatterAccordion from "./components/frontmatter-accordion";
 
 export default function WorkspaceShell() {
   const [inboxItems, setInboxItems] = useState<InboxItem[]>([]);
@@ -36,9 +37,10 @@ export default function WorkspaceShell() {
   const [promptLoading, setPromptLoading] = useState(false);
   const [promptError, setPromptError] = useState<string | null>(null);
   const [pendingInsert, setPendingInsert] = useState<string | null>(null);
-  const [tagsInput, setTagsInput] = useState<string>("");
   const { insertSnippet } = useSnippetInsert((content) => setPendingInsert(content));
   const inboxCount = useWorkspaceStore((s) => s.inboxCount);
+  const focusMode = useWorkspaceStore((s) => s.focusMode);
+  const toggleFocusMode = useWorkspaceStore((s) => s.toggleFocusMode);
 
   const loadPrompt = useCallback(async () => {
     if (!selectedPromptId) {
@@ -60,7 +62,6 @@ export default function WorkspaceShell() {
       setPromptFrontmatter(data.frontmatter);
       setPromptBody(data.body);
       setPromptHash(data.hash);
-      setTagsInput((data.frontmatter?.tags ?? []).join(", "));
       setEditorDirty(false);
     } catch (err) {
       setPromptError(err instanceof Error ? err.message : "讀取失敗");
@@ -77,10 +78,6 @@ export default function WorkspaceShell() {
     // 切換專案時退出草稿模式
     setSelectedInboxId(null);
   }, [selectedProjectId]);
-
-  useEffect(() => {
-    setTagsInput((promptFrontmatter?.tags ?? []).join(", "));
-  }, [selectedPromptId, promptFrontmatter?.tags]);
 
   const handleFrontmatterChange = (partial: Partial<PromptFrontmatter>) => {
     if (!promptFrontmatter) return;
@@ -160,7 +157,6 @@ export default function WorkspaceShell() {
       setPromptFrontmatter(data.frontmatter);
       setPromptBody(data.body ?? "");
       setPromptHash(data.hash ?? null);
-      setTagsInput((data.frontmatter?.tags ?? []).join(", "));
       setPromptRefreshKey((k) => k + 1);
       setProjectRefreshKey((k) => k + 1);
     } catch (err) {
@@ -215,7 +211,10 @@ export default function WorkspaceShell() {
           </div>
         </aside>
         <div className="w-[3px] cursor-col-resize bg-slate-200/70" />
-        <main className="flex-[1.2] flex flex-col border-r border-slate-200">
+        <main
+          className={`flex-[1.2] flex flex-col border-r border-slate-200 ${focusMode ? "hidden" : ""}`}
+          data-testid="prompt-list-panel"
+        >
           <div className="h-16 bg-slate-50 border-b border-slate-200 px-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 flex-1">
               <div className="text-xs text-slate-500">提示詞列表</div>
@@ -235,7 +234,10 @@ export default function WorkspaceShell() {
           </ErrorBoundary>
         </main>
         <div className="w-[3px] cursor-col-resize bg-slate-200/70" />
-        <section className="flex-[1.8] flex flex-col p-4 bg-slate-50">
+        <section
+          className={`flex flex-col p-4 bg-slate-50 transition-all ${focusMode ? "flex-[1_1_100%]" : "flex-[1.8]"}`}
+          data-testid="editor-panel"
+        >
           <div className="flex flex-col gap-3 h-full">
             {selectedInboxId ? (
               <DraftEditor
@@ -254,114 +256,17 @@ export default function WorkspaceShell() {
                 <div className="flex h-full gap-3">
                   <div className="flex-1 flex flex-col gap-3">
                     {promptFrontmatter && (
-                      <div className="border border-slate-200 bg-white rounded-lg p-3 text-[12px] space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-600 font-semibold">前言編輯</span>
-                          <button
-                            onClick={() => selectedPromptId && handleDeletePrompt(selectedPromptId)}
-                            className="px-3 py-1 rounded-full border border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 text-[11px]"
-                          >
-                            刪除提示詞
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="space-y-1">
-                            <div className="text-[11px] text-slate-500">標題</div>
-                            <input
-                              className="w-full border border-slate-300 rounded px-2 py-1"
-                              value={promptFrontmatter.title}
-                              onChange={(e) =>
-                                handleFrontmatterChange({
-                                  title: e.target.value,
-                                  updatedAt: new Date().toISOString()
-                                })
-                              }
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <div className="text-[11px] text-slate-500">模型</div>
-                            <input
-                              className="w-full border border-slate-300 rounded px-2 py-1"
-                              value={promptFrontmatter.model}
-                              onChange={(e) =>
-                                handleFrontmatterChange({
-                                  model: e.target.value,
-                                  updatedAt: new Date().toISOString()
-                                })
-                              }
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <div className="text-[11px] text-slate-500">狀態</div>
-                            <select
-                              className="w-full border border-slate-300 rounded px-2 py-1"
-                              value={promptFrontmatter.status}
-                              onChange={(e) =>
-                                handleFrontmatterChange({
-                                  status: e.target.value as PromptStatus,
-                                  updatedAt: new Date().toISOString()
-                                })
-                              }
-                            >
-                              <option value="使用中">使用中</option>
-                              <option value="草稿">草稿</option>
-                              <option value="已封存">已封存</option>
-                            </select>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="text-[11px] text-slate-500">類型</div>
-                            <select
-                              className="w-full border border-slate-300 rounded px-2 py-1"
-                              value={promptFrontmatter.type}
-                              onChange={(e) =>
-                                handleFrontmatterChange({
-                                  type: e.target.value as PromptType,
-                                  updatedAt: new Date().toISOString()
-                                })
-                              }
-                            >
-                              <option value="簡報生成">簡報生成</option>
-                              <option value="結構設計">結構設計</option>
-                              <option value="RAG 調教">RAG 調教</option>
-                              <option value="其他">其他</option>
-                            </select>
-                          </div>
-                          <div className="col-span-2 space-y-1">
-                            <div className="text-[11px] text-slate-500">標籤（以逗號分隔）</div>
-                            <input
-                              className="w-full border border-slate-300 rounded px-2 py-1"
-                              value={tagsInput}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                setTagsInput(value);
-                                const tags = value
-                                  .split(",")
-                                  .map((t) => t.trim())
-                                  .filter(Boolean);
-                                handleFrontmatterChange({ tags, updatedAt: new Date().toISOString() });
-                              }}
-                            />
-                          </div>
-                          <div className="col-span-2 space-y-1">
-                            <div className="text-[11px] text-slate-500">備註</div>
-                            <textarea
-                              className="w-full border border-slate-300 rounded px-2 py-1"
-                              value={promptFrontmatter.notes ?? ""}
-                              onChange={(e) =>
-                                handleFrontmatterChange({
-                                  notes: e.target.value,
-                                  updatedAt: new Date().toISOString()
-                                })
-                              }
-                            />
-                          </div>
-                        </div>
-                      </div>
+                      <FrontmatterAccordion
+                        frontmatter={promptFrontmatter}
+                        onChange={handleFrontmatterChange}
+                        onDelete={() => selectedPromptId && handleDeletePrompt(selectedPromptId)}
+                      />
                     )}
                     <PromptHeader
                       title={promptFrontmatter?.title ?? "尚未選擇提示詞"}
                       frontmatter={promptFrontmatter}
                       body={promptBody}
+                      onToggleFocus={toggleFocusMode}
                     />
                     <PromptEditor
                       promptId={selectedPromptId}
@@ -371,10 +276,7 @@ export default function WorkspaceShell() {
                       insertText={pendingInsert}
                       onInserted={() => setPendingInsert(null)}
                       onBodyChange={(body) => setPromptBody(body)}
-                      onFrontmatterChange={(fm) => {
-                        setPromptFrontmatter(fm);
-                        setTagsInput((fm?.tags ?? []).join(", "));
-                      }}
+                      onFrontmatterChange={(fm) => setPromptFrontmatter(fm)}
                     />
                   </div>
                   <SnippetPanel onInsert={(snippet: Snippet) => insertSnippet(snippet)} />

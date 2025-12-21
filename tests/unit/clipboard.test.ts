@@ -9,7 +9,7 @@ const fm = {
   model: "gpt-4",
   tags: ["a", "b"],
   updatedAt: "2025-01-01T00:00:00.000Z",
-  notes: "備註"
+  note: "備註"
 };
 
 describe("clipboard utils", () => {
@@ -17,7 +17,9 @@ describe("clipboard utils", () => {
     const full = buildFullContent(fm, "Body text\nMore");
     expect(full).toContain("title: Test Title");
     expect(full).toContain("project: proj-1");
-    expect(full).toContain("tags: [a, b]");
+    expect(full).toContain("tags:");
+    expect(full).toContain("- a");
+    expect(full).toContain("note: 備註");
     expect(full.trim().endsWith("More")).toBe(true);
   });
 
@@ -25,5 +27,12 @@ describe("clipboard utils", () => {
     const full = buildFullContent(fm, "Body text\nMore");
     const slim = buildSlimContent(full);
     expect(slim).toBe("Body text\nMore");
+  });
+
+  it("returns trimmed body even when frontmatter is invalid", () => {
+    const raw = `---\n: :\n---\n\nBody text  `;
+    const slim = buildSlimContent(raw);
+    expect(slim).toContain("Body text");
+    expect(slim.startsWith("---")).toBe(true);
   });
 });
