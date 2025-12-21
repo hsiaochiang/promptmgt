@@ -138,7 +138,7 @@ describe("telemetry update check", () => {
   it("reports failure when fetch throws", async () => {
     const { checkForUpdates } = await import("@/lib/services/telemetry");
     const result = await checkForUpdates("1.0.0", {
-      fetcher: () => {
+      fetcher: async (_input: RequestInfo | URL) => {
         throw new Error("boom");
       }
     });

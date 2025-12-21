@@ -40,8 +40,7 @@ describe("US3 - 編輯/複製/專注模式", () => {
   beforeEach(() => {
     useWorkspaceStore.setState({ focusMode: false });
     const writeText = vi.fn();
-    // @ts-expect-error jsdom clipboard stub
-    Object.assign(navigator, { clipboard: { writeText } });
+    Object.assign(navigator as any, { clipboard: { writeText } });
   });
 
   afterEach(() => {
@@ -50,8 +49,7 @@ describe("US3 - 編輯/複製/專注模式", () => {
 
   it("完整/精簡複製按鈕與快捷鍵運作", async () => {
     const writeText = vi.fn();
-    // @ts-expect-error jsdom clipboard stub
-    Object.assign(navigator, { clipboard: { writeText } });
+    Object.assign(navigator as any, { clipboard: { writeText } });
 
     render(<PromptHeader title={fm.title} frontmatter={fm} body={"Line 1"} />);
 

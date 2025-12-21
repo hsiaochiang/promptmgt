@@ -12,6 +12,7 @@ const baseSnippets: Snippet[] = [
     category: "角色",
     content: "內容一",
     usage: 0,
+    usageCount: 0,
     lastUsedAt: undefined
   },
   {
@@ -20,6 +21,7 @@ const baseSnippets: Snippet[] = [
     category: "格式",
     content: "內容二",
     usage: 0,
+    usageCount: 0,
     lastUsedAt: undefined
   }
 ];
@@ -33,8 +35,8 @@ describe("SnippetPanel CRUD", () => {
   it("新增/編輯/刪除片語更新列表", async () => {
     const responses: Record<string, any> = {
       GET: baseSnippets,
-      POST: { id: "s-3", name: "新片語", category: "其他", content: "新增內容", usage: 0, lastUsedAt: undefined },
-      PATCH: { id: "s-1", name: "片語一-更新", category: "角色", content: "內容一", usage: 0, lastUsedAt: undefined },
+      POST: { id: "s-3", name: "新片語", category: "其他", content: "新增內容", usage: 0, usageCount: 0, lastUsedAt: undefined },
+      PATCH: { id: "s-1", name: "片語一-更新", category: "角色", content: "內容一", usage: 0, usageCount: 0, lastUsedAt: undefined },
       DELETE: { ok: true }
     };
 

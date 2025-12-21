@@ -17,8 +17,13 @@ vi.mock("next/link", () => ({
 
 const baseSettings: Settings = {
   rootPath: null,
+  pinned: true,
+  layout: { leftWidth: 320, middleWidth: 520 },
+  fontScale: 2,
   telemetryEnabled: true,
-  updateCheckEnabled: true
+  updateCheckEnabled: true,
+  telemetry: { enabled: true },
+  pathExists: false
 };
 
 afterEach(() => {

@@ -37,7 +37,7 @@ describe("API /api/snippets", () => {
 
   it("creates, prevents duplicates, updates and deletes", async () => {
     const { GET, POST } = await import("@/app/api/snippets/route");
-    const { GET: GET_ID, PATCH, DELETE } = await import("@/app/api/snippets/[id]/route");
+    const { GET: GET_ID, PATCH, DELETE } = await import("../../app/api/snippets/[id]/route");
 
     const createRes = await POST(
       new Request("http://localhost/api/snippets", {
