@@ -18,7 +18,7 @@ export async function archiveDraft(payload: ArchivePayload) {
     throw new Error("草稿不存在");
   }
 
-  const filePath = await writePrompt(
+  const { filePath, hash, mtimeMs } = await writePrompt(
     db.data!.settings.rootPath ?? "",
     payload.projectName,
     payload.frontmatter,
@@ -36,5 +36,5 @@ export async function archiveDraft(payload: ArchivePayload) {
   await db.write();
   const promptId = Buffer.from(filePath, "utf8").toString("base64url");
 
-  return { filePath, promptId };
+  return { filePath, promptId, hash, mtimeMs };
 }

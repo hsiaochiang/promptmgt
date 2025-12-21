@@ -9,21 +9,24 @@ beforeEach(async () => {
 
 afterEach(async () => {
   vi.unstubAllGlobals();
+  const { clearTelemetryBuffer } = await import("@/lib/services/telemetry");
+  clearTelemetryBuffer();
   if (restoreWorkspace) await restoreWorkspace();
 });
 
 describe("telemetry sender", () => {
   it("skips when telemetry disabled", async () => {
     const { updateSettings } = await import("@/lib/services/settings");
-    const { sendTelemetry } = await import("@/lib/services/telemetry");
+    const { sendTelemetry, getTelemetryBuffer } = await import("@/lib/services/telemetry");
     await updateSettings({ telemetryEnabled: false });
 
     const result = await sendTelemetry({ event: "app_start", timestamp: new Date().toISOString() });
     expect(result).toMatchObject({ skipped: true, reason: "disabled" });
+    expect(getTelemetryBuffer()).toHaveLength(0);
   });
 
   it("blocks payload containing forbidden fields", async () => {
-    const { sendTelemetry } = await import("@/lib/services/telemetry");
+    const { sendTelemetry, getTelemetryBuffer } = await import("@/lib/services/telemetry");
 
     const result = await sendTelemetry({
       event: "app_start",
@@ -31,55 +34,56 @@ describe("telemetry sender", () => {
       title: "should-not-send"
     });
     expect(result).toMatchObject({ skipped: true, reason: "blocked" });
+    expect(getTelemetryBuffer()).toHaveLength(0);
   });
 
-  it("blocks payload missing required fields", async () => {
-    const { sendTelemetry } = await import("@/lib/services/telemetry");
-    const result = await sendTelemetry({ appVersion: "0.1.0" });
-    expect(result).toMatchObject({ skipped: true, reason: "blocked" });
-  });
-
-  it("sends sanitized payload over https", async () => {
+  it("buffers sanitized payload locally", async () => {
     const { updateSettings } = await import("@/lib/services/settings");
-    const { sendTelemetry } = await import("@/lib/services/telemetry");
+    const { sendTelemetry, getTelemetryBuffer } = await import("@/lib/services/telemetry");
     await updateSettings({ telemetryEnabled: true });
-    const mockFetch = vi.fn(async () => new Response("ok", { status: 200 }));
 
-    const result = await sendTelemetry(
-      {
-        event: "search_perf",
-        timestamp: new Date().toISOString(),
-        performance: { searchLatencyMs: 120 },
-        counts: { prompts: 10 }
-      },
-      { endpoint: "https://telemetry.local/collect", fetcher: mockFetch }
-    );
-
-    expect(result).not.toHaveProperty("skipped");
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(result).toMatchObject({ ok: true, status: 200 });
-  });
-
-  it("rejects insecure endpoint", async () => {
-    const { sendTelemetry } = await import("@/lib/services/telemetry");
-    const result = await sendTelemetry(
-      { event: "app_start", timestamp: new Date().toISOString() },
-      { endpoint: "http://insecure" }
-    );
-    expect(result).toMatchObject({ skipped: true, reason: "insecure-endpoint" });
-  });
-
-  it("returns error when fetch fails", async () => {
-    const { sendTelemetry } = await import("@/lib/services/telemetry");
-    const mockFetch = vi.fn(async () => {
-      throw new Error("network");
+    const result = await sendTelemetry({
+      event: "search_perf",
+      timestamp: new Date().toISOString(),
+      performance: { searchLatencyMs: 120 },
+      counts: { prompts: 10 }
     });
-    const result = await sendTelemetry(
-      { event: "app_start", timestamp: new Date().toISOString() },
-      { endpoint: "https://telemetry.local/collect", fetcher: mockFetch }
-    );
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(result).toMatchObject({ ok: false, error: "network" });
+
+    expect(result).toMatchObject({ ok: true, buffered: true });
+    const buffered = getTelemetryBuffer();
+    expect(buffered).toHaveLength(1);
+    expect(buffered[0]).toMatchObject({ event: "search_perf" });
+  });
+
+  it("evicts oldest entries when exceeding 5MB", async () => {
+    const { updateSettings } = await import("@/lib/services/settings");
+    const { sendTelemetry, getTelemetryBuffer } = await import("@/lib/services/telemetry");
+    await updateSettings({ telemetryEnabled: true });
+
+    const large = "x".repeat(3 * 1024 * 1024);
+    await sendTelemetry({ event: "big-1", timestamp: new Date().toISOString(), errors: large });
+    await sendTelemetry({ event: "big-2", timestamp: new Date().toISOString(), errors: large });
+
+    const buffered = getTelemetryBuffer();
+    expect(buffered).toHaveLength(1);
+    expect(buffered[0].event).toBe("big-2");
+  });
+
+  it("exports buffer to file", async () => {
+    const { updateSettings } = await import("@/lib/services/settings");
+    const { sendTelemetry, exportTelemetry } = await import("@/lib/services/telemetry");
+    const { mkdtemp } = await import("fs/promises");
+    const { tmpdir } = await import("os");
+    const { join } = await import("path");
+
+    const dir = await mkdtemp(join(tmpdir(), "telemetry-"));
+    const exportPath = join(dir, "events.log");
+    await updateSettings({ telemetryEnabled: true, telemetry: { enabled: true, exportPath } });
+
+    await sendTelemetry({ event: "app_start", timestamp: new Date().toISOString() });
+    const result = await exportTelemetry();
+
+    expect(result).toMatchObject({ ok: true, path: exportPath });
   });
 });
 

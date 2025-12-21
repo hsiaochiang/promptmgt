@@ -24,11 +24,12 @@ export default function DraftEditor({ draft, projects, onArchived, onDeleted }: 
   const [archiveType, setArchiveType] = useState<PromptType>("其他");
   const [archiveModel, setArchiveModel] = useState("gpt-4o-mini");
   const [archiveTags, setArchiveTags] = useState("");
-  const [archiveNotes, setArchiveNotes] = useState("");
+  const [archiveNote, setArchiveNote] = useState("");
   const [archiving, setArchiving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const setEditorDirty = useWorkspaceStore((s) => s.setEditorDirty);
   const setLoading = useWorkspaceStore((s) => s.setLoading);
+  const setLastSavedAt = useWorkspaceStore((s) => s.setLastSavedAt);
   const lastSavedAt = useWorkspaceStore((s) => s.lastSavedAt);
   const { isSaving } = useAutosaveDraft({
     draftId: draft?.id ?? null,
@@ -42,11 +43,13 @@ export default function DraftEditor({ draft, projects, onArchived, onDeleted }: 
       setTitle("");
       setHint("");
       setContent("");
+      setLastSavedAt(null);
       return;
     }
     setTitle(draft.title);
     setHint(draft.hint ?? "");
     setContent(draft.content ?? "");
+    setLastSavedAt(draft.updatedAt ?? null);
   }, [draft]);
 
   useEffect(() => {
@@ -100,7 +103,7 @@ export default function DraftEditor({ draft, projects, onArchived, onDeleted }: 
             status: archiveStatus,
             model: archiveModel,
             tags: tagsArray,
-            notes: archiveNotes,
+            note: archiveNote,
             updatedAt: new Date().toISOString()
           },
           body: content
@@ -256,8 +259,8 @@ export default function DraftEditor({ draft, projects, onArchived, onDeleted }: 
           <label className="text-xs text-slate-500">前言備註</label>
           <textarea
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
-            value={archiveNotes}
-            onChange={(e) => setArchiveNotes(e.target.value)}
+            value={archiveNote}
+            onChange={(e) => setArchiveNote(e.target.value)}
             placeholder="可選：補充使用說明"
           />
         </div>

@@ -1,3 +1,5 @@
+import { promises as fs } from "fs";
+import { dirname, join } from "path";
 import { getSettings } from "./settings";
 
 export interface TelemetryPayload {
@@ -27,6 +29,8 @@ export interface TelemetryPayload {
     status?: string;
   };
 }
+
+type TelemetryEntry = { entry: TelemetryPayload; bytes: number };
 
 const ALLOWED_ROOT_KEYS = new Set([
   "event",
@@ -60,6 +64,12 @@ const FORBIDDEN_KEYS = [
   "clipboard"
 ];
 
+const MAX_BUFFER_BYTES = 5 * 1024 * 1024; // 5MB 環迴
+const DEFAULT_EXPORT = "telemetry.log";
+
+let buffer: TelemetryEntry[] = [];
+let bufferBytes = 0;
+
 export function sanitizeTelemetryPayload(input: Record<string, unknown>): TelemetryPayload | null {
   if (Object.keys(input).some((key) => FORBIDDEN_KEYS.some((k) => key.toLowerCase().includes(k)))) {
     return null;
@@ -77,14 +87,38 @@ export function sanitizeTelemetryPayload(input: Record<string, unknown>): Teleme
   return output as TelemetryPayload;
 }
 
+function pushToBuffer(entry: TelemetryPayload) {
+  const serialized = JSON.stringify(entry);
+  const bytes = Buffer.byteLength(serialized, "utf8");
+
+  while (buffer.length && bufferBytes + bytes > MAX_BUFFER_BYTES) {
+    const removed = buffer.shift();
+    if (removed) bufferBytes -= removed.bytes;
+  }
+
+  buffer.push({ entry, bytes });
+  bufferBytes += bytes;
+}
+
+export function getTelemetryBuffer(): TelemetryPayload[] {
+  return buffer.map((b) => b.entry);
+}
+
+export function clearTelemetryBuffer() {
+  buffer = [];
+  bufferBytes = 0;
+}
+
 interface SendOptions {
-  endpoint?: string;
-  fetcher?: typeof fetch;
+  exportPath?: string;
+  flush?: boolean;
 }
 
 export async function sendTelemetry(payload: Record<string, unknown>, options: SendOptions = {}) {
   const settings = await getSettings();
-  const telemetryEnabled = settings.telemetryEnabled ?? true;
+  const globalEnabled = settings.telemetryEnabled ?? true;
+  const scopedEnabled = settings.telemetry?.enabled ?? globalEnabled;
+  const telemetryEnabled = globalEnabled && scopedEnabled;
   if (!telemetryEnabled) {
     return { skipped: true, reason: "disabled" } as const;
   }
@@ -92,22 +126,33 @@ export async function sendTelemetry(payload: Record<string, unknown>, options: S
   const sanitized = sanitizeTelemetryPayload(payload);
   if (!sanitized) return { skipped: true, reason: "blocked" } as const;
 
-  const endpoint = options.endpoint ?? "https://telemetry.local/collect";
-  if (!endpoint.startsWith("https://")) {
-    return { skipped: true, reason: "insecure-endpoint" } as const;
+  pushToBuffer(sanitized);
+
+  if (options.flush) {
+    await exportTelemetry(options.exportPath);
   }
 
-  const doFetch = options.fetcher ?? fetch;
-  try {
-    const res = await doFetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(sanitized)
-    });
-    return { ok: res.ok, status: res.status } as const;
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "unknown" } as const;
-  }
+  return { ok: true, buffered: true, size: bufferBytes } as const;
+}
+
+async function resolveExportPath(explicitPath?: string) {
+  const settings = await getSettings();
+  const candidate = explicitPath ?? settings.telemetry?.exportPath;
+  if (candidate) return candidate;
+  if (settings.rootPath) return join(settings.rootPath, DEFAULT_EXPORT);
+  return null;
+}
+
+export async function exportTelemetry(filePath?: string) {
+  const targetPath = await resolveExportPath(filePath);
+  if (!targetPath) return { skipped: true, reason: "no-path" } as const;
+
+  const dir = dirname(targetPath);
+  await fs.mkdir(dir, { recursive: true });
+  const contents = buffer.map((b) => JSON.stringify(b.entry)).join("\n");
+  await fs.writeFile(targetPath, contents, "utf8");
+
+  return { ok: true, path: targetPath, bytesWritten: Buffer.byteLength(contents, "utf8") } as const;
 }
 
 interface UpdateCheckResult {

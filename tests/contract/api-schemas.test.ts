@@ -400,7 +400,7 @@ describe("API contracts", () => {
 
     const rootPath = process.env.DEFAULT_ROOT!;
     await updateSettings({ rootPath });
-    const filePath = await writePrompt(
+    const { filePath } = await writePrompt(
       rootPath,
       "AI 工作流課程",
       {
@@ -445,7 +445,7 @@ describe("API contracts", () => {
 
     const rootPath = process.env.DEFAULT_ROOT!;
     await updateSettings({ rootPath });
-    const filePath = await writePrompt(
+    const { filePath } = await writePrompt(
       rootPath,
       "proj-1",
       {

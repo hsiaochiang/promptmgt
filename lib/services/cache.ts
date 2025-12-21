@@ -43,7 +43,12 @@ export function setPromptMetaFromPrompts(prompts: PromptListItem[]) {
 export function applyPromptMeta(projects: Project[]) {
   return projects.map((project) => {
     const meta = promptMetaByProject[project.name];
-    if (!meta) return project;
+    if (!meta) {
+      return {
+        ...project,
+        promptCount: 0
+      };
+    }
     return {
       ...project,
       promptCount: meta.promptCount,

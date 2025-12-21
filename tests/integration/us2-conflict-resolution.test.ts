@@ -53,8 +53,8 @@ describe("US2 - 衝突處理整合測試", () => {
 
     expect(saveRes.status).toBe(409);
     const errorData = await saveRes.json();
-    expect(errorData.message).toBe("Conflict detected");
-    expect(errorData.currentHash).toBeDefined();
+    expect(errorData).toMatchObject({ code: "conflict", message: "Conflict detected" });
+    expect(errorData.details?.currentHash ?? errorData.currentHash).toBeDefined();
   });
 
   it("使用最新的 hash 儲存應能成功覆寫 (Overwrite 流程)", async () => {

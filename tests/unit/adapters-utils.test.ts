@@ -69,11 +69,14 @@ describe("prompt file system adapter", () => {
       updatedAt: new Date().toISOString()
     };
 
-    const filePath = await writePrompt(rootPath, "專案A", frontmatter, "內容");
-    expect(filePath.endsWith("非法--檔名.md")).toBe(true);
+    const result = await writePrompt(rootPath, "專案A", frontmatter, "內容");
+    expect(result.filePath.endsWith("非法-檔名.md")).toBe(true);
+    const reserved = await writePrompt(rootPath, "CON", { ...frontmatter, title: "COM1" }, "內容");
+    expect(reserved.filePath.includes("COM1_")).toBe(true);
     const prompts = await listPrompts(rootPath);
-    expect(prompts).toHaveLength(1);
-    expect(prompts[0]).toMatchObject({
+    expect(prompts.length).toBeGreaterThanOrEqual(2);
+    const first = prompts.find((p) => p.projectId === "專案A");
+    expect(first).toMatchObject({
       projectId: "專案A",
       title: "非法:/檔名",
       status: "草稿",
@@ -128,6 +131,13 @@ describe("frontmatter parsing", () => {
     expect(broken.frontmatter).toBeNull();
     expect(broken.body).toContain("bad yaml");
   });
+
+  it("flags missing required keys as damaged but keeps data", async () => {
+    const { parsePrompt } = await import("@/lib/utils/frontmatter");
+    const parsed = parsePrompt("---\nproject: P1\n---\nbody");
+    expect(parsed.damaged).toBe(true);
+    expect(parsed.frontmatter?.project).toBe("P1");
+  });
 });
 
 describe("conflict detection", () => {
@@ -160,6 +170,29 @@ describe("conflict detection", () => {
     ).toBe(false);
 
     expect(hasConflict({ localMtime: 100, externalMtime: 90 })).toBe(false);
+  });
+
+  it("builds conflict events with reasons", async () => {
+    const { computeHash, detectConflict, createConflictEvent } = await import("@/lib/services/conflict");
+    const localHash = computeHash("local");
+    const externalHash = computeHash("external");
+
+    const result = detectConflict({
+      localMtime: 100,
+      externalMtime: 150,
+      localHash,
+      externalHash
+    });
+
+    expect(result.conflict).toBe(true);
+    expect(result.reasons).toEqual(["mtime", "hash"]);
+
+    const event = createConflictEvent(result, "view-diff", { filePath: "/tmp/prompt.md" });
+    expect(event.decision).toBe("view-diff");
+    expect(event.reasons).toEqual(["mtime", "hash"]);
+    expect(event.hashes).toMatchObject({ local: localHash, external: externalHash });
+    expect(event.context?.filePath).toContain("prompt.md");
+    expect(event.id).toBeTruthy();
   });
 });
 
@@ -229,8 +262,9 @@ describe("clipboard utils", () => {
     };
     const full = buildFullContent(frontmatter, "Body text");
     expect(full).toContain("title: Test");
-    expect(full).toContain("tags: [x, y]");
-    expect(full.endsWith("Body text")).toBe(true);
+      expect(full).toContain("tags:");
+      expect(full).toContain("- x");
+    expect(full.trim().endsWith("Body text")).toBe(true);
 
     const slim = buildSlimContent(full);
     expect(slim).toBe("Body text");

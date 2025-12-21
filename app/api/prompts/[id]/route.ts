@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
-import { parsePrompt, serializePrompt } from "@/lib/utils/frontmatter";
-import { computeHash, hasConflict } from "@/lib/services/conflict";
+import { badRequest, conflict, notFound } from "@/app/api/_lib/responses";
+import { hasConflict } from "@/lib/services/conflict";
 import { getDb } from "@/lib/db";
-import { listPrompts } from "@/lib/fs/prompts";
-import { getPromptMeta, setPromptMetaFromPrompts } from "@/lib/services/cache";
+import { listPrompts, readPrompt, writePrompt } from "@/lib/fs/prompts";
+import { applyPromptMeta, setPromptMetaFromPrompts } from "@/lib/services/cache";
 
 function decodeId(id: string) {
   return Buffer.from(id, "base64url").toString("utf8");
@@ -17,20 +17,18 @@ function now() {
 export async function GET(_: Request, { params }: { params: { id: string } }) {
   const filePath = decodeId(params.id);
   try {
-    const raw = await fs.readFile(filePath, "utf8");
-    const parsed = parsePrompt(raw);
-    const stat = await fs.stat(filePath);
+    const result = await readPrompt(filePath);
     return NextResponse.json({
       id: params.id,
-      frontmatter: parsed.frontmatter,
-      body: parsed.body,
-      hash: computeHash(raw),
-      mtimeMs: stat.mtimeMs,
-      damaged: parsed.damaged
+      frontmatter: result.frontmatter,
+      body: result.body,
+      hash: result.hash,
+      mtimeMs: result.mtimeMs,
+      damaged: result.damaged
     });
   } catch (error: any) {
     if (error?.code === "ENOENT") {
-      return NextResponse.json({ message: "Not Found" }, { status: 404 });
+      return notFound("Prompt not found");
     }
     throw error;
   }
@@ -39,38 +37,74 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   const { frontmatter, body, clientHash } = await request.json();
   const filePath = decodeId(params.id);
+  const current = await readPrompt(filePath);
 
-  const current = await fs.readFile(filePath, "utf8");
-  const stat = await fs.stat(filePath);
-  const currentHash = computeHash(current);
-
-  if (hasConflict({ localMtime: stat.mtimeMs, externalMtime: stat.mtimeMs, localHash: clientHash, externalHash: currentHash })) {
-    return NextResponse.json(
-      { message: "Conflict detected", currentHash },
-      { status: 409 }
-    );
+  if (
+    hasConflict({
+      localMtime: current.mtimeMs,
+      externalMtime: current.mtimeMs,
+      localHash: clientHash,
+      externalHash: current.hash
+    })
+  ) {
+    return conflict("Conflict detected", { currentHash: current.hash });
   }
 
+  const baseFrontmatter = current.frontmatter ?? {};
   const updatedFrontmatter = {
+    ...baseFrontmatter,
     ...frontmatter,
-    updatedAt: frontmatter?.updatedAt ?? now()
+    updatedAt: frontmatter?.updatedAt ?? baseFrontmatter.updatedAt ?? now()
   };
-  const content = serializePrompt(updatedFrontmatter, body);
-  await fs.writeFile(filePath, content, "utf8");
-  const newHash = computeHash(content);
-  const newStat = await fs.stat(filePath);
+  const projectName = updatedFrontmatter.project ?? baseFrontmatter.project;
+
+  if (!projectName) {
+    return badRequest("project is required");
+  }
+
+  const writeResult = await (async () => {
+    try {
+      return await writePrompt(
+        "",
+        projectName,
+        updatedFrontmatter,
+        body,
+        {
+          expectedHash: clientHash,
+          expectedMtime: current.mtimeMs,
+          targetPath: filePath
+        }
+      );
+    } catch (error: any) {
+      if (error?.code === "E_CONFLICT") {
+        return conflict("Conflict detected", { currentHash: current.hash });
+      }
+      throw error;
+    }
+  })();
+
+  if (writeResult instanceof NextResponse) return writeResult;
+  const { hash: newHash, mtimeMs: newMtime } = writeResult;
 
   // update project updatedAt in db
   const db = await getDb();
-  const project = db.data!.projects.find((p) => p.name === updatedFrontmatter.project);
+  const project = db.data!.projects.find((p) => p.name === projectName);
   if (project) {
     project.updatedAt = updatedFrontmatter.updatedAt;
-    await db.write();
   }
+
+  const rootPath = db.data!.settings.rootPath;
+  if (rootPath) {
+    const prompts = await listPrompts(rootPath);
+    setPromptMetaFromPrompts(prompts);
+    db.data!.projects = applyPromptMeta(db.data!.projects);
+  }
+
+  await db.write();
 
   return NextResponse.json({
     hash: newHash,
-    mtimeMs: newStat.mtimeMs,
+    mtimeMs: newMtime,
     updatedAt: updatedFrontmatter.updatedAt
   });
 }
@@ -82,11 +116,12 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
 
   let projectName: string | null = null;
   try {
-    const raw = await fs.readFile(filePath, "utf8");
-    const parsed = parsePrompt(raw);
+    const parsed = await readPrompt(filePath);
     projectName = parsed.frontmatter?.project ?? null;
-  } catch {
-    // ignore parse errors; still attempt delete
+  } catch (error: any) {
+    if (error?.code !== "ENOENT") {
+      throw error;
+    }
   }
 
   await fs.rm(filePath, { force: true });
@@ -94,12 +129,7 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
   if (projectName && rootPath) {
     const prompts = await listPrompts(rootPath);
     setPromptMetaFromPrompts(prompts);
-    const meta = getPromptMeta(projectName);
-    const project = db.data!.projects.find((p) => p.name === projectName);
-    if (project && meta) {
-      project.promptCount = meta.promptCount;
-      project.updatedAt = meta.updatedAt ?? project.updatedAt;
-    }
+    db.data!.projects = applyPromptMeta(db.data!.projects);
   }
 
   await db.write();

@@ -13,11 +13,13 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const selectedProjectId = useWorkspaceStore((s) => s.selectedProjectId);
   const setSelectedProjectId = useWorkspaceStore((s) => s.setSelectedProjectId);
 
   const fetchProjects = async () => {
     setLoading(true);
+    setNotice(null);
     const res = await fetch("/api/projects");
     const data = (await res.json()) as Project[];
     setProjects(data);
@@ -37,13 +39,20 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
     const name = window.prompt("輸入新專案名稱", "新專案");
     if (!name) return;
     setBusy(true);
+    setNotice(null);
     try {
       const res = await fetch("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, status: "規劃中" })
       });
-      if (!res.ok) throw new Error("新增專案失敗");
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({} as any));
+        if ((res.status === 409 || res.status === 400) && (payload as any)?.message) {
+          setNotice((payload as any).message as string);
+        }
+        throw new Error("新增專案失敗");
+      }
       const created = (await res.json()) as Project;
       await fetchProjects();
       setSelectedProjectId(created.name);
@@ -58,13 +67,20 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
     const name = window.prompt("專案名稱", project.name) ?? project.name;
     const status = (window.prompt("專案狀態（規劃中/進行中/已結案）", project.status) as ProjectStatus | null) ?? project.status;
     setBusy(true);
+    setNotice(null);
     try {
       const res = await fetch("/api/projects", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: project.id, name, status })
       });
-      if (!res.ok) throw new Error("更新專案失敗");
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({} as any));
+        if ((res.status === 409 || res.status === 400) && (payload as any)?.message) {
+          setNotice((payload as any).message as string);
+        }
+        throw new Error("更新專案失敗");
+      }
       const updated = (await res.json()) as Project;
       await fetchProjects();
       if (selectedProjectId === project.name) {
@@ -80,6 +96,7 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
   const handleDelete = async (project: Project) => {
     if (!window.confirm(`確定刪除專案「${project.name}」？`)) return;
     setBusy(true);
+    setNotice(null);
     try {
       const res = await fetch("/api/projects", {
         method: "DELETE",
@@ -112,6 +129,7 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
           </button>
         </div>
       </div>
+      {notice ? <div className="text-[11px] text-amber-700 mb-1">{notice}</div> : null}
       {loading && <div className="text-[11px] text-slate-400">載入中…</div>}
       <div className="space-y-1.5">
         {projects.map((p) => (
@@ -135,7 +153,7 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
               <span className="text-[10px] opacity-70">{p.promptCount} 篇</span>
             </div>
             <div className="flex items-center justify-between text-[10px] opacity-70">
-              <span>{p.status}</span>
+              <span className="px-2 py-0.5 rounded-full bg-white/70 border border-slate-200">{p.status}</span>
               <span>更新：{p.updatedAt ?? "—"}</span>
             </div>
             <div className="flex justify-end gap-1 text-[10px] mt-1">

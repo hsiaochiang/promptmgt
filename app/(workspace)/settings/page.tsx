@@ -9,22 +9,25 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rootPathInput, setRootPathInput] = useState("");
+  const [pathExists, setPathExists] = useState<boolean | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/settings");
+      const data = (await res.json()) as Settings;
+      setSettings(data);
+      setRootPathInput(data.rootPath ?? "");
+      setPathExists((data as any).pathExists ?? null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "讀取設定失敗");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch("/api/settings");
-        const data = (await res.json()) as Settings;
-        setSettings(data);
-        setRootPathInput(data.rootPath ?? "");
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "讀取設定失敗");
-      } finally {
-        setLoading(false);
-      }
-    };
     load();
   }, []);
 
@@ -41,6 +44,7 @@ export default function SettingsPage() {
       const data = (await res.json()) as Settings;
       setSettings(data);
       setRootPathInput(data.rootPath ?? "");
+      setPathExists((data as any).pathExists ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "更新設定失敗");
     } finally {
@@ -80,7 +84,12 @@ export default function SettingsPage() {
                   <div className="font-semibold text-sm">根路徑</div>
                   <div className="text-sm text-slate-500">指定 Prompts 儲存資料夾的絕對路徑。</div>
                 </div>
-                <span className="text-[11px] text-slate-400">{saving ? "儲存中…" : null}</span>
+                <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                  {pathExists === false ? (
+                    <span className="text-amber-700">路徑不存在，請建立或重新定位</span>
+                  ) : null}
+                  <span className="text-[11px] text-slate-400">{saving ? "儲存中…" : null}</span>
+                </div>
               </div>
               <div className="flex gap-2">
                 <input
@@ -95,7 +104,23 @@ export default function SettingsPage() {
                 >
                   儲存路徑
                 </button>
+                <button
+                  onClick={() => update({ rootPath: rootPathInput })}
+                  className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-700 hover:bg-slate-50"
+                  disabled={!rootPathInput}
+                >
+                  建立資料夾
+                </button>
+                <button
+                  onClick={load}
+                  className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  重新檢查
+                </button>
               </div>
+              {pathExists === true && rootPathInput ? (
+                <div className="text-[11px] text-emerald-700">路徑可用：{rootPathInput}</div>
+              ) : null}
             </div>
             <ToggleRow
               title="匿名遙測"

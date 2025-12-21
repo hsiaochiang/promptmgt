@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
+import { badRequest, conflict, notFound } from "@/app/api/_lib/responses";
 import { getDb } from "@/lib/db";
 import { nanoid } from "nanoid";
 
 function normalizeName(name?: string) {
   return name?.trim().toLowerCase();
+}
+
+function conflictResponse() {
+  return conflict("snippet name already exists");
 }
 
 export async function GET() {
@@ -18,7 +23,7 @@ export async function POST(request: Request) {
   const name = payload.name?.trim() || "新片語";
   const conflict = db.data!.snippets.find((s) => normalizeName(s.name) === normalizeName(name));
   if (conflict) {
-    return NextResponse.json({ message: "snippet name already exists" }, { status: 409 });
+    return conflictResponse();
   }
 
   const snippet = {
@@ -40,20 +45,18 @@ export async function PATCH(request: Request) {
   const { id, name, category, content } = payload;
 
   if (!id) {
-    return NextResponse.json({ message: "id is required" }, { status: 400 });
+    return badRequest("id is required", { field: "id" });
   }
 
   const db = await getDb();
   const snippet = db.data!.snippets.find((s) => s.id === id);
-  if (!snippet) {
-    return NextResponse.json({ message: "Not Found" }, { status: 404 });
-  }
+  if (!snippet) return notFound("Snippet not found");
 
   if (name !== undefined) {
     const nextName = name.trim();
     const conflict = db.data!.snippets.find((s) => s.id !== id && normalizeName(s.name) === normalizeName(nextName));
     if (conflict) {
-      return NextResponse.json({ message: "snippet name already exists" }, { status: 409 });
+      return conflictResponse();
     }
     snippet.name = nextName || snippet.name;
   }
@@ -70,14 +73,12 @@ export async function DELETE(request: Request) {
   const { id } = payload;
 
   if (!id) {
-    return NextResponse.json({ message: "id is required" }, { status: 400 });
+    return badRequest("id is required", { field: "id" });
   }
 
   const db = await getDb();
   const existing = db.data!.snippets.find((s) => s.id === id);
-  if (!existing) {
-    return NextResponse.json({ message: "Not Found" }, { status: 404 });
-  }
+  if (!existing) return notFound("Snippet not found");
 
   db.data!.snippets = db.data!.snippets.filter((s) => s.id !== id);
   await db.write();

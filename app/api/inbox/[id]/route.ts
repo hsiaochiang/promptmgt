@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { conflict, notFound } from "@/app/api/_lib/responses";
 import { getDb } from "@/lib/db";
 
 function now() {
@@ -8,7 +9,7 @@ function now() {
 export async function GET(_: Request, { params }: { params: { id: string } }) {
   const db = await getDb();
   const draft = db.data!.inbox.find((i) => i.id === params.id);
-  if (!draft) return NextResponse.json({ message: "Not Found" }, { status: 404 });
+  if (!draft) return notFound("Draft not found");
   return NextResponse.json(draft);
 }
 
@@ -16,7 +17,14 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   const payload = await request.json();
   const db = await getDb();
   const draft = db.data!.inbox.find((i) => i.id === params.id);
-  if (!draft) return NextResponse.json({ message: "Not Found" }, { status: 404 });
+  if (!draft) return notFound("Draft not found");
+
+  const expectedUpdatedAt =
+    payload.expectedUpdatedAt ?? payload.updatedAt ?? payload.clientUpdatedAt ?? null;
+
+  if (expectedUpdatedAt && draft.updatedAt && draft.updatedAt !== expectedUpdatedAt) {
+    return conflict("Draft has changed", { currentUpdatedAt: draft.updatedAt });
+  }
 
   draft.title = payload.title ?? draft.title;
   draft.content = payload.content ?? draft.content;
@@ -32,7 +40,7 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
   db.data!.inbox = db.data!.inbox.filter((i) => i.id !== params.id);
 
   if (db.data!.inbox.length === before) {
-    return NextResponse.json({ message: "Not Found" }, { status: 404 });
+    return notFound("Draft not found");
   }
 
   await db.write();

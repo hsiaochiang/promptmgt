@@ -4,18 +4,31 @@ export interface SearchResult extends PromptListItem {
   snippet: string;
 }
 
+interface SearchFilter {
+  projectId?: string;
+  status?: string;
+}
+
 export function searchPrompts(
   prompts: PromptListItem[],
   query: string,
-  limit = 1000
+  limit = 1000,
+  filter: SearchFilter = {}
 ): SearchResult[] {
   if (!query.trim()) return [];
   const lowered = query.toLowerCase();
   const results: SearchResult[] = [];
 
   for (const item of prompts) {
+    if (filter.projectId && item.projectId !== filter.projectId && item.project !== filter.projectId) {
+      continue;
+    }
+    if (filter.status && item.status !== filter.status) {
+      continue;
+    }
+
     const haystack =
-      item.title.toLowerCase() + " " + item.tags.join(" ").toLowerCase() + " " + item.model;
+      item.title.toLowerCase() + " " + item.tags.join(" ").toLowerCase() + " " + (item.model ?? "");
     if (haystack.includes(lowered)) {
       results.push({
         ...item,

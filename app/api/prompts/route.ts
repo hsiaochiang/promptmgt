@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
-import { listPrompts } from "@/lib/fs/prompts";
+import { nanoid } from "nanoid";
+import { badRequest } from "@/app/api/_lib/responses";
+import { listPrompts, writePrompt } from "@/lib/fs/prompts";
 import { getDb } from "@/lib/db";
-import { promises as fs } from "fs";
-import { setPromptMetaFromPrompts, getPromptMeta } from "@/lib/services/cache";
-import { writePrompt } from "@/lib/fs/prompts";
-import { serializePrompt } from "@/lib/utils/frontmatter";
-import { computeHash } from "@/lib/services/conflict";
+import { applyPromptMeta, setPromptMetaFromPrompts } from "@/lib/services/cache";
 import type { PromptFrontmatter } from "@/lib/types/schema";
+import { sanitizeFilename } from "@/lib/utils/sanitizeFilename";
+
+function now() {
+  return new Date().toISOString();
+}
 
 export async function GET(request: Request) {
   const db = await getDb();
@@ -18,11 +21,26 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get("projectId");
+  const status = searchParams.get("status");
+  const query = searchParams.get("q")?.toLowerCase() ?? "";
+  const limit = Math.min(parseInt(searchParams.get("limit") ?? "1000", 10) || 1000, 1000);
   const all = await listPrompts(rootPath);
   setPromptMetaFromPrompts(all);
-  const filtered = projectId
+  let filtered = projectId
     ? all.filter((p) => p.projectId === projectId || p.project === projectId)
     : all;
+
+  if (status) {
+    filtered = filtered.filter((p) => p.status === status);
+  }
+
+  if (query.trim()) {
+    filtered = filtered.filter((p) =>
+      [p.title, p.model, p.tags.join(" ")].some((field) => (field ?? "").toLowerCase().includes(query))
+    );
+  }
+
+  filtered = filtered.slice(0, limit);
   return NextResponse.json(filtered);
 }
 
@@ -34,45 +52,58 @@ export async function POST(request: Request) {
   const rootPath = db.data!.settings.rootPath;
 
   if (!rootPath) {
-    return NextResponse.json({ message: "rootPath is not configured" }, { status: 400 });
+    return badRequest("rootPath is not configured");
   }
 
-  if (!frontmatter?.title || !frontmatter?.project) {
-    return NextResponse.json({ message: "frontmatter.title and project are required" }, { status: 400 });
+  const errors: string[] = [];
+  if (!frontmatter?.title) errors.push("title");
+  if (!frontmatter?.project) errors.push("project");
+  if (errors.length > 0) {
+    return badRequest("frontmatter.title and project are required", { missing: errors });
   }
 
-  const now = new Date().toISOString();
-  const fm = { ...frontmatter, updatedAt: frontmatter.updatedAt ?? now };
+  const normalizedFrontmatter: PromptFrontmatter = {
+    ...frontmatter,
+    title: frontmatter.title.trim(),
+    project: frontmatter.project.trim(),
+    updatedAt: frontmatter.updatedAt ?? now(),
+    createdAt: frontmatter.createdAt ?? now(),
+    tags: Array.isArray(frontmatter.tags) ? frontmatter.tags : []
+  };
 
-  const filePath = await writePrompt(rootPath, fm.project, fm, body ?? "");
-  const content = serializePrompt(fm, body ?? "");
-  const stat = await fs.stat(filePath);
+  const safeProject = sanitizeFilename(normalizedFrontmatter.project);
+  const projectExists = db.data!.projects.find(
+    (p) => p.name.toLowerCase() === normalizedFrontmatter.project.toLowerCase()
+  );
+
+  if (!projectExists) {
+    db.data!.projects.push({
+      id: `proj-${nanoid(6)}`,
+      name: normalizedFrontmatter.project,
+      status: "進行中",
+      promptCount: 0,
+      createdAt: normalizedFrontmatter.createdAt,
+      updatedAt: normalizedFrontmatter.updatedAt,
+      path: rootPath ? `${rootPath}/${safeProject}` : undefined
+    });
+  }
+
+  const { filePath, hash, mtimeMs } = await writePrompt(rootPath, normalizedFrontmatter.project, normalizedFrontmatter, body ?? "");
   const id = Buffer.from(filePath, "utf8").toString("base64url");
-
-  const project = db.data!.projects.find((p) => p.name === fm.project);
-  if (project) {
-    project.promptCount = (project.promptCount ?? 0) + 1;
-    project.updatedAt = fm.updatedAt;
-    await db.write();
-  }
 
   const all = await listPrompts(rootPath);
   setPromptMetaFromPrompts(all);
-  const meta = getPromptMeta(fm.project);
-  if (project && meta) {
-    project.promptCount = meta.promptCount;
-    project.updatedAt = meta.updatedAt ?? project.updatedAt;
-    await db.write();
-  }
+  db.data!.projects = applyPromptMeta(db.data!.projects);
+  await db.write();
 
   return NextResponse.json(
     {
       id,
-      projectId: fm.project,
-      frontmatter: fm,
+      projectId: normalizedFrontmatter.project,
+      frontmatter: normalizedFrontmatter,
       body: body ?? "",
-      hash: computeHash(content),
-      mtimeMs: stat.mtimeMs
+      hash,
+      mtimeMs
     },
     { status: 201 }
   );

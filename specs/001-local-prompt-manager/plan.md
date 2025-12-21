@@ -1,31 +1,35 @@
-# Implementation Plan: 本機提示詞管理系統（GUI/核心流程）
+# Implementation Plan: 本機提示詞管理系統（雙層儲存＋UI Prototype 對應）
 
-**Branch**: `001-local-prompt-manager` | **Date**: 2025-12-20 | **Spec**: `/specs/001-local-prompt-manager/spec.md`
+**Branch**: `001-local-prompt-manager` | **Date**: 2025-12-21 | **Spec**: specs/001-local-prompt-manager/spec.md
 **Input**: Feature specification from `/specs/001-local-prompt-manager/spec.md`
+
+**Note**: This模板由 `/speckit.plan` 產生，內容需全程維持繁體中文並符合專案憲章。
 
 ## Summary
 
-落地本機提示詞管理：雙層儲存（LowDB + 檔案系統 Markdown），支援收件匣草稿自動儲存、草稿刪除與轉正、專案 CRUD、提示詞直接新增/刪除/前言編輯、片語 CRUD 與插入、設定頁 rootPath 編輯。自動儲存間隔 2 秒，無輸入時暫停，恢復輸入再計時。
+本功能為本機執行的提示詞管理應用，採 Markdown 檔案 + LowDB JSON 雙層儲存，提供收件匣草稿→專案歸檔→提示詞編輯/複製→片語插入的工作流，並支援三欄佈局、Pin/專注模式、快捷鍵與本機持久化設定（localStorage）。
 
 ## Technical Context
 
-**Language/Version**: TypeScript, Next.js 14 (App Router), React 18  
-**Primary Dependencies**: LowDB、gray-matter、@uiw/react-codemirror、TailwindCSS、Zustand  
-**Storage**: LowDB (`db.json`) + 檔案系統 Markdown（`Prompts/{Project}/{SafeTitle}.md`）  
-**Testing**: Vitest（contract / unit / integration），覆蓋率門檻 ≥80%，關鍵路徑 100%  
-**Target Platform**: 本機瀏覽器（桌面）  
-**Project Type**: 單一 Next.js 應用  
-**Performance Goals**: 搜尋/複製/自動存取均在 2–3 秒內完成；啟動載入 50 專案/500 提示詞 ≤5 秒  
-**Constraints**: 離線本機運行；檔名需經合法化；外部檔案修改需提示並避免覆寫；缺 rootPath 時需引導設定  
-**Scale/Scope**: 專案 ≤100、單專案提示詞 ≤500、片語 ≤200
+**Language/Version**: TypeScript 5.x、Next.js 14（App Router）、Node.js 18  
+**Primary Dependencies**: Next.js / React 18、Tailwind CSS、lowdb、fs/promises、zod（schema 驗證）、localStorage（用戶端偏好）、React Query / SWR 類型資料抓取（現況待確認，若無則補）  
+**Storage**: 檔案系統（專案資料夾內的 Markdown 檔）＋ LowDB JSON（db.json）＋ localStorage（Pin/寬度/快捷偏好）  
+**Testing**: Vitest（單元/整合）、React Testing Library（元件）、契約測試（tests/contract）、整合測試（tests/integration）；需維持 TDD、覆蓋率 ≥80%  
+**Target Platform**: 桌面瀏覽器（Chromium/Edge）在本機 localhost 執行，Windows/macOS；Node 18 runtime  
+**Project Type**: Web（Next.js 全端：App Router + Route Handlers）  
+**Performance Goals**: 啟動/載入 50 專案 + 500 提示詞 ≤5 秒；搜尋 p95 ≤2 秒（1000 筆內）；自動儲存持續 2 秒節奏；Pin 收合動畫 150–250ms；精簡複製 ≤3 秒；草稿→轉正流程 ≤30 秒  
+**Constraints**: 離線優先（不依賴雲端），檔案系統權限沿用 OS 帳戶；localStorage 持久化佈局/Pin；需處理檔案衝突偵測與使用者決策；前端需符合 WCAG 2.1 AA（字級 +2px、不裁切）；資料僅單機存放，無應用層加密；觀測性/遙測在本機情境下的記錄/管道 **NEEDS CLARIFICATION**  
+**Scale/Scope**: 目標資料量：專案 ~50、提示詞 ~500、收件匣草稿 100+（需分頁/搜尋），片語庫數百筆；單機單用戶並發，前後端同機
 
 ## Constitution Check
 
-- 語言：文件須為繁體中文（符合 Principle V）
-- 測試：TDD、覆蓋率 80%+，關鍵路徑 100%（Principle II）
-- UX：一致、可及性、即時驗證與指引（Principle III）
-- 效能：遵守 SC-004/008 等時間門檻（Principle IV）
-- 現狀：無已知違反；後續設計與實作需保持繁中與測試覆蓋
+*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+
+- 語言：所有規劃/文件須為繁體中文（符合憲章 V），目前文件符合。
+- 測試：需 TDD、覆蓋率 ≥80%，契約/整合/單元測試比例遵守測試金字塔；現狀需於計畫中落實，不得省略。
+- UX/可及性：需遵守 WCAG 2.1 AA，快速回饋、錯誤可修正；Plan/設計需標記持續符合。
+- 效能：需量化並對應成功指標（已在 Technical Context），落地時需驗證。
+- 觀測性：Phase 0 已選擇「本機暫存、可匯出」遙測方案（5MB 環迴、無外傳、可停用/匯出），不再有未解事項。
 
 ## Project Structure
 
@@ -33,65 +37,57 @@
 
 ```text
 specs/001-local-prompt-manager/
-├── plan.md
-├── spec.md
-├── research.md
-├── data-model.md
-├── quickstart.md
-├── contracts/
-└── tasks.md
+├── plan.md              # 本文件（/speckit.plan 輸出）
+├── research.md          # Phase 0（研究/決策彙總）
+├── data-model.md        # Phase 1（資料模型/驗證）
+├── quickstart.md        # Phase 1（啟動/使用教學）
+├── contracts/           # Phase 1（API 合約 OpenAPI/GraphQL）
+└── tasks.md             # Phase 2（/speckit.tasks 產物，非本命令）
 ```
 
-### Source Code（實際）
+### Source Code (repository root)
 
 ```text
 app/
-  (workspace)/
-    workspace-shell.tsx
-    inbox-workspace.tsx
-    actions/archiveDraft.ts
-    components/
-      project-list.tsx            # 專案 CRUD 按鈕（新增/編輯/刪除）
-      inbox-list.tsx
-      draft-editor.tsx            # 草稿刪除＋歸檔表單（前言欄位）
-      prompt-list.tsx             # 刪除提示詞入口
-      prompt-editor.tsx           # 前言回填與衝突處理
-      prompt-header.tsx
-      snippet-panel.tsx           # 片語新增/編輯/刪除＋插入
-      error-boundary.tsx
-      top-bar.tsx
-    hooks/
-      useAutosaveDraft.ts
-      useAutosavePrompt.ts
-      useSnippetInsert.ts
-    store/useWorkspaceStore.ts
-  api/
-    projects/route.ts             # GET/POST/PATCH/DELETE 專案
-    inbox/route.ts
-    inbox/[id]/route.ts
-    prompts/route.ts              # GET (filter)、POST 建立提示詞
-    prompts/[id]/route.ts         # GET/POST/DELETE 單一提示詞
-    snippets/route.ts             # GET/POST/PATCH/DELETE 片語
-    snippets/[id]/usage/route.ts
-    settings/route.ts
-    search/route.ts
-    archive/route.ts              # 歸檔草稿 API proxy
+├── globals.css
+├── layout.tsx
+├── page.tsx
+├── (workspace)/                 # 前端工作區（列表/編輯器/片語）
+│   ├── actions/
+│   ├── components/
+│   ├── hooks/
+│   ├── settings/
+│   └── store/
+└── api/                         # Next Route Handlers（REST 風格）
+    ├── inbox/
+    ├── projects/
+    ├── prompts/
+    ├── search/
+    ├── settings/
+    └── snippets/
+
 lib/
-  db.ts
-  fs/prompts.ts
-  services/{cache,conflict,search,settings,telemetry}.ts
-  utils/{clipboard,frontmatter,sanitizeFilename}.ts
-  types/schema.ts
+├── db.ts
+├── db/
+│   └── fs/ (prompts.ts ...)
+├── services/ (cache/conflict/search/settings/telemetry)
+└── utils/ (clipboard/frontmatter/sanitizeFilename)
+
 tests/
-  contract/*
-  integration/*
-  unit/*
+├── contract/
+├── integration/
+└── unit/
+
+docs/ (env-setup, perf-checks, startup-guide, ux-checks, settings/telemetry)
+coverage/ (lcov-report)
 ```
 
-**Structure Decision**: 單一 Next.js 專案，前後端同 repo；App Router + LowDB + FS；測試位於 tests/{contract,integration,unit}。
+**Structure Decision**: 採 Next.js 單倉全端專案，前端位於 app/（含 Route Handlers），核心邏輯/資料層位於 lib/，測試依 pyramid 分布於 tests/contract|integration|unit。憑藉現有架構擴充，不新增子專案。
 
 ## Complexity Tracking
 
+> 目前無憲章違規需豁免，表格留空。
+
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| 無 | N/A | N/A |
+

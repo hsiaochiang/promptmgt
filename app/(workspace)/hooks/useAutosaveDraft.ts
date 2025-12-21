@@ -25,11 +25,17 @@ export function useAutosaveDraft({ draftId, title, content, hint, delay = 2000 }
     timerRef.current = setTimeout(async () => {
       setIsSaving(true);
       try {
+        const expectedUpdatedAt = useWorkspaceStore.getState().lastSavedAt ?? undefined;
         const res = await fetch(`/api/inbox/${draftId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, content, hint })
+          body: JSON.stringify({ title, content, hint, expectedUpdatedAt })
         });
+        if (res.status === 409) {
+          // 外部有更新，保持 dirty 由 UI 引導使用者處理
+          return;
+        }
+        if (!res.ok) return;
         const data = await res.json();
         setEditorDirty(false);
         setLastSavedAt(data.updatedAt ?? new Date().toISOString());

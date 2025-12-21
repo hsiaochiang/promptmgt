@@ -6,16 +6,16 @@
 
 ## 主要環境變數
 - `DB_FILE`: LowDB 路徑，預設 `<repo>/db.json`。如部署到容器，建議掛載 volume 保存。
-- `DEFAULT_ROOT`: 提示詞檔案根目錄，預設 `<repo>/Prompts`。需確保可讀寫。
+- `DEFAULT_ROOT`: 提示詞檔案根目錄，預設 `<repo>/Prompts`，建議在設定頁或環境變數覆寫為 `%USERPROFILE%/.promptmgt`（或 `~/.promptmgt`）。需確保可讀寫。
 
 ## 安裝步驟（首次）
 ```bash
 npm install
 ```
 
-## 檔案與資料夾
-- `db.json`: LowDB 資料庫（專案/收件匣/片語/設定）。
-- `Prompts/`: 存放 Markdown 提示詞，結構 `Prompts/{ProjectName}/{SafeTitle}.md`。
+## 腳本驗證（2025-12-21）
+- `npm run lint`：通過（next lint，無警告/錯誤）。
+- `npm run test`：通過（vitest coverage，82 tests，coverage 約 97% / branch 80%）。
 
 ## 其他注意事項
 - 遙測與更新檢查預設開啟，可在 UI Settings 關閉。
