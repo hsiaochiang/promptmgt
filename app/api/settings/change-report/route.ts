@@ -21,7 +21,7 @@ function parseTimestamp(value?: string | null) {
   return Number.isNaN(ts) ? null : ts;
 }
 
-export async function GET() {
+export async function GET(_request: Request) {
   try {
     const settings = await getSettings();
     const since = Date.now() - WINDOW_MS;

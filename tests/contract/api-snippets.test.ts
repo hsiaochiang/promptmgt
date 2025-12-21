@@ -105,8 +105,8 @@ describe("API /api/snippets", () => {
 
   it("increments usage count and timestamps", async () => {
     const { POST: create } = await import("@/app/api/snippets/route");
-    const { POST: increment } = await import("@/app/api/snippets/[id]/usage/route");
-    const { GET: GET_ID } = await import("@/app/api/snippets/[id]/route");
+    const { POST: increment } = await import("../../app/api/snippets/[id]/usage/route");
+    const { GET: GET_ID } = await import("../../app/api/snippets/[id]/route");
 
     const createdRes = await create(
       new Request("http://localhost/api/snippets", {
