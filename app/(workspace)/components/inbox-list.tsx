@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import type { InboxItem } from "@/lib/types/schema";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
+import { getInboxPageSize } from "@/lib/utils/config";
 
 interface Props {
   selectedId: string | null;
@@ -17,7 +18,7 @@ function formatPreview(text: string) {
 }
 
 export default function InboxList({ selectedId, onSelect, onLoaded, refreshKey = 0 }: Props) {
-  const pageSize = 50;
+  const pageSize = getInboxPageSize();
   const [items, setItems] = useState<InboxItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);

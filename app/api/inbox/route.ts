@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import { getDb } from "@/lib/db";
+import { getInboxPageSize } from "@/lib/utils/config";
 
 function now() {
   return new Date().toISOString();
@@ -10,10 +11,12 @@ export async function GET(request: Request) {
   const db = await getDb();
   const { searchParams } = new URL(request.url ?? "http://localhost/api/inbox");
 
+  const pageSize = getInboxPageSize();
+
   const query = searchParams.get("q")?.trim().toLowerCase() ?? "";
   const limitParam = Number(searchParams.get("limit"));
   const offsetParam = Number(searchParams.get("offset"));
-  const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 200) : undefined;
+  const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 200) : pageSize;
   const offset = Number.isFinite(offsetParam) && offsetParam > 0 ? offsetParam : 0;
 
   let inbox = [...db.data!.inbox].sort(
@@ -29,13 +32,9 @@ export async function GET(request: Request) {
 
   const total = inbox.length;
 
-  if (limit) {
-    const items = inbox.slice(offset, offset + limit);
-    const hasMore = offset + limit < total;
-    return NextResponse.json({ items, total, hasMore, limit, offset });
-  }
-
-  return NextResponse.json({ items: inbox, total, hasMore: false, limit: total, offset: 0 });
+  const items = inbox.slice(offset, offset + limit);
+  const hasMore = offset + limit < total;
+  return NextResponse.json({ items, total, hasMore, limit, offset });
 }
 
 export async function POST(request: Request) {
