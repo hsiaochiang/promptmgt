@@ -2,10 +2,7 @@ import { NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import { getDb } from "@/lib/db";
 import { getInboxPageSize } from "@/lib/utils/config";
-
-function now() {
-  return new Date().toISOString();
-}
+import { toIsoWithOffset } from "@/lib/utils/date";
 
 export async function GET(request: Request) {
   const db = await getDb();
@@ -45,8 +42,8 @@ export async function POST(request: Request) {
     title: payload.title ?? "新草稿",
     content: payload.content ?? "",
     hint: payload.hint ?? "",
-    createdAt: now(),
-    updatedAt: now()
+    createdAt: toIsoWithOffset(),
+    updatedAt: toIsoWithOffset()
   };
   db.data!.inbox.push(newItem);
   await db.write();

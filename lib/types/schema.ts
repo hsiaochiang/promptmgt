@@ -1,12 +1,18 @@
 import { z } from "zod";
+import { toIsoWithOffset } from "../utils/date";
 
 // 中文與英文字段並行，避免破壞現有資料，同時符合 data-model 驗證規範
 const ILLEGAL_FILENAME_CHARS = /[\/\\:*?"<>|]/;
+const ISO_UTC8_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?\+08:00$/;
 
-const isoDateString = z
+const isoUtc8String = z
   .string()
   .trim()
-  .refine((value) => !Number.isNaN(Date.parse(value)), { message: "必須為可解析的日期" });
+  .refine((value) => ISO_UTC8_REGEX.test(value) && !Number.isNaN(Date.parse(value)), {
+    message: "必須為 ISO 8601 (UTC+08:00) 日期字串"
+  });
+
+const isoUtc8StringWithDefault = isoUtc8String.default(() => toIsoWithOffset());
 
 const nonEmptyTrimmed = (max: number) =>
   z
@@ -43,8 +49,9 @@ export const projectSchema = z.object({
   name: nonEmptyTrimmed(100),
   status: projectStatusSchema,
   promptCount: z.number().int().nonnegative(),
-  updatedAt: isoDateString.optional(),
-  createdAt: isoDateString.optional(),
+  docPath: z.string().trim().min(1, "docPath 必填"),
+  updatedAt: isoUtc8StringWithDefault,
+  createdAt: isoUtc8StringWithDefault,
   path: z.string().optional()
 });
 
@@ -56,8 +63,8 @@ export const inboxItemSchema = z.object({
   title: z.string().trim().max(200).default(""),
   content: z.string().default(""),
   hint: z.string().trim().max(500).optional(),
-  createdAt: isoDateString,
-  updatedAt: isoDateString
+  createdAt: isoUtc8StringWithDefault,
+  updatedAt: isoUtc8StringWithDefault
 });
 
 export type InboxItem = z.infer<typeof inboxItemSchema>;
@@ -70,7 +77,9 @@ export const snippetSchema = z
     content: z.string().default(""),
     usage: z.number().int().nonnegative().optional(),
     usageCount: z.number().int().nonnegative().optional(),
-    lastUsedAt: isoDateString.optional()
+    lastUsedAt: isoUtc8String.optional(),
+    createdAt: isoUtc8StringWithDefault,
+    updatedAt: isoUtc8StringWithDefault
   })
   .transform((value) => ({
     ...value,
@@ -93,8 +102,8 @@ export const promptFrontmatterSchema = z.object({
   model: z.string().trim().max(100).optional(),
   tags: tagArraySchema,
   note: z.string().trim().max(2000).optional(),
-  updatedAt: isoDateString,
-  createdAt: isoDateString.optional()
+  updatedAt: isoUtc8StringWithDefault,
+  createdAt: isoUtc8StringWithDefault
 });
 
 export type PromptFrontmatter = z.infer<typeof promptFrontmatterSchema>;
@@ -135,7 +144,9 @@ export const settingsSchema = z.object({
   telemetryEnabled: z.boolean().default(true),
   updateCheckEnabled: z.boolean().default(true),
   telemetry: telemetrySettingsSchema.default({ enabled: true }),
-  pathExists: z.boolean().optional()
+  pathExists: z.boolean().optional(),
+  createdAt: isoUtc8StringWithDefault,
+  updatedAt: isoUtc8StringWithDefault
 });
 
 export type Settings = z.infer<typeof settingsSchema>;

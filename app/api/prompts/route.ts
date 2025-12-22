@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { join } from "path";
 import { nanoid } from "nanoid";
 import { badRequest } from "@/app/api/_lib/responses";
 import { listPrompts, writePrompt } from "@/lib/fs/prompts";
@@ -6,10 +7,7 @@ import { getDb } from "@/lib/db";
 import { applyPromptMeta, setPromptMetaFromPrompts } from "@/lib/services/cache";
 import type { PromptFrontmatter } from "@/lib/types/schema";
 import { sanitizeFilename } from "@/lib/utils/sanitizeFilename";
-
-function now() {
-  return new Date().toISOString();
-}
+import { toIsoWithOffset } from "@/lib/utils/date";
 
 export async function GET(request: Request) {
   const db = await getDb();
@@ -66,8 +64,8 @@ export async function POST(request: Request) {
     ...frontmatter,
     title: frontmatter.title.trim(),
     project: frontmatter.project.trim(),
-    updatedAt: frontmatter.updatedAt ?? now(),
-    createdAt: frontmatter.createdAt ?? now(),
+    updatedAt: frontmatter.updatedAt ?? toIsoWithOffset(),
+    createdAt: frontmatter.createdAt ?? toIsoWithOffset(),
     tags: Array.isArray(frontmatter.tags) ? frontmatter.tags : []
   };
 
@@ -84,7 +82,8 @@ export async function POST(request: Request) {
       promptCount: 0,
       createdAt: normalizedFrontmatter.createdAt,
       updatedAt: normalizedFrontmatter.updatedAt,
-      path: rootPath ? `${rootPath}/${safeProject}` : undefined
+      path: rootPath ? `${rootPath}/${safeProject}` : undefined,
+      docPath: join(rootPath ?? "", "Prompts", safeProject, "README.md")
     });
   }
 

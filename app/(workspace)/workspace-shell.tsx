@@ -10,6 +10,7 @@ import ChangeReportModal, { ChangeReportItem } from "./components/change-report-
 import SnippetPanel from "./components/snippet-panel";
 import DraftEditor from "./components/draft-editor";
 import { AsyncBoundary, ErrorBoundary } from "./components/error-boundary";
+import ProjectReadme from "./components/project-readme";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { InboxItem, PromptFrontmatter, Project, PromptStatus, PromptType, Snippet } from "@/lib/types/schema";
 import RootPathAlert from "./components/root-path-alert";
@@ -171,6 +172,8 @@ export default function WorkspaceShell() {
     setSelectedInboxId(null);
     setInboxRefreshKey((k) => k + 1);
   };
+
+  const selectedProject = projects.find((p) => p.name === selectedProjectId) ?? null;
 
   const createPrompt = async (options?: { title?: string; skipPrompt?: boolean }) => {
     const projectName = selectedProjectId ?? projects[0]?.name;
@@ -407,6 +410,10 @@ export default function WorkspaceShell() {
               >
                 <div className={`flex h-full gap-3 relative ${isSnippetPanelOpen ? "md:pr-[320px]" : ""}`}>
                   <div className="flex-1 flex flex-col gap-3">
+                    <ProjectReadme
+                      project={selectedProject}
+                      onSaved={() => setProjectRefreshKey((k) => k + 1)}
+                    />
                     {promptFrontmatter && (
                       <FrontmatterAccordion
                         frontmatter={promptFrontmatter}

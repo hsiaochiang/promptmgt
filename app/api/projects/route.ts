@@ -7,10 +7,7 @@ import { getDb } from "@/lib/db";
 import { applyPromptMeta, setPromptMetaFromPrompts } from "@/lib/services/cache";
 import { listPrompts } from "@/lib/fs/prompts";
 import { sanitizeFilename } from "@/lib/utils/sanitizeFilename";
-
-function now() {
-  return new Date().toISOString();
-}
+import { toIsoWithOffset } from "@/lib/utils/date";
 
 export async function GET() {
   const db = await getDb();
@@ -33,7 +30,8 @@ export async function POST(request: Request) {
   }
 
   const rootPath = db.data!.settings.rootPath ?? "";
-  const createdAt = now();
+  const createdAt = toIsoWithOffset();
+  const safeName = sanitizeFilename(name);
   const project = {
     id: payload.id ?? `proj-${nanoid(6)}`,
     name,
@@ -41,7 +39,8 @@ export async function POST(request: Request) {
     promptCount: 0,
     updatedAt: createdAt,
     createdAt,
-    path: rootPath ? join(rootPath, sanitizeFilename(name)) : undefined
+    path: rootPath ? join(rootPath, safeName) : undefined,
+    docPath: join(rootPath, "Prompts", safeName, "README.md")
   };
   db.data!.projects.push(project);
   await db.write();
@@ -74,11 +73,13 @@ export async function PATCH(request: Request) {
 
   if (status) project.status = status;
   if (typeof promptCount === "number") project.promptCount = promptCount;
-  project.updatedAt = now();
+  project.updatedAt = toIsoWithOffset();
 
   const rootPath = db.data!.settings.rootPath ?? "";
   if (rootPath && project.name) {
-    project.path = join(rootPath, sanitizeFilename(project.name));
+    const safe = sanitizeFilename(project.name);
+    project.path = join(rootPath, safe);
+    project.docPath = join(rootPath, "Prompts", safe, "README.md");
   }
 
   await db.write();

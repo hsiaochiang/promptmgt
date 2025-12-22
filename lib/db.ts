@@ -4,9 +4,22 @@ import { homedir } from "os";
 import { Low } from "lowdb";
 import { JSONFile } from "lowdb/node";
 import { databaseSchema, type DatabaseSchema } from "./types/schema";
+import { toIsoWithOffset } from "./utils/date";
 
 const DB_FILE = process.env.DB_FILE || join(process.cwd(), "db.json");
 const DEFAULT_ROOT = process.env.DEFAULT_ROOT || join(homedir(), ".promptmgt");
+
+function ensureIsoUtc8(value?: string) {
+  if (value && value.includes("+08:00") && !Number.isNaN(Date.parse(value))) {
+    return value;
+  }
+  const parsed = value ? new Date(value) : new Date();
+  return toIsoWithOffset(parsed);
+}
+
+function projectDocPath(name: string) {
+  return join(DEFAULT_ROOT, "Prompts", name || "未命名專案", "README.md");
+}
 
 const seedData: DatabaseSchema = {
   projects: [
@@ -15,21 +28,27 @@ const seedData: DatabaseSchema = {
       name: "AI 工作流課程",
       status: "進行中",
       promptCount: 12,
-      updatedAt: "2025-12-10T00:00:00.000Z"
+      docPath: projectDocPath("AI 工作流課程"),
+      createdAt: ensureIsoUtc8("2025-12-01T00:00:00.000Z"),
+      updatedAt: ensureIsoUtc8("2025-12-10T00:00:00.000Z")
     },
     {
       id: "proj-2",
       name: "企業資金詢價平台",
       status: "進行中",
       promptCount: 8,
-      updatedAt: "2025-12-08T00:00:00.000Z"
+      docPath: projectDocPath("企業資金詢價平台"),
+      createdAt: ensureIsoUtc8("2025-12-01T00:00:00.000Z"),
+      updatedAt: ensureIsoUtc8("2025-12-08T00:00:00.000Z")
     },
     {
       id: "proj-3",
       name: "貿易管理業務知識資料庫",
       status: "規劃中",
       promptCount: 5,
-      updatedAt: "2025-12-05T00:00:00.000Z"
+      docPath: projectDocPath("貿易管理業務知識資料庫"),
+      createdAt: ensureIsoUtc8("2025-12-01T00:00:00.000Z"),
+      updatedAt: ensureIsoUtc8("2025-12-05T00:00:00.000Z")
     }
   ],
   inbox: [
@@ -37,16 +56,16 @@ const seedData: DatabaseSchema = {
       id: "inbox-1",
       title: "TAIA 官網改版－需求釐清提示詞草稿",
       content: "",
-      createdAt: "2025-12-09T00:00:00.000Z",
-      updatedAt: "2025-12-09T00:00:00.000Z",
+      createdAt: ensureIsoUtc8("2025-12-09T00:00:00.000Z"),
+      updatedAt: ensureIsoUtc8("2025-12-09T00:00:00.000Z"),
       hint: "尚未指定專案與標籤"
     },
     {
       id: "inbox-2",
       title: "RAG 教學簡報逐字稿生成 v1",
       content: "",
-      createdAt: "2025-12-09T00:00:00.000Z",
-      updatedAt: "2025-12-09T00:00:00.000Z",
+      createdAt: ensureIsoUtc8("2025-12-09T00:00:00.000Z"),
+      updatedAt: ensureIsoUtc8("2025-12-09T00:00:00.000Z"),
       hint: "候選：AI 工作流課程 / 外部授課"
     }
   ],
@@ -58,7 +77,10 @@ const seedData: DatabaseSchema = {
       usage: 18,
       usageCount: 18,
       content:
-        "你是一位資深系統分析與網站規劃顧問，熟悉跨部門專案協作與需求釐清。"
+        "你是一位資深系統分析與網站規劃顧問，熟悉跨部門專案協作與需求釐清。",
+      createdAt: ensureIsoUtc8("2025-12-05T00:00:00.000Z"),
+      updatedAt: ensureIsoUtc8("2025-12-10T00:00:00.000Z"),
+      lastUsedAt: ensureIsoUtc8("2025-12-10T00:00:00.000Z")
     },
     {
       id: "s-2",
@@ -66,7 +88,10 @@ const seedData: DatabaseSchema = {
       category: "輸出格式",
       usage: 24,
       usageCount: 24,
-      content: "請以 Markdown 格式輸出結果，必要時使用表格彙整重點。"
+      content: "請以 Markdown 格式輸出結果，必要時使用表格彙整重點。",
+      createdAt: ensureIsoUtc8("2025-12-05T00:00:00.000Z"),
+      updatedAt: ensureIsoUtc8("2025-12-10T00:00:00.000Z"),
+      lastUsedAt: ensureIsoUtc8("2025-12-10T00:00:00.000Z")
     },
     {
       id: "s-3",
@@ -74,7 +99,10 @@ const seedData: DatabaseSchema = {
       category: "限制條件",
       usage: 15,
       usageCount: 15,
-      content: "所有回答必須以向量資料庫中的內容為主，無相關資訊時請明確回答不知道。"
+      content: "所有回答必須以向量資料庫中的內容為主，無相關資訊時請明確回答不知道。",
+      createdAt: ensureIsoUtc8("2025-12-05T00:00:00.000Z"),
+      updatedAt: ensureIsoUtc8("2025-12-10T00:00:00.000Z"),
+      lastUsedAt: ensureIsoUtc8("2025-12-10T00:00:00.000Z")
     }
   ],
   settings: {
@@ -84,9 +112,56 @@ const seedData: DatabaseSchema = {
     fontScale: 2,
     telemetryEnabled: true,
     updateCheckEnabled: true,
-    telemetry: { enabled: true }
+    telemetry: { enabled: true },
+    createdAt: ensureIsoUtc8(),
+    updatedAt: ensureIsoUtc8()
   }
 };
+
+function normalizeData(raw?: Partial<DatabaseSchema>): DatabaseSchema {
+  const source = raw ?? seedData;
+  const projects = (source.projects ?? seedData.projects).map((proj) => ({
+    ...proj,
+    docPath: proj.docPath ?? projectDocPath(proj.name ?? ""),
+    promptCount: typeof proj.promptCount === "number" ? proj.promptCount : 0,
+    createdAt: ensureIsoUtc8(proj.createdAt),
+    updatedAt: ensureIsoUtc8(proj.updatedAt)
+  }));
+
+  const inbox = (source.inbox ?? seedData.inbox).map((item) => ({
+    ...item,
+    createdAt: ensureIsoUtc8(item.createdAt),
+    updatedAt: ensureIsoUtc8(item.updatedAt)
+  }));
+
+  const snippets = (source.snippets ?? seedData.snippets).map((snip) => {
+    const usage =
+      typeof snip.usage === "number"
+        ? snip.usage
+        : typeof snip.usageCount === "number"
+          ? snip.usageCount
+          : 0;
+    const lastUsedAt = snip.lastUsedAt ? ensureIsoUtc8(snip.lastUsedAt) : undefined;
+    return {
+      ...snip,
+      usage,
+      usageCount: typeof snip.usageCount === "number" ? snip.usageCount : usage,
+      createdAt: ensureIsoUtc8(snip.createdAt),
+      updatedAt: ensureIsoUtc8(snip.updatedAt),
+      lastUsedAt
+    };
+  });
+
+  const settings = {
+    ...seedData.settings,
+    ...(source.settings ?? {}),
+    rootPath: (source.settings ?? {}).rootPath ?? seedData.settings.rootPath,
+    createdAt: ensureIsoUtc8((source.settings as any)?.createdAt),
+    updatedAt: ensureIsoUtc8((source.settings as any)?.updatedAt)
+  };
+
+  return { projects, inbox, snippets, settings };
+}
 
 function createWriteQueue() {
   let current = Promise.resolve();
@@ -116,20 +191,11 @@ async function initDb() {
         mkdirSync(DEFAULT_ROOT, { recursive: true });
       }
       const adapter = new JSONFile<DatabaseSchema>(DB_FILE);
-      const db = new Low<DatabaseSchema>(adapter, seedData);
+      const db = new Low<DatabaseSchema>(adapter, normalizeData(seedData));
       await db.read();
 
-      const parsed = databaseSchema.safeParse(db.data);
-      if (parsed.success) {
-        db.data = parsed.data;
-      } else {
-        const merged = {
-          ...seedData,
-          ...(db.data ?? {}),
-          settings: { ...seedData.settings, ...(db.data as any)?.settings }
-        };
-        db.data = databaseSchema.parse(merged);
-      }
+      const normalized = normalizeData(db.data ?? seedData);
+      db.data = databaseSchema.parse(normalized);
 
       // serialize concurrent writes to prevent file corruption
       const originalWrite = db.write.bind(db);

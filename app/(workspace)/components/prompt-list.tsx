@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { PromptListItem } from "@/lib/types/schema";
+import { formatForUI_MMDD_HHmm } from "@/lib/utils/date";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 import { AsyncBoundary } from "./error-boundary";
 
@@ -429,7 +430,7 @@ export default function PromptList({ refreshKey = 0, onDeletePrompt, onSelectedW
                   />
                   <span className="font-semibold truncate">{prompt.title}</span>
                 </div>
-                <span className="text-[10px] text-slate-400">更新：{prompt.updatedAt}</span>
+                <span className="text-[10px] text-slate-400">更新：{formatForUI_MMDD_HHmm(prompt.updatedAt ?? "")}</span>
               </div>
               <div className="flex items-center justify-between text-[11px]">
                 <div className="flex items-center gap-2">

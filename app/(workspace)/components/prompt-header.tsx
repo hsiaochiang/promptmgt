@@ -2,6 +2,7 @@
 
 import React, { useEffect } from "react";
 import { buildFullContent, buildSlimContent } from "@/lib/utils/clipboard";
+import { formatForUI_HHmm } from "@/lib/utils/date";
 import type { PromptFrontmatter } from "@/lib/types/schema";
 
 interface Props {
@@ -74,6 +75,9 @@ export default function PromptHeader({ title, frontmatter, body, onToggleFocus }
             <span>Ctrl + C 完整</span>
             <span>Ctrl + Shift + C 精簡</span>
           </div>
+          {frontmatter?.updatedAt ? (
+            <div className="text-[10px] text-slate-500">最後儲存：{formatForUI_HHmm(frontmatter.updatedAt)}</div>
+          ) : null}
         </div>
       </div>
       {frontmatter && (

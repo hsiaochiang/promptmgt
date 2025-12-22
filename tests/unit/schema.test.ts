@@ -1,12 +1,8 @@
 import { describe, expect, it } from "vitest";
-import {
-  projectSchema,
-  promptFrontmatterSchema,
-  settingsSchema,
-  snippetSchema
-} from "@/lib/types/schema";
+import { projectSchema, promptFrontmatterSchema, settingsSchema, snippetSchema } from "@/lib/types/schema";
+import { toIsoWithOffset } from "@/lib/utils/date";
 
-const now = new Date().toISOString();
+const now = toIsoWithOffset();
 
 describe("promptFrontmatterSchema", () => {
   it("trims and deduplicates tags", () => {
@@ -43,6 +39,7 @@ describe("projectSchema", () => {
       name: "AI 工作流課程",
       status: "進行中",
       promptCount: 0,
+      docPath: "C:/tmp/AI-工作流課程/README.md",
       updatedAt: now
     });
     expect(parsed.status).toBe("進行中");
@@ -52,6 +49,7 @@ describe("projectSchema", () => {
       name: "Project B",
       status: "active",
       promptCount: 1,
+      docPath: "C:/tmp/Project-B/README.md",
       updatedAt: now
     });
     expect(english.status).toBe("active");

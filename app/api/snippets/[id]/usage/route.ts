@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { notFound } from "@/app/api/_lib/responses";
 import { getDb } from "@/lib/db";
+import { toIsoWithOffset } from "@/lib/utils/date";
 
 export async function POST(_: Request, { params }: { params: { id: string } }) {
   const db = await getDb();
@@ -10,7 +11,7 @@ export async function POST(_: Request, { params }: { params: { id: string } }) {
   const nextCount = Number.isFinite(current) && current >= 0 ? current + 1 : 1;
   snippet.usage = nextCount;
   snippet.usageCount = nextCount;
-  snippet.lastUsedAt = new Date().toISOString();
+  snippet.lastUsedAt = toIsoWithOffset();
   await db.write();
   return NextResponse.json(snippet);
 }

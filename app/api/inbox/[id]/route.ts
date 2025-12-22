@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { conflict, notFound } from "@/app/api/_lib/responses";
 import { getDb } from "@/lib/db";
-
-function now() {
-  return new Date().toISOString();
-}
+import { toIsoWithOffset } from "@/lib/utils/date";
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
   const db = await getDb();
@@ -29,7 +26,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   draft.title = payload.title ?? draft.title;
   draft.content = payload.content ?? draft.content;
   draft.hint = payload.hint ?? draft.hint;
-  draft.updatedAt = now();
+  draft.updatedAt = toIsoWithOffset();
   await db.write();
   return NextResponse.json(draft);
 }

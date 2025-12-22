@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSettings } from "@/lib/services/settings";
 import { listPrompts } from "@/lib/fs/prompts";
 import { getDb } from "@/lib/db";
+import { toIsoWithOffset } from "@/lib/utils/date";
 
 interface ChangeReportItem {
   id: string;
@@ -42,7 +43,7 @@ export async function GET(_request: Request) {
           kind: "prompt" as const,
           title: prompt.title,
           action,
-          timestamp: new Date(ts).toISOString(),
+          timestamp: toIsoWithOffset(new Date(ts)),
           path: prompt.path,
           projectId: prompt.projectId
         } satisfies ChangeReportItem;
@@ -65,7 +66,7 @@ export async function GET(_request: Request) {
           kind: "inbox" as const,
           title: item.title || "未命名草稿",
           action,
-          timestamp: new Date(ts).toISOString(),
+          timestamp: toIsoWithOffset(new Date(ts)),
           path: "收件匣"
         } satisfies ChangeReportItem;
       })

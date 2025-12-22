@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import type { Project, ProjectStatus } from "@/lib/types/schema";
+import { formatForUI_MMDD_HHmm } from "@/lib/utils/date";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 
 interface Props {
@@ -173,7 +174,7 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
             </div>
             <div className="flex items-center justify-between text-[10px] opacity-70">
               <span className="px-2 py-0.5 rounded-full bg-white/70 border border-slate-200">{p.status}</span>
-              <span>更新：{p.updatedAt ?? "—"}</span>
+              <span>更新：{formatForUI_MMDD_HHmm(p.updatedAt ?? "")}</span>
             </div>
             <div className="flex justify-end gap-1 text-[10px] mt-1">
               <button

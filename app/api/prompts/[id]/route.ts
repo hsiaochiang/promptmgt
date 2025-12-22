@@ -5,13 +5,10 @@ import { hasConflict } from "@/lib/services/conflict";
 import { getDb } from "@/lib/db";
 import { listPrompts, readPrompt, writePrompt } from "@/lib/fs/prompts";
 import { applyPromptMeta, setPromptMetaFromPrompts } from "@/lib/services/cache";
+import { toIsoWithOffset } from "@/lib/utils/date";
 
 function decodeId(id: string) {
   return Buffer.from(id, "base64url").toString("utf8");
-}
-
-function now() {
-  return new Date().toISOString();
 }
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
@@ -54,7 +51,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
   const updatedFrontmatter = {
     ...baseFrontmatter,
     ...frontmatter,
-    updatedAt: frontmatter?.updatedAt ?? baseFrontmatter.updatedAt ?? now()
+    updatedAt: frontmatter?.updatedAt ?? baseFrontmatter.updatedAt ?? toIsoWithOffset()
   };
   const projectName = updatedFrontmatter.project ?? baseFrontmatter.project;
 

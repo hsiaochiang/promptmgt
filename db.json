@@ -5,21 +5,27 @@
       "name": "AI 工作流課程",
       "status": "進行中",
       "promptCount": 1,
-      "updatedAt": "2025-12-21T04:25:36.595Z"
+      "docPath": "C:\\Users\\wilson_hsiao\\.promptmgt\\Prompts\\AI 工作流課程\\README.md",
+      "updatedAt": "2025-12-21T04:25:36.595Z",
+      "createdAt": "2025-12-22T03:36:13.315+08:00"
     },
     {
       "id": "proj-2",
       "name": "企業資金詢價平台",
       "status": "進行中",
       "promptCount": 3,
-      "updatedAt": "2025-12-22T02:29:21.313Z"
+      "docPath": "C:\\Users\\wilson_hsiao\\.promptmgt\\Prompts\\企業資金詢價平台\\README.md",
+      "updatedAt": "2025-12-22T02:29:21.313Z",
+      "createdAt": "2025-12-22T03:36:13.315+08:00"
     },
     {
       "id": "proj-3",
       "name": "貿易管理業務知識資料庫",
       "status": "規劃中",
       "promptCount": 1,
-      "updatedAt": "2025-12-21T04:25:18.477Z"
+      "docPath": "C:\\Users\\wilson_hsiao\\.promptmgt\\Prompts\\貿易管理業務知識資料庫\\README.md",
+      "updatedAt": "2025-12-21T04:25:18.477Z",
+      "createdAt": "2025-12-22T03:36:13.315+08:00"
     }
   ],
   "inbox": [],
@@ -31,7 +37,9 @@
       "content": "你是一位資深系統分析與網站規劃顧問，熟悉跨部門專案協作與需求釐清。",
       "usage": 22,
       "usageCount": 22,
-      "lastUsedAt": "2025-12-20T14:32:42.816Z"
+      "lastUsedAt": "2025-12-20T14:32:42.816+08:00",
+      "createdAt": "2025-12-22T03:36:13.315+08:00",
+      "updatedAt": "2025-12-22T03:36:13.315+08:00"
     },
     {
       "id": "s-2",
@@ -40,7 +48,9 @@
       "content": "請以 Markdown 格式輸出結果，必要時使用表格彙整重點。",
       "usage": 26,
       "usageCount": 26,
-      "lastUsedAt": "2025-12-20T14:32:44.181Z"
+      "lastUsedAt": "2025-12-20T14:32:44.181+08:00",
+      "createdAt": "2025-12-22T03:36:13.315+08:00",
+      "updatedAt": "2025-12-22T03:36:13.315+08:00"
     },
     {
       "id": "s-3",
@@ -49,7 +59,9 @@
       "content": "所有回答必須以向量資料庫中的內容為主，無相關資訊時請明確回答不知道。",
       "usage": 16,
       "usageCount": 16,
-      "lastUsedAt": "2025-12-20T12:42:07.199Z"
+      "lastUsedAt": "2025-12-20T12:42:07.199+08:00",
+      "createdAt": "2025-12-22T03:36:13.315+08:00",
+      "updatedAt": "2025-12-22T03:36:13.315+08:00"
     },
     {
       "id": "snip-baBSSU",
@@ -57,7 +69,9 @@
       "category": "其他",
       "content": "commit with detailed zh-tw log",
       "usage": 0,
-      "usageCount": 0
+      "usageCount": 0,
+      "createdAt": "2025-12-22T03:36:13.315+08:00",
+      "updatedAt": "2025-12-22T03:36:13.315+08:00"
     }
   ],
   "settings": {
@@ -70,6 +84,8 @@
     "telemetry": {
       "enabled": true
     },
-    "pathExists": false
+    "pathExists": false,
+    "createdAt": "2025-12-22T03:36:13.315+08:00",
+    "updatedAt": "2025-12-22T03:36:13.315+08:00"
   }
 }
