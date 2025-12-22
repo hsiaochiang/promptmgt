@@ -193,7 +193,167 @@
 - US3：T026/T027/T028 併行；T029 併行後再進行 T030/T031。
 - US4：T032/T033 併行；T034 併行後再做 T035/T036。
 - US5：T037/T038 併行；T039/T040/T041 併行，最後 T042/T043。
+# Tasks: 本機提示詞管理系統（雙層儲存＋UI Prototype 對應）
+
+**Input**: specs/001-local-prompt-manager/
+**Prerequisites**: plan.md、spec.md（User Stories）、research.md、data-model.md、contracts/
+
+## Phase 1: Setup
+
+**Purpose**: 專案啟動與環境基線
+
+- [ ] T001 檢查 Node 18 與 npm 腳本可用，更新 package.json scripts 與 docs/env-setup.md 的啟動/測試指引
+- [ ] T002 建立預設根路徑與安全性說明於 docs/startup-guide.md（含 `%USERPROFILE%/.promptmgt` 隱藏資料夾與存取權限）
+- [ ] T003 [P] 執行 `npm run lint`、`npm run test -- --watch=false` 並記錄結果於 docs/env-setup.md
+
+---
+
+## Phase 2: Foundational
+
+**Purpose**: 完成所有使用者故事前的阻塞基礎能力
+
+- [ ] T004 建立共用 zod schema（Project/Prompt/Inbox/Snippet/Settings）含 `docPath` 與 ISO+08:00 `createdAt/updatedAt` 驗證於 lib/types/schema.ts
+- [ ] T005 [P] 實作 ISO+08:00 時間工具與 Frontmatter 自動補值於 lib/utils/date.ts、lib/utils/frontmatter.ts
+- [ ] T006 實作檔案與 LowDB 寫入序列化佇列＋ mtime/hash 驗證於 lib/db.ts、lib/db/fs/prompts.ts
+- [ ] T007 [P] 強化檔名清理與 Frontmatter 降級邏輯於 lib/utils/sanitizeFilename.ts、lib/utils/frontmatter.ts
+- [ ] T008 [P] 建立 localStorage 偏好封裝（Pin/寬度/字級）與 schema 驗證於 app/(workspace)/store/useWorkspaceStore.ts
+- [ ] T009 實作本機觀測性與更新檢查服務於 lib/services/telemetry.ts、docs/settings/telemetry.md（含可停用/匯出/https 限制）
+- [ ] T010 [P] 統一 API 錯誤格式 `{code,message,details}` 中介層於 app/api/_lib/ 或 middleware 並套用所有 Route Handlers
+
+---
+
+## Phase 3: User Story 1 - 收件匣快速草稿捕捉 (Priority: P1) 🎯 MVP
+
+**Goal**: 允許在收件匣快速輸入 Markdown 草稿並自動儲存，關閉重開可復原。
+
+**Independent Test**: 僅啟用收件匣與自動儲存，流程「開啟 → 輸入 → 關閉 → 重開」內容完整且排序依最後編輯時間。
+
+### Tests
+- [ ] T011 [P] [US1] 編寫 /api/inbox 契約測試（列表/新增/更新/刪除）於 tests/contract/api-inbox.test.ts
+- [ ] T012 [P] [US1] 編寫自動儲存與復原整合測試於 tests/integration/us1-draft-autosave.test.ts
+- [ ] T013 [P] [US1] 編寫 autosave/draft UI 單元測試於 tests/unit/useAutosaveDraft.test.tsx
+
+### Implementation
+- [ ] T014 [P] [US1] 實作草稿資料層與快取（列表/新增/更新/刪除）於 lib/db/fs/prompts.ts、lib/services/cache.ts
+- [ ] T015 [P] [US1] 實作 /app/api/inbox/route.ts 與 /app/api/inbox/[id]/route.ts（2 秒 debounce、mtime 衝突 409）
+- [ ] T016 [US1] 建立收件匣 UI（autosave/loading 指示）於 app/(workspace)/components/inbox-list.tsx、draft-editor.tsx
+- [ ] T017 [US1] 實作刪除草稿與計數刷新動作於 app/(workspace)/actions/archiveDraft.ts
+
+**Checkpoint**: US1 可獨立驗證捕捉/自動儲存/復原。
+
+---
+
+## Phase 4: User Story 2 - 專案歸檔與列表總覽 (Priority: P1)
+
+**Goal**: 草稿轉正為正式提示詞，維護專案列表與計數，含專案 README（docPath）。
+
+**Independent Test**: 「草稿轉正 → 專案列表更新 → 生成 Markdown + README」可單獨驗證，專案路徑失效時能提示並重定位。
+
+### Tests
+- [ ] T018 [P] [US2] 編寫 /api/projects 與 /api/prompts 契約測試於 tests/contract/api-projects-prompts.test.ts
+- [ ] T019 [P] [US2] 編寫草稿轉正與專案計數整合測試於 tests/integration/us2-archive-draft.test.ts
+- [ ] T020 [P] [US2] 編寫檔名清理與 Frontmatter 生成單元測試於 tests/unit/adapters-utils.test.ts
+
+### Implementation
+- [ ] T021 [P] [US2] 實作 Project CRUD Route Handlers（含 docPath）於 app/api/projects/route.ts、app/api/projects/[id]/route.ts
+- [ ] T022 [P] [US2] 實作 Prompt CRUD/轉正 Route Handlers（包含 ISO 時間補值與路徑失效處理）於 app/api/prompts/route.ts、app/api/prompts/[id]/route.ts
+- [ ] T023 [US2] 擴充搜尋與快取服務支援專案/狀態篩選與計數刷新於 lib/services/search.ts、lib/services/cache.ts
+- [ ] T024 [US2] 更新專案/提示詞列表 UI（狀態切換、重複名稱提示、時間顯示 MM/DD HH:mm）於 app/(workspace)/components/project-list.tsx、prompt-list.tsx、prompt-header.tsx
+- [ ] T025 [US2] 處理根路徑失效提示與重新定位於 app/(workspace)/components/root-path-alert.tsx、app/(workspace)/settings/page.tsx
+- [ ] T026 [US2] 實作專案 README 檔案存取於 lib/db/fs/projects.ts（建立/讀寫 docPath 並自動生成 README.md）
+- [ ] T027 [US2] 實作 README GET/PUT Route Handler 於 app/api/projects/[id]/readme/route.ts
+- [ ] T028 [US2] 建立專案說明編輯 UI 並預設建立 README 於 app/(workspace)/components/project-readme.tsx（路徑範例 Prompts/{Project}/README.md）
+
+**Checkpoint**: US1+US2 可獨立運作並生成 README，計數與路徑狀態一致。
+
+---
+
+## Phase 5: User Story 3 - Markdown 編輯與精準複製 (Priority: P1)
+
+**Goal**: 提供 Markdown 編輯/預覽，支援完整/精簡複製、專注模式、前言 accordion，時間顯示一致。
+
+**Independent Test**: 「開啟提示詞 → 編輯 → 預覽 → 精簡複製」可獨立驗證；標題列 HH:mm 顯示於頂部且更新。
+
+### Tests
+- [ ] T029 [P] [US3] 編寫 /api/prompts/{id} 契約測試於 tests/contract/api-prompts-detail.test.ts
+- [ ] T030 [P] [US3] 編寫精簡/完整複製與專注模式整合測試於 tests/integration/us3-copy-focus.test.tsx
+- [ ] T031 [P] [US3] 編寫 clipboard/frontmatter 單元測試於 tests/unit/clipboard.test.ts
+
+### Implementation
+- [ ] T032 [P] [US3] 增強複製與 Frontmatter 處理於 lib/utils/clipboard.ts、lib/utils/frontmatter.ts（含降級模式與錯誤處理）
+- [ ] T033 [US3] 更新編輯器與標題列（專注模式、accordion 預設收合、HH:mm 顯示置頂）於 app/(workspace)/components/prompt-editor.tsx、prompt-header.tsx
+- [ ] T034 [US3] 確保 autosave 與快捷鍵（Ctrl+Shift+C）於 app/(workspace)/hooks/useAutosavePrompt.ts、useSnippetInsert.ts 正常運作
+- [ ] T035 [US3] 套用時間格式 `formatForUI_MMDD_HHmm()` 至列表/變更報告/通知於 app/(workspace)/components/prompt-list.tsx、project-list.tsx、top-bar.tsx、snackbars
+
+**Checkpoint**: US1-3 可獨立驗證，複製/專注/時間顯示一致。
+
+---
+
+## Phase 6: User Story 5 - 佈局與操作效率 (Priority: P1)
+
+**Goal**: 三欄拖曳持久化、Pin 開關/召回、快捷鍵與危險操作 Undo；字級 +2px 不裁切。
+
+**Independent Test**: 只啟用 UI 交互即可驗證拖曳寬度持久化、Pin 收合 SLA、快捷鍵成功率、Undo/Redo 行為。
+
+### Tests
+- [ ] T036 [P] [US5] 編寫 Pin 收合與拖曳寬度持久化整合測試於 tests/integration/us5-layout-pin.test.tsx
+- [ ] T037 [P] [US5] 編寫快捷鍵映射與偏好持久化單元測試於 tests/unit/shortcuts.test.ts
+
+### Implementation
+- [ ] T038 [P] [US5] 實作三欄寬度拖曳持久化於 app/(workspace)/components/workspace-shell.tsx（150–250ms 收合 SLA）
+- [ ] T039 [US5] 實作 Pin 預設 ON、OFF 點選自動收合與 Alt+L 召回於 app/(workspace)/components/prompt-list.tsx、store/useWorkspaceStore.ts
+- [ ] T040 [US5] 實作全域快捷鍵（Alt+L/P/N/Shift+N、Ctrl+K、Ctrl+Shift+C）於 app/(workspace)/components/top-bar.tsx 或 hotkey handler
+- [ ] T041 [US5] 實作危險操作二段確認 + Undo snackbar（5–10 秒）於 app/(workspace)/components/prompt-list.tsx、project-list.tsx
+- [ ] T042 [US5] 調整全站字級 +2px 與行高於 app/globals.css，通過 docs/ux-checks.md 檢核
+
+**Checkpoint**: US5 UI 體驗完整，可與其他故事並行驗證。
+
+---
+
+## Phase 7: User Story 4 - 片語剪貼簿插入與統計 (Priority: P2)
+
+**Goal**: 搜尋/插入片語至游標並記錄使用次數，Drawer 開關不重置編輯器。
+
+**Independent Test**: 「新增片語 → 搜尋 → 插入 → 查看使用次數」可獨立驗證。
+
+### Tests
+- [ ] T043 [P] [US4] 編寫 /api/snippets 契約測試於 tests/contract/api-snippets.test.ts
+- [ ] T044 [P] [US4] 編寫 Drawer 插入與 usageCount 更新整合測試於 tests/integration/us4-snippet-insert.test.tsx
+
+### Implementation
+- [ ] T045 [P] [US4] 實作 Snippet CRUD/usage API 於 app/api/snippets/route.ts、app/api/snippets/[id]/route.ts
+- [ ] T046 [US4] 建立片語 Drawer（Alt+S、overlay/Esc 關閉、不重置編輯器）於 app/(workspace)/components/snippet-panel.tsx
+- [ ] T047 [US4] 強化 useSnippetInsert 與右側工具列觸發於 app/(workspace)/hooks/useSnippetInsert.ts、app/(workspace)/components/top-bar.tsx
+
+**Checkpoint**: US4 完成片語搜尋/插入/統計且不影響編輯器狀態。
+
+---
+
+## Final Phase: Polish & Cross-Cutting Concerns
+
+- [ ] T048 [P] 更新 quickstart 與 README（根路徑、安全性、遙測/更新檢查、快捷鍵、片語 Drawer、時間格式）於 specs/001-local-prompt-manager/quickstart.md、docs/startup-guide.md
+- [ ] T049 [P] 撰寫並執行效能量測腳本（啟動/搜尋/精簡複製/Pin 動畫/autosave）於 docs/perf-checks.md，對應 SC-001/003/004/008/011/021
+- [ ] T050 [P] 紀錄效能實測結果與調優方案於 docs/perf-checks.md（若未達標同步建立改進計畫）
+- [ ] T051 [P] 建立成功指標對應表 SC-001~SC-020 於 docs/perf-checks.md 或專章，標示驗證頻率與責任人
+- [ ] T052 [P] 更新 docs/ux-checks.md：涵蓋錯誤文案、Undo 流程、路徑失效、時間顯示、空態/截斷提示
+- [ ] T053 [P] 執行 `vitest --coverage` 並於 coverage/lcov-report/ 摘要 <80% 或關鍵路徑 <100% 檔案清單，寫入 docs/perf-checks.md
+- [ ] T054 [P] 補齊關鍵路徑測試（conflict handling、rootPath init、search truncation、batch ops、Undo）於 tests/unit/ 與 tests/integration/
+- [ ] T055 [P] 建立回歸檢查掛鉤（CI 或手動）涵蓋搜尋截斷、Pin 動畫、autosave 節流、快捷鍵成功率、時間格式驗證，記錄於 docs/perf-checks.md
+
+---
+
+## Dependencies & Execution Order
+- Phase 1 → Phase 2 → User Stories（US1 → US2 → US3 → US5 → US4）→ Final Phase。
+- US2 依賴 US1 的草稿轉正流程；US3 依賴 US2 的提示詞 CRUD；US5/US4 依賴 Phase 2 完成，可與 US3 部分並行。
+
+## Parallel Execution Examples
+- Phase 2：T004 與 T005~T008 可並行；T009/T010 並行後統一接入。
+- US1：T011~T013 並行撰寫；T014/T015 並行後再做 T016/T017。
+- US2：T018~T020 並行；T021/T022 並行後再進行 T023~T028。
+- US3：T029~T031 並行；T032 與 T035 可並行，完成後整合 T033/T034。
+- US5：T036/T037 並行；T038/T039/T040 並行，最後 T041/T042。
+- US4：T043/T044 並行；T045 並行後再做 T046/T047。
 
 ## Implementation Strategy
-- MVP：完成 Phase 1–2 後優先交付 US1（收件匣捕捉），驗證自動儲存與復原。
-- Incremental：依序交付 US2（轉正/專案）、US3（編輯/複製）、US5（佈局/快捷鍵）、US4（片語 Drawer）。每階段完成即跑對應測試回歸。
+- MVP：完成 Phase 1–2 後優先交付 US1，驗證收件匣自動儲存與復原。
+- Incremental：依序交付 US2（轉正/專案 + README）、US3（編輯/複製 + 時間顯示）、US5（佈局/快捷鍵/Undo）、US4（片語 Drawer）。每階段完成即跑對應測試與效能檢查。

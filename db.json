@@ -11,8 +11,8 @@
       "id": "proj-2",
       "name": "企業資金詢價平台",
       "status": "進行中",
-      "promptCount": 1,
-      "updatedAt": "2025-12-21T04:24:26.484Z"
+      "promptCount": 3,
+      "updatedAt": "2025-12-22T02:29:21.313Z"
     },
     {
       "id": "proj-3",
@@ -22,24 +22,7 @@
       "updatedAt": "2025-12-21T04:25:18.477Z"
     }
   ],
-  "inbox": [
-    {
-      "id": "inbox-yYUhOOWc",
-      "title": "新草稿",
-      "content": "",
-      "hint": "",
-      "createdAt": "2025-12-20T13:05:20.221Z",
-      "updatedAt": "2025-12-20T13:05:20.221Z"
-    },
-    {
-      "id": "inbox-tUoSKXWk",
-      "title": "新草稿",
-      "content": "",
-      "hint": "",
-      "createdAt": "2025-12-20T13:08:17.789Z",
-      "updatedAt": "2025-12-22T01:45:56.285Z"
-    }
-  ],
+  "inbox": [],
   "snippets": [
     {
       "id": "s-1",

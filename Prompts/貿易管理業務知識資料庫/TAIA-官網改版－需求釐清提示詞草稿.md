@@ -5,7 +5,7 @@ type: 其他
 status: 使用中
 model: gpt-4o-mini
 tags: []
-notes: ''
+note: ''
 updatedAt: '2025-12-21T04:25:18.477Z'
 ---
 
