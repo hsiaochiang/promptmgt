@@ -22,6 +22,12 @@
 **Update Check Strategy**: UPDATE_CHECK_ENDPOINT 僅接受 https；缺少端點或使用者停用時跳過（no-op）；設定頁可手動檢查並回報 status（skipped/available/up-to-date/failed）；toggle 狀態持久化於 LowDB + localStorage 快取；預設不排程自動檢查，避免離線時多餘呼叫。
 **Scale/Scope**: 目標資料量：專案 ~50、提示詞 ~500、收件匣草稿 100+（需分頁/搜尋），片語庫數百筆；單機單用戶並發，前後端同機
 
+**Performance Validation Plan**:
+- 建立 perf 測試腳本與/或手動步驟，使用 50 專案/500 提示詞資料集驗證 SC-001/SC-002/SC-008。
+- 搜尋壓測：使用 1000 筆提示詞資料集量測 p95≤2 秒並驗證超量截斷旗標（SC-004/FR-017）。
+- 互動 SLA：量測精簡複製 ≤3 秒、片語插入 ≤10 秒、Pin 收合 150–250ms、快捷鍵成功率、Undo 成功率，結果填入 docs/perf-checks.md、docs/ux-checks.md。
+- 自動化覆蓋：將上述量測與成功率驗證掛入 tests/ 或文件化手動流程，並在回歸任務中重複執行。
+
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
