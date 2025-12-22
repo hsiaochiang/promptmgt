@@ -142,6 +142,18 @@ describe("inbox pagination", () => {
     expect(data.limit).toBe(200);
     expect(data.offset).toBe(0);
   });
+
+  it("filters by keyword and respects offset", async () => {
+    const { GET } = await import("@/app/api/inbox/route");
+    const res = await GET(new Request("http://localhost/api/inbox?q=RAG&offset=0&limit=5"));
+    const data = await res.json();
+    expect(data.total).toBeGreaterThanOrEqual(1);
+    expect(data.items[0]?.title?.toLowerCase()).toContain("rag");
+
+    const offsetRes = await GET(new Request("http://localhost/api/inbox?q=RAG&offset=1&limit=5"));
+    const offsetData = await offsetRes.json();
+    expect(offsetData.offset).toBe(1);
+  });
 });
 
 describe("telemetry update check", () => {

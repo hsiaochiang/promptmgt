@@ -9,6 +9,13 @@
    - `INBOX_PAGE_SIZE` 可設定觀察分頁開銷。
    - 如需乾淨環境，清除 `db.json` 或使用 `DEFAULT_ROOT` 指向臨時資料夾。
 
+## 時間格式驗證（FR-034/FR-035 | T073/T079）
+
+- 自動化：執行整合測試 `tests/integration/frontmatter-timezone.test.ts`、`tests/integration/timestamps-all-entities.test.ts`（ISO+08:00 確認）。
+- 檔案抽樣：隨機檢查 prompt/inbox/snippet/專案 README frontmatter 的 `createdAt`/`updatedAt`，應為 `YYYY-MM-DDTHH:mm:ss.sss+08:00` 並可被 `Date.parse`。
+- UI 抽樣：列表/專案卡片顯示 `MM/DD HH:mm`，編輯器標題列顯示 `HH:mm`（來源同 ISO+08:00）。
+- 修復指引：若發現非 +08:00 或缺值，重新透過對應 API 保存一次（會套用 `toIsoWithOffset()`）；settings 可呼叫 `/api/settings` POST 更新以刷新 `updatedAt`；若檔案前述仍異常，手動套用 ISO+08:00 後重跑測試。
+
 ## 量測項目與方法
 
 - **SC-001 / SC-008 啟動時間**：

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { badRequest, conflict, notFound } from "@/app/api/_lib/responses";
 import { getDb } from "@/lib/db";
 import { nanoid } from "nanoid";
+import { toIsoWithOffset } from "@/lib/utils/date";
 
 function normalizeName(name?: string) {
   return name?.trim().toLowerCase();
@@ -58,7 +59,9 @@ export async function POST(request: Request) {
     content,
     usage: 0,
     usageCount: 0,
-    lastUsedAt: undefined
+    lastUsedAt: undefined,
+    createdAt: toIsoWithOffset(),
+    updatedAt: toIsoWithOffset()
   };
 
   db.data!.snippets.push(snippet);
@@ -85,6 +88,7 @@ export async function PATCH(request: Request) {
   }
   if (category !== undefined) target.category = category.trim() || target.category;
   if (content !== undefined) target.content = typeof content === "string" ? content : target.content;
+  target.updatedAt = toIsoWithOffset();
   await db.write();
   return NextResponse.json({ ...target, usageCount: toUsageCount(target), usage: toUsageCount(target) });
 }
