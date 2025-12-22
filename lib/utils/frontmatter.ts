@@ -1,4 +1,5 @@
 import matter from "gray-matter";
+import { toIsoWithOffset } from "./date";
 import type { PromptFrontmatter } from "../types/schema";
 
 export interface ParsedPrompt {
@@ -39,7 +40,7 @@ function normalizeFrontmatter(data: Record<string, unknown>): { fm: PromptFrontm
     model: typeof data.model === "string" ? data.model : "",
     tags,
     note,
-    updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : new Date().toISOString(),
+    updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : toIsoWithOffset(),
     createdAt: typeof data.createdAt === "string" ? data.createdAt : undefined
   };
 
@@ -70,7 +71,7 @@ export function serializePrompt(frontmatter: PromptFrontmatter, body: string) {
     ...frontmatter,
     tags: safeTags,
     note: frontmatter.note,
-    updatedAt: frontmatter.updatedAt ?? new Date().toISOString()
+    updatedAt: frontmatter.updatedAt ?? toIsoWithOffset()
   };
 
   for (const key of Object.keys(payload)) {

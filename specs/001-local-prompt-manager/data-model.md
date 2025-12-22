@@ -7,8 +7,9 @@
 - `name`: string（必填、唯一，<=100）
 - `status`: enum [`active`,`planned`,`archived`]（對應 進行中/規劃中/已結案）
 - `promptCount`: number（>=0）
-- `updatedAt`: datetime (ISO)
-- `createdAt`: datetime (ISO)
+- `docPath`: string（專案說明 README 路徑，位於專案資料夾）
+- `updatedAt`: datetime (ISO 8601, UTC+08:00)
+- `createdAt`: datetime (ISO 8601, UTC+08:00)
 - `path`: string（檔案系統路徑，可由 name 推導與 sanitize）
 - 關聯：1:N `Prompt`
 
@@ -23,8 +24,8 @@
 - `note`: string（可選）
 - `content`: string（Markdown 本體）
 - `frontmatter`: object（序列化用：title/project/type/status/model/tags/note/updatedAt）
-- `updatedAt`: datetime (ISO)
-- `createdAt`: datetime (ISO)
+- `updatedAt`: datetime (ISO 8601, UTC+08:00)
+- `createdAt`: datetime (ISO 8601, UTC+08:00)
 - `path`: string（檔案路徑，經 sanitizeFilename）
 - 衍生：`preview`（前 50 字）
 
@@ -33,8 +34,8 @@
 - `title`: string（可空，<=200）
 - `content`: string（Markdown）
 - `hint`: string（可選，備註）
-- `createdAt`: datetime (ISO)
-- `updatedAt`: datetime (ISO)
+- `createdAt`: datetime (ISO 8601, UTC+08:00)
+- `updatedAt`: datetime (ISO 8601, UTC+08:00)
 
 ### Snippet（片語）
 - `id`: string（uuid v4）
@@ -42,7 +43,9 @@
 - `category`: string（可選，分類用）
 - `content`: string
 - `usageCount`: number（>=0）
-- `lastUsedAt`: datetime (ISO | 可空)
+- `lastUsedAt`: datetime (ISO 8601, UTC+08:00 | 可空)
+- `createdAt`: datetime (ISO 8601, UTC+08:00)
+- `updatedAt`: datetime (ISO 8601, UTC+08:00)
 
 ### Settings（設定）
 - `rootPath`: string（必填；啟動時驗證存在與可寫）
@@ -50,10 +53,13 @@
 - `layout`: object `{ leftWidth:number, middleWidth:number }`（寬度百分比/px，持久化於 localStorage）
 - `fontScale`: number（預設 +2px；允許覆蓋）
 - `telemetry`: object `{ enabled:boolean, exportPath?:string }`
+- `createdAt`: datetime (ISO 8601, UTC+08:00)
+- `updatedAt`: datetime (ISO 8601, UTC+08:00)
 
 ## 驗證規則
 - 所有 `id` 使用 uuid v4。  
 - 標題/名稱不得含檔名禁用字元 `/ \ : * ? " < > |`；寫檔前必須經 `sanitizeFilename`。  
+- 所有時間欄位強制使用 ISO 8601（UTC+08:00）；解析/序列化需驗證偏移存在，缺值由系統自動補值。  
 - 標籤/分類需去重、trim、禁止空白字串。  
 - `rootPath` 必須存在且可寫；不存在時阻擋啟動並提示設定。  
 - localStorage 設定載入需通過 zod schema，失敗則回退預設。  

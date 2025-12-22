@@ -25,6 +25,25 @@
 - [X] T009 [P] 建立 localStorage 偏好封裝（Pin/寬度/字級）於 app/(workspace)/store/useWorkspaceStore.ts，含 schema 驗證與 fallback
 - [X] T010 [P] 更新錯誤格式與處理管線（{code,message,details}）於 app/api/_middleware 或共用 handler util，並覆蓋所有 Route Handlers 使用
 
+--
+
+## 時間與專案說明需求（新增）
+
+**目的**: 落實 FR-033/FR-034（每個專案需有專案說明 Markdown 檔；所有時間以 ISO8601 UTC+08:00 儲存，UI 顯示 MM/DD HH:mm，編輯器標題列顯示 HH:mm）。
+
+- [X] T064 已完成：新增日期工具 `lib/utils/date.ts`（toIsoWithOffset、formatForUI_MMDD_HHmm、formatForUI_HHmm）
+- [X] T065 已完成：更新 `lib/utils/frontmatter.ts` 以使用 `toIsoWithOffset()` 作為 `updatedAt` 的預設值（序列化為 ISO+08:00）
+- [ ] T066 [US3] [P] 在列表與詳情 UI 使用 `formatForUI_MMDD_HHmm()` 以顯示時間於 `app/(workspace)/components/prompt-list.tsx`、`app/(workspace)/components/project-list.tsx`、`app/(workspace)/components/prompt-header.tsx`
+- [ ] T067 [US3] 在編輯器標題列使用 `formatForUI_HHmm()` 只顯示 `HH:mm`（檔案: `app/(workspace)/components/prompt-header.tsx`）
+- [ ] T068 [US2] 更新 `lib/types/schema.ts`：為 `project` schema 新增 `readmePath` 或 `docPath` 欄位，並更新 zod 驗證（路徑為 `lib/types/schema.ts`）
+- [ ] T069 [US2] 實作 Project README CRUD Route Handlers：`app/api/projects/[id]/readme/route.ts`（GET/PUT），並在 `lib/db/fs/projects.ts` 或 `lib/services` 中加入對應的檔案讀寫支援
+- [ ] T070 [US2] 前端：在專案檢視頁加入專案說明編輯/儲存元件 `app/(workspace)/components/project-readme.tsx`，並於專案建立時自動建立 README.md（範例路徑 `Prompts/{ProjectName}/README.md`）
+- [ ] T071 [P] 單元測試：新增 `tests/unit/date.test.ts` 測試 `toIsoWithOffset()` 與格式化函式（覆蓋時區邊界與合法格式）
+- [ ] T072 [P] 整合測試：新增 `tests/integration/frontmatter-timezone.test.ts` 驗證序列化後檔案 Frontmatter 中 `updatedAt/createdAt` 為 ISO+08:00 格式
+- [ ] T073 [P] 文件更新：將時間格式驗證步驟新增至 `docs/perf-checks.md` 與 `docs/ux-checks.md`（檔案: docs/perf-checks.md, docs/ux-checks.md）
+
+---
+
 ---
 
 ## Phase 3: User Story 1 - 收件匣快速草稿捕捉 (Priority: P1) 🎯 MVP

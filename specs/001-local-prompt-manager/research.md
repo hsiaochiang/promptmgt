@@ -57,6 +57,11 @@
 - **Rationale**: 符合 Clarification 選項 B，無額外密鑰管理負擔。
 - **Alternatives considered**: AES-256 應用層加密（超出需求）；公開於共享路徑（違反隱私）。
 
+### 時間欄位與時區策略
+- **Decision**: 所有實體（Project/Prompt/Inbox/Snippet/Settings）必備 `createdAt`/`updatedAt`，儲存格式為 ISO 8601（UTC+08:00，固定偏移，不採夏令時間），缺值由系統自動補值；UI 顯示 `MM/DD HH:mm`，編輯器標題列顯示 `HH:mm`。
+- **Rationale**: 與 FR-034/FR-035、SC-021 對齊；固定偏移可避免 DST 轉換誤差，序列化/驗證一致降低前後端落差。
+- **Alternatives considered**: 儲存 UTC Z + 轉換顯示（需額外轉換且易混用 Z/偏移）；允許缺 `createdAt`（違反稽核需求）。
+
 ## 待落實的實務要點
 
 - Route Handlers 寫入需集中序列化，避免客戶端直寫檔案。

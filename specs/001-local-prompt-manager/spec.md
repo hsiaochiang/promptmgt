@@ -20,6 +20,10 @@
 - Q: 提示詞列表的 Pin（釘住）預設與持久化行為為何？ → A: 預設 Pin = ON，並以 localStorage 跨專案、重整持久化；使用者可手動切換為 OFF 以獲得更大編輯區。
 - Q: 本機資料（草稿/提示詞/設定）預設的存放安全與目錄策略為何？ → A: 依作業系統使用者權限存放於使用者目錄下的隱藏資料夾，無額外應用層加密。
 
+### Session 2025-12-22
+
+- Q: 是否要求所有實體必備 createdAt/updatedAt 且以 UTC+08:00 ISO 儲存並自動補值？ → A: 是，所有實體（Project/Prompt/Inbox/Snippet/Settings）都須具備 createdAt/updatedAt，格式為 ISO 8601（UTC+08:00），缺值由系統自動填入。
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - 收件匣快速草稿捕捉 (Priority: P1)
@@ -167,6 +171,7 @@
 - **FR-032**: 系統必須將全站字級放大 +2px 並調整行高/間距以避免裁切，符合 WCAG Text Spacing 原則
 - **FR-033**: 系統必須為每個專案建立並維護專案說明 Markdown 檔，記錄專案資訊與進度，存放於專案資料夾且可由使用者編輯
 - **FR-034**: 系統必須將所有時間欄位以 ISO 8601（UTC+08:00）儲存並於 UI 以 "MM/DD HH:mm" 顯示；編輯器標題列的已儲存時間僅顯示 HH:mm 並置於頁面最上方
+- **FR-035**: 系統必須確保所有實體（Project/Prompt/Inbox/Snippet/Settings）皆包含 createdAt 與 updatedAt 欄位，格式為 ISO 8601（UTC+08:00），缺值由系統自動補齊
 
 ### Non-Functional Requirements
 
@@ -175,11 +180,11 @@
 
 ### Key Entities *(include if feature involves data)*
 
-- **Project（專案）**: 業務或任務容器，包含 id、名稱、狀態、提示詞數量、最後更新時間；關聯多個 Prompt
-- **InboxItem（收件匣草稿）**: 尚未歸檔的靈感，包含 id、標題、內容、提示/備註、建立與最後編輯時間
-- **Prompt（提示詞）**: 正式檔案，包含 id、專案參照、標題、類型、狀態、模型、標籤、內容本體、備註、更新時間
-- **Snippet（片語）**: 可重複使用的片段，包含 id、名稱、分類、內容、使用次數、最後使用時間
-- **Settings（設定）**: 應用層設定，如根目錄路徑、預設篩選與顯示偏好
+- **Project（專案）**: 業務或任務容器，包含 id、名稱、狀態、提示詞數量、建立與更新時間（ISO 8601, UTC+08:00）；關聯多個 Prompt
+- **InboxItem（收件匣草稿）**: 尚未歸檔的靈感，包含 id、標題、內容、提示/備註、建立與最後編輯時間（ISO 8601, UTC+08:00）
+- **Prompt（提示詞）**: 正式檔案，包含 id、專案參照、標題、類型、狀態、模型、標籤、內容本體、備註、建立與更新時間（ISO 8601, UTC+08:00）
+- **Snippet（片語）**: 可重複使用的片段，包含 id、名稱、分類、內容、使用次數、建立與最後使用時間（ISO 8601, UTC+08:00）
+- **Settings（設定）**: 應用層設定，如根目錄路徑、預設篩選與顯示偏好，需保存建立與更新時間（ISO 8601, UTC+08:00）
 
 ## Success Criteria *(mandatory)*
 
