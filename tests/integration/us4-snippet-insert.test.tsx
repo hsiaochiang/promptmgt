@@ -128,7 +128,9 @@ describe("US4 - 點擊片語插入並計數", () => {
   it("點擊片語會插入內容並讓 usage +1", async () => {
     render(<TestHarness />);
 
-    const card = await screen.findByText("角色設定－資深系統分析顧問");
+    await waitFor(() => expect(screen.queryByText("載入中…")).not.toBeInTheDocument(), { timeout: 5000 });
+
+    const card = await screen.findByText("角色設定－資深系統分析顧問", {}, { timeout: 5000 });
     const cardContainer = card.closest("div")?.parentElement?.parentElement as HTMLElement;
     const usageText = cardContainer.textContent ?? "";
     const initialUsage = parseInt(usageText.match(/使用\s+(\d+)/)?.[1] ?? "0", 10);

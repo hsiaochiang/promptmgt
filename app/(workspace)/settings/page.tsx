@@ -3,8 +3,45 @@
 import React, { useEffect, useState } from "react";
 import type { Settings } from "@/lib/types/schema";
 
+const FLAGS_STORAGE_KEY = "pm-settings-flags";
+const baseDefaults: Settings = {
+  rootPath: "",
+  pinned: true,
+  layout: {},
+  fontScale: 2,
+  telemetryEnabled: true,
+  updateCheckEnabled: true,
+  telemetry: { enabled: true }
+};
+
+function persistFlags(next: Partial<Settings>) {
+  if (typeof window === "undefined") return;
+  const payload = {
+    telemetryEnabled: next.telemetryEnabled,
+    updateCheckEnabled: next.updateCheckEnabled
+  };
+  window.localStorage.setItem(FLAGS_STORAGE_KEY, JSON.stringify(payload));
+}
+
+function readFlagDefaults(): Settings | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(FLAGS_STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<Settings>;
+    return {
+      ...baseDefaults,
+      telemetryEnabled: parsed.telemetryEnabled ?? baseDefaults.telemetryEnabled,
+      updateCheckEnabled: parsed.updateCheckEnabled ?? baseDefaults.updateCheckEnabled
+    } as Settings;
+  } catch {
+    window.localStorage.removeItem(FLAGS_STORAGE_KEY);
+    return null;
+  }
+}
+
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<Settings | null>(null);
+  const [settings, setSettings] = useState<Settings | null>(() => readFlagDefaults());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,6 +59,7 @@ export default function SettingsPage() {
       setSettings(data);
       setRootPathInput(data.rootPath ?? "");
       setPathExists((data as any).pathExists ?? null);
+      persistFlags(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "讀取設定失敗");
     } finally {
@@ -47,6 +85,7 @@ export default function SettingsPage() {
       setSettings(data);
       setRootPathInput(data.rootPath ?? "");
       setPathExists((data as any).pathExists ?? null);
+      persistFlags(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "更新設定失敗");
     } finally {

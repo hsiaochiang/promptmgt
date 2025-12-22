@@ -106,6 +106,12 @@ describe("update checker", () => {
     expect(result).toMatchObject({ status: "update-available", latestVersion: "0.2.0" });
   });
 
+  it("skips when endpoint is missing", async () => {
+    const { checkForUpdates } = await import("@/lib/services/telemetry");
+    const result = await checkForUpdates("0.1.0", { endpoint: undefined });
+    expect(result).toMatchObject({ status: "skipped", reason: "no-endpoint" });
+  });
+
   it("returns up-to-date when latest equals current", async () => {
     const { checkForUpdates } = await import("@/lib/services/telemetry");
     const mockFetch = vi.fn(async () => new Response(JSON.stringify({ latestVersion: "0.1.0" }), { status: 200 }));

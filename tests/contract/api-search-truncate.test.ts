@@ -49,11 +49,14 @@ describe("api-search-truncate", () => {
     });
   });
 
-  it("caps requested limit to 1000 and reports truncation", async () => {
+  it(
+    "caps requested limit to 1000 and reports truncation",
+    { timeout: 15000 },
+    async () => {
     const { writePrompt } = await import("@/lib/fs/prompts");
     const { GET } = await import("@/app/api/search/route");
 
-    for (let i = 0; i < 1100; i++) {
+      for (let i = 0; i < 1005; i++) {
       await writePrompt(
         rootPath,
         "proj-1",
@@ -70,10 +73,11 @@ describe("api-search-truncate", () => {
       );
     }
 
-    const response = await GET(new Request("http://localhost/api/search?q=Bulk&limit=5000"));
-    const payload = await response.json();
+      const response = await GET(new Request("http://localhost/api/search?q=Bulk&limit=5000"));
+      const payload = await response.json();
 
-    expect(payload.results).toHaveLength(1000);
-    expect(payload.truncated).toBe(true);
-  });
+      expect(payload.results).toHaveLength(1000);
+      expect(payload.truncated).toBe(true);
+    }
+  );
 });

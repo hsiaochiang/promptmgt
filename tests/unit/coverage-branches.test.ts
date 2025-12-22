@@ -116,7 +116,9 @@ describe("cache applyPromptMeta", () => {
 
 describe("settings pathExists", () => {
   it("returns false when rootPath is missing", async () => {
+    const { updateSettings } = await import("@/lib/services/settings");
     const { GET } = await import("@/app/api/settings/route");
+    await updateSettings({ rootPath: null });
     const res = await GET(new Request("http://localhost/api/settings"));
     const data = await res.json();
     expect(data.pathExists).toBe(false);
@@ -138,6 +140,7 @@ describe("telemetry update check", () => {
   it("reports failure when fetch throws", async () => {
     const { checkForUpdates } = await import("@/lib/services/telemetry");
     const result = await checkForUpdates("1.0.0", {
+      endpoint: "https://updates.local/check",
       fetcher: async (_input: RequestInfo | URL) => {
         throw new Error("boom");
       }

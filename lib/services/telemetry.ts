@@ -173,7 +173,10 @@ export async function checkForUpdates(currentVersion: string, options: UpdateOpt
     return { status: "skipped", reason: "disabled" };
   }
 
-  const endpoint = options.endpoint ?? `https://updates.local/check?current=${encodeURIComponent(currentVersion)}`;
+  const endpoint = options.endpoint ?? process.env.UPDATE_CHECK_ENDPOINT ?? null;
+  if (!endpoint) {
+    return { status: "skipped", reason: "no-endpoint" };
+  }
   if (!endpoint.startsWith("https://")) {
     return { status: "skipped", reason: "insecure-endpoint" };
   }
