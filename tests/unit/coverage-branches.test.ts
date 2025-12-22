@@ -134,6 +134,14 @@ describe("inbox pagination", () => {
     expect(data.hasMore).toBe(true);
     expect(data.total).toBeGreaterThan(1);
   });
+
+  it("caps oversized limit to 200", async () => {
+    const { GET } = await import("@/app/api/inbox/route");
+    const res = await GET(new Request("http://localhost/api/inbox?limit=500"));
+    const data = await res.json();
+    expect(data.limit).toBe(200);
+    expect(data.offset).toBe(0);
+  });
 });
 
 describe("telemetry update check", () => {

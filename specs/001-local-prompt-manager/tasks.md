@@ -39,17 +39,17 @@
 - [ ] T069 [US2] 實作 Project README CRUD Route Handlers：`app/api/projects/[id]/readme/route.ts`（GET/PUT），並在 `lib/db/fs/projects.ts` 或 `lib/services` 中加入對應的檔案讀寫支援
 - [ ] T070 [US2] 前端：在專案檢視頁加入專案說明編輯/儲存元件 `app/(workspace)/components/project-readme.tsx`，並於專案建立時自動建立 README.md（範例路徑 `Prompts/{ProjectName}/README.md`）
 - [X] T071 [P] 單元測試：新增 `tests/unit/date.test.ts` 測試 `toIsoWithOffset()` 與格式化函式（覆蓋時區邊界與合法格式）
-- [ ] T072 [P] 整合測試：新增 `tests/integration/frontmatter-timezone.test.ts` 驗證序列化後檔案 Frontmatter 中 `updatedAt/createdAt` 為 ISO+08:00 格式
-- [ ] T073 [P] 文件更新：將時間格式驗證步驟新增至 `docs/perf-checks.md` 與 `docs/ux-checks.md`（檔案: docs/perf-checks.md, docs/ux-checks.md）
-- [ ] T074 [P] 專案 README API/檔案整合測試：涵蓋 GET/PUT、檔案生成與錯誤處理，驗證 docPath 與 ISO+08:00 時間更新（tests/integration/project-readme.test.ts）
+- [X] T072 [P] 整合測試：新增 `tests/integration/frontmatter-timezone.test.ts` 驗證序列化後檔案 Frontmatter 中 `updatedAt/createdAt` 為 ISO+08:00 格式
+- [X] T073 [P] 文件更新：將時間格式驗證步驟新增至 `docs/perf-checks.md` 與 `docs/ux-checks.md`（檔案: docs/perf-checks.md, docs/ux-checks.md）
+- [X] T074 [P] 專案 README API/檔案整合測試：涵蓋 GET/PUT、檔案生成與錯誤處理，驗證 docPath 與 ISO+08:00 時間更新（tests/integration/project-readme.test.ts）
 - [ ] T075 [US2] 專案 README 編輯 UI 驗收：載入/編輯/保存/錯誤提示整合測試（建議 tests/integration/project-readme-ui.test.tsx），確保與 docPath 一致
 - [ ] T076 [P] 專案 README 操作文件：於 quickstart.md/README.md 補充 README 路徑、建立流程、常見錯誤與修復指引
 
 ## 時間欄位完整性（FR-035）
 
-- [ ] T077 [P] 全實體 createdAt/updatedAt 自動補值整合測試：涵蓋 Project/Prompt/Inbox/Snippet/Settings 缺值/更新流程，驗證皆為 ISO+08:00
+- [X] T077 [P] 全實體 createdAt/updatedAt 自動補值整合測試：涵蓋 Project/Prompt/Inbox/Snippet/Settings 缺值/更新流程，驗證皆為 ISO+08:00
 - [ ] T078 [P] 資料修復流程：啟動時 normalize 舊資料（docPath、ISO+08:00 時間、缺欄位補齊），並新增腳本或啟動檢查紀錄修復結果
-- [ ] T079 [P] 文件補充：於 docs/perf-checks.md、docs/ux-checks.md（或 quickstart.md）加入時間欄位修復與驗證步驟，包含抽樣檢查與失敗處置
+- [X] T079 [P] 文件補充：於 docs/perf-checks.md、docs/ux-checks.md（或 quickstart.md）加入時間欄位修復與驗證步驟，包含抽樣檢查與失敗處置
 
 ---
 
