@@ -1,7 +1,7 @@
-feat: 實作日誌路徑設定與遙測增強 (T086-T088)
+feat: 實作契約範例與 UI 空態/截斷驗收 (T089-T090)
 
-- Settings API 與 UI 支援 `logPath` 設定 (T086)
-- 遙測日誌實作敏感欄位遮蔽與 5MB 自動旋轉 (T087)
-- 新增 `tests/unit/telemetry-rotation.test.ts` 驗證日誌旋轉邏輯 (T087)
-- 更新 `quickstart.md`、`README.md` 與 `telemetry.md` 說明日誌特性 (T088)
+- 更新 `contracts/openapi.yaml` 增加搜尋截斷與分頁範例
+- 更新 `docs/ux-checks.md` 補充 UI 文案準則
+- 新增 `tests/integration/search-truncate-ui.test.tsx` 驗證截斷與空態
+- 實作 `app/(workspace)/components/search-results-panel.tsx` (輔助元件)
 - 更新 tasks.md 狀態

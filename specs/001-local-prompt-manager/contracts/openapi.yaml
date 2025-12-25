@@ -17,10 +17,29 @@ paths:
           name: limit
           schema: { type: integer, minimum: 1, maximum: 100 }
         - in: query
-          name: cursor
-          schema: { type: string }
+           name: cursor
+           schema: { type: string }
       responses:
-        '200': { description: 成功, content: { application/json: { schema: { $ref: '#/components/schemas/InboxList' } } } }
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InboxList' }
+              examples:
+                paged:
+                  summary: 分頁搜尋範例
+                  value:
+                    items:
+                      - id: inbox-1
+                        title: 寫給模型的任務分解
+                        content: 請拆解專案需求並列出行動
+                        hint: 產品企劃
+                        createdAt: 2025-12-20T08:00:00+08:00
+                        updatedAt: 2025-12-25T08:00:00+08:00
+                    total: 120
+                    limit: 50
+                    offset: 0
+                    hasMore: true
     post:
       summary: 新增收件匣草稿
       requestBody:
@@ -203,7 +222,26 @@ paths:
           name: limit
           schema: { type: integer, minimum: 1, maximum: 1000 }
       responses:
-        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/SearchResult' } } } }
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SearchResult' }
+              examples:
+                truncated:
+                  summary: 截斷提示範例
+                  value:
+                    results:
+                      - id: prompt-1
+                        title: 搜尋截斷範例
+                        projectId: default
+                        status: 使用中
+                        model: gpt-4o
+                        tags: [搜尋, 截斷]
+                        snippet: "搜尋截斷範例"
+                        updatedAt: 2025-12-25T08:00:00+08:00
+                        createdAt: 2025-12-24T08:00:00+08:00
+                    truncated: true
 
   /settings:
     get:
@@ -245,7 +283,7 @@ components:
         content: { type: string }
         hint: { type: string, nullable: true }
         createdAt: { type: string, format: date-time }
-        updatedAt: { type: string, format: date-time }
+         updatedAt: { type: string, format: date-time }
     InboxInput:
       type: object
       properties:
@@ -254,11 +292,14 @@ components:
         hint: { type: string }
     InboxList:
       type: object
-      properties:
-        items:
-          type: array
-          items: { $ref: '#/components/schemas/InboxItem' }
-        nextCursor: { type: string, nullable: true }
+     properties:
+       items:
+         type: array
+         items: { $ref: '#/components/schemas/InboxItem' }
+        total: { type: integer }
+        hasMore: { type: boolean }
+        limit: { type: integer }
+        offset: { type: integer }
     Project:
       type: object
       required: [id,name,status,promptCount,updatedAt,createdAt]
@@ -384,11 +425,26 @@ components:
           properties:
             leftWidth: { type: number }
             middleWidth: { type: number }
-        fontScale: { type: number }
+         fontScale: { type: number }
     SearchResult:
       type: object
       properties:
-        prompts: { type: array, items: { $ref: '#/components/schemas/Prompt' } }
-        inbox: { type: array, items: { $ref: '#/components/schemas/InboxItem' } }
-        snippets: { type: array, items: { $ref: '#/components/schemas/Snippet' } }
+        results:
+          type: array
+          items: { $ref: '#/components/schemas/SearchMatch' }
         truncated: { type: boolean, description: 是否因超過 1000 筆而截斷 }
+    SearchMatch:
+      type: object
+      required: [id,title,projectId,status,updatedAt]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        projectId: { type: string }
+        status: { type: string }
+        model: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        snippet: { type: string }
+        updatedAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }

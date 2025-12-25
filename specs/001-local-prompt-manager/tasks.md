@@ -61,8 +61,8 @@
 - [X] T086 [P][NFR] Settings API/UI 支援 `logPath`：`app/api/settings/route.ts`、`app/(workspace)/settings/page.tsx` 讀寫 `logPath`，預設 `rootPath/logs/app.log`，限制不可指向非使用者目錄
 - [X] T087 [P][NFR] 日誌遮蔽與旋轉測試：`lib/services/telemetry.ts` 實作敏感欄位遮蔽與 5MB 旋轉檢查；`tests/unit/telemetry-rotation.test.ts` 驗證
 - [X] T088 [P][NFR] 文件同步：更新 `quickstart.md`/`README.md` 說明 `logPath`、遮蔽/旋轉特性與設定開關；列出相關環境變數（若有）
-- [ ] T089 [P][Edge] 契約示例與文案：`contracts/openapi.yaml` 增加搜尋截斷/分頁範例回應；`docs/ux-checks.md` 補充 UI 提示/空態文案準則
-- [ ] T090 [P][Edge] UI 空態/提示驗收：`tests/integration/search-truncate-ui.test.tsx` 覆蓋截斷提示、收件匣分頁空態與整理提示文案
+- [X] T089 [P][Edge] 契約示例與文案：`contracts/openapi.yaml` 增加搜尋截斷/分頁範例回應；`docs/ux-checks.md` 補充 UI 提示/空態文案準則
+- [X] T090 [P][Edge] UI 空態/提示驗收：`tests/integration/search-truncate-ui.test.tsx` 覆蓋截斷提示、收件匣分頁空態與整理提示文案
 
 
 ---
