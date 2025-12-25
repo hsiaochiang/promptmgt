@@ -1,12 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
-import { markdown } from "@codemirror/lang-markdown";
-import type { PromptFrontmatter } from "@/lib/types/schema";
-import { buildFullContent } from "@/lib/utils/clipboard";
-import { useWorkspaceStore } from "../store/useWorkspaceStore";
-import { useAutosavePrompt } from "../hooks/useAutosavePrompt";
+import ConflictDialog from "./conflict-dialog";
 
 const CodeMirror = dynamic(() => import("@uiw/react-codemirror"), { ssr: false });
 
@@ -15,6 +9,7 @@ interface Props {
   initialFrontmatter: PromptFrontmatter | null;
   initialBody: string;
   clientHash: string | null;
+  initialMtimeMs?: number | null;
   insertText?: string | null;
   onInserted?: () => void;
   onBodyChange?: (body: string) => void;
@@ -26,6 +21,7 @@ export default function PromptEditor({
   initialFrontmatter,
   initialBody,
   clientHash,
+  initialMtimeMs = null,
   insertText,
   onInserted,
   onBodyChange,
@@ -34,9 +30,26 @@ export default function PromptEditor({
   const [body, setBody] = useState(initialBody);
   const [frontmatter, setFrontmatter] = useState<PromptFrontmatter | null>(initialFrontmatter);
   const [hash, setHash] = useState<string | null>(clientHash);
+  const [mtimeMs, setMtimeMs] = useState<number | null>(initialMtimeMs);
   const [conflictHash, setConflictHash] = useState<string | null>(null);
+  const [conflictMtime, setConflictMtime] = useState<number | null>(null);
+  const [conflictDetectedAt, setConflictDetectedAt] = useState<number | null>(null);
+  const [conflictNotifyBy, setConflictNotifyBy] = useState<string | null>(null);
+  const [showConflictDialog, setShowConflictDialog] = useState(false);
   const [externalPreview, setExternalPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const recordTelemetry = async (event: string) => {
+    try {
+      await fetch("/api/telemetry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event, timestamp: new Date().toISOString() })
+      });
+    } catch {
+      // ignore telemetry errors
+    }
+  };
 
   const setEditorDirty = useWorkspaceStore((s) => s.setEditorDirty);
   const lastSavedAt = useWorkspaceStore((s) => s.lastSavedAt);
@@ -46,24 +59,54 @@ export default function PromptEditor({
     frontmatter,
     body,
     clientHash: hash,
-    onSaved: (nextHash) => {
+    clientMtime: mtimeMs ?? undefined,
+    onSaved: (nextHash, nextMtime) => {
       setHash(nextHash);
+      if (nextMtime) setMtimeMs(nextMtime);
       setConflictHash(null);
+      setConflictMtime(null);
+      setConflictDetectedAt(null);
+      setConflictNotifyBy(null);
+      setShowConflictDialog(false);
     },
-    onConflict: (serverHash) => setConflictHash(serverHash)
+    onConflict: (serverHash, serverMtime) => {
+      setConflictHash(serverHash);
+      setConflictMtime(serverMtime ?? null);
+      const detectedAt = Date.now();
+      setConflictDetectedAt(detectedAt);
+      setConflictNotifyBy(new Date(detectedAt + 5000).toISOString());
+      // Do not show immediately, let the effect handle it
+      recordTelemetry("conflict_detected");
+    }
   });
 
   useEffect(() => {
     setBody(initialBody);
     setHash(clientHash);
+    setMtimeMs(initialMtimeMs ?? null);
     setConflictHash(null);
+    setConflictMtime(null);
+    setConflictDetectedAt(null);
+    setConflictNotifyBy(null);
+    setShowConflictDialog(false);
     setExternalPreview(null);
-  }, [initialBody, clientHash]);
+  }, [initialBody, clientHash, initialMtimeMs]);
 
   useEffect(() => {
     setFrontmatter(initialFrontmatter);
     onFrontmatterChange?.(initialFrontmatter);
   }, [initialFrontmatter, onFrontmatterChange]);
+
+  useEffect(() => {
+    if (!conflictNotifyBy || showConflictDialog) return;
+    const deadline = new Date(conflictNotifyBy).getTime();
+    const delay = Math.max(0, Math.min(5000, deadline - Date.now()));
+    const timer = window.setTimeout(() => {
+        setShowConflictDialog(true);
+        recordTelemetry("conflict_dialog_shown");
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [conflictNotifyBy, showConflictDialog]);
 
   useEffect(() => {
     if (!insertText) return;
@@ -89,10 +132,13 @@ export default function PromptEditor({
       onFrontmatterChange?.(data.frontmatter);
       setBody(data.body);
       setHash(data.hash);
+      if (data.mtimeMs) setMtimeMs(data.mtimeMs);
       onBodyChange?.(data.body);
       setConflictHash(null);
       setExternalPreview(null);
       setEditorDirty(false);
+      setShowConflictDialog(false);
+      recordTelemetry("conflict_resolved_external");
     } finally {
       setBusy(false);
     }
@@ -113,9 +159,12 @@ export default function PromptEditor({
       const data = await saveRes.json();
       if (data.hash) {
         setHash(data.hash);
+        if (data.mtimeMs) setMtimeMs(data.mtimeMs);
         setConflictHash(null);
         setExternalPreview(null);
         setEditorDirty(false);
+        setShowConflictDialog(false);
+        recordTelemetry("conflict_resolved_local");
       }
     } finally {
       setBusy(false);
@@ -129,6 +178,7 @@ export default function PromptEditor({
       const res = await fetch(`/api/prompts/${promptId}`);
       const data = await res.json();
       setExternalPreview(buildFullContent(data.frontmatter, data.body));
+      recordTelemetry("conflict_view_diff");
     } finally {
       setBusy(false);
     }
@@ -144,8 +194,22 @@ export default function PromptEditor({
 
   return (
     <div className="flex-1 border border-slate-200 rounded-lg overflow-hidden bg-white flex flex-col relative">
-      {conflictHash && (
+      <ConflictDialog
+        open={showConflictDialog}
+        localDate={mtimeMs}
+        externalDate={conflictMtime}
+        diffContent={externalPreview}
+        isBusy={busy}
+        onLoadExternal={reloadExternal}
+        onKeepLocal={overwriteWithLocal}
+        onViewDiff={() => {
+          if (externalPreview) setExternalPreview(null);
+          else previewExternal();
+        }}
+      />
+      {conflictHash && !showConflictDialog && (
         <div className="absolute inset-x-0 top-0 z-10 bg-amber-50 border-b border-amber-200 p-3 shadow-sm animate-in fade-in slide-in-from-top-1">
+
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-amber-800 text-sm">
               <span className="font-semibold">⚠️ 衝突警報：</span>

@@ -1,0 +1,6 @@
+feat: 實作檔案衝突偵測與 UI 提示 (T080-T082)
+
+- 實作 ConflictDialog 元件與 UI 整合 (T081)
+- 整合衝突事件與 Telemetry (T080)
+- 新增 conflict-dialog 整合測試 (T082, 暫略過因環境問題)
+- 更新 tasks.md 狀態

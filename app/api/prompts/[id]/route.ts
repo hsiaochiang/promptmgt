@@ -33,19 +33,19 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
 }
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
-  const { frontmatter, body, clientHash } = await request.json();
+  const { frontmatter, body, clientHash, clientMtime } = await request.json();
   const filePath = decodeId(params.id);
   const current = await readPrompt(filePath);
 
   if (
     hasConflict({
-      localMtime: current.mtimeMs,
+      localMtime: clientMtime ?? current.mtimeMs,
       externalMtime: current.mtimeMs,
       localHash: clientHash,
       externalHash: current.hash
     })
   ) {
-    return conflict("Conflict detected", { currentHash: current.hash });
+    return conflict("Conflict detected", { currentHash: current.hash, currentMtime: current.mtimeMs });
   }
 
   const baseFrontmatter: Partial<PromptFrontmatter> = current.frontmatter ?? {};
@@ -63,20 +63,14 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   const writeResult = await (async () => {
     try {
-      return await writePrompt(
-        "",
-        projectName,
-        updatedFrontmatter,
-        body,
-        {
-          expectedHash: clientHash,
-          expectedMtime: current.mtimeMs,
-          targetPath: filePath
-        }
-      );
+      return await writePrompt("", projectName, updatedFrontmatter, body, {
+        expectedHash: clientHash,
+        expectedMtime: clientMtime ?? current.mtimeMs,
+        targetPath: filePath
+      });
     } catch (error: any) {
       if (error?.code === "E_CONFLICT") {
-        return conflict("Conflict detected", { currentHash: current.hash });
+        return conflict("Conflict detected", { currentHash: current.hash, currentMtime: current.mtimeMs });
       }
       throw error;
     }

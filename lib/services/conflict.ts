@@ -6,12 +6,14 @@ export function computeHash(content: string) {
 
 export type ConflictReason = "mtime" | "hash";
 export type ConflictDecision = "load-external" | "keep-local" | "view-diff";
+export type ConflictSource = "save" | "watcher";
 
 export interface ConflictCheck {
   localMtime: number;
   externalMtime: number;
   localHash?: string;
   externalHash?: string;
+  detectedAtMs?: number;
 }
 
 export interface ConflictCheckResult {
@@ -35,6 +37,8 @@ export interface ConflictEvent {
   hashes: { local?: string; external?: string };
   mtimes: { local: number; external: number };
   context?: ConflictEventContext;
+  source?: ConflictSource;
+  notifyBy?: string;
 }
 
 export function detectConflict(params: ConflictCheck): ConflictCheckResult {
@@ -61,15 +65,33 @@ export function hasConflict(params: ConflictCheck) {
 export function createConflictEvent(
   result: ConflictCheckResult,
   decision: ConflictDecision,
-  context: ConflictEventContext = {}
+  context: ConflictEventContext = {},
+  source: ConflictSource = "save",
+  detectedAt: number | Date = Date.now()
 ): ConflictEvent {
+  const detectedMs = typeof detectedAt === "number" ? detectedAt : detectedAt.getTime();
   return {
     id: randomUUID(),
     decision,
-    timestamp: new Date().toISOString(),
+    timestamp: new Date(detectedMs).toISOString(),
     reasons: result.reasons,
     hashes: { local: result.local.hash, external: result.external.hash },
     mtimes: { local: result.local.mtime, external: result.external.mtime },
-    context
+    context,
+    source,
+    notifyBy: new Date(detectedMs + 5000).toISOString()
   };
+}
+
+export function createWatcherConflictEvent(
+  params: ConflictCheck,
+  context: ConflictEventContext = {}
+): ConflictEvent {
+  const result = detectConflict(params);
+  return createConflictEvent(result, "view-diff", context, "watcher", params.detectedAtMs ?? Date.now());
+}
+
+export function shouldNotifyWithinFiveSeconds(event: ConflictEvent, now: number = Date.now()) {
+  if (!event.notifyBy) return true;
+  return new Date(event.notifyBy).getTime() - now <= 5000;
 }

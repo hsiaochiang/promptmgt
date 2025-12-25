@@ -9,9 +9,10 @@ interface Options {
   frontmatter: PromptFrontmatter | null;
   body: string;
   clientHash: string | null;
+  clientMtime?: number | null;
   delay?: number;
-  onSaved?: (hash: string) => void;
-  onConflict?: (serverHash: string) => void;
+  onSaved?: (hash: string, mtimeMs?: number, updatedAt?: string) => void;
+  onConflict?: (serverHash: string, serverMtime?: number) => void;
 }
 
 export function useAutosavePrompt({
@@ -19,6 +20,7 @@ export function useAutosavePrompt({
   frontmatter,
   body,
   clientHash,
+  clientMtime,
   delay = 2000,
   onSaved,
   onConflict
@@ -40,20 +42,21 @@ export function useAutosavePrompt({
         const res = await fetch(`/api/prompts/${promptId}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ frontmatter, body, clientHash })
+          body: JSON.stringify({ frontmatter, body, clientHash, clientMtime })
         });
         if (res.status === 409) {
           const data = await res.json();
           const serverHash = data?.currentHash ?? null;
+          const serverMtime = data?.currentMtime ?? null;
           setError("發現外部變更，請選擇載入或覆寫。");
           if (serverHash && onConflict) {
-            onConflict(serverHash);
+            onConflict(serverHash, serverMtime ?? undefined);
           }
           return;
         }
         const data = await res.json();
         if (data.hash && onSaved) {
-          onSaved(data.hash);
+          onSaved(data.hash, data.mtimeMs, data.updatedAt);
         }
         setEditorDirty(false);
         setLastSavedAt(data.updatedAt ?? new Date().toISOString());
