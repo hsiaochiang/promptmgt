@@ -1,5 +1,5 @@
 import { promises as fs } from "fs";
-import { dirname, extname, join } from "path";
+import { basename, dirname, extname, join } from "path";
 import { parsePrompt, serializePrompt } from "../utils/frontmatter";
 import { sanitizeFilename } from "../utils/sanitizeFilename";
 import { computeHash, hasConflict } from "../services/conflict";
@@ -59,7 +59,10 @@ export async function listPrompts(rootPath: string): Promise<PromptListItem[]> {
       if (!file.isFile() || extname(file.name) !== ".md") continue;
       const fullPath = join(projectDir, file.name);
       const raw = await fs.readFile(fullPath, "utf8");
-      const parsed = parsePrompt(raw);
+      const parsed = parsePrompt(raw, {
+        fallbackProject: entry.name,
+        fallbackTitle: file.name.replace(extname(file.name), "")
+      });
       if (!parsed.frontmatter) continue;
       const stat = await fs.stat(fullPath);
 
@@ -85,7 +88,10 @@ export async function listPrompts(rootPath: string): Promise<PromptListItem[]> {
 
 export async function readPrompt(filePath: string): Promise<PromptReadResult> {
   const raw = await fs.readFile(filePath, "utf8");
-  const parsed = parsePrompt(raw);
+  const parsed = parsePrompt(raw, {
+    fallbackProject: basename(dirname(filePath)),
+    fallbackTitle: basename(filePath, extname(filePath))
+  });
   const stat = await fs.stat(filePath);
   return {
     ...parsed,

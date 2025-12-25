@@ -1,5 +1,13 @@
 "use client";
 
+import React, { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { markdown } from "@codemirror/lang-markdown";
+import { buildFullContent } from "@/lib/utils/clipboard";
+import { toIsoWithOffset } from "@/lib/utils/date";
+import type { PromptFrontmatter } from "@/lib/types/schema";
+import { useAutosavePrompt } from "../hooks/useAutosavePrompt";
+import { useWorkspaceStore } from "../store/useWorkspaceStore";
 import ConflictDialog from "./conflict-dialog";
 
 const CodeMirror = dynamic(() => import("@uiw/react-codemirror"), { ssr: false });
@@ -10,10 +18,14 @@ interface Props {
   initialBody: string;
   clientHash: string | null;
   initialMtimeMs?: number | null;
+  initialDamaged?: boolean;
+  initialParseErrorCode?: string | null;
+  initialParseErrorMessage?: string | null;
   insertText?: string | null;
   onInserted?: () => void;
   onBodyChange?: (body: string) => void;
   onFrontmatterChange?: (frontmatter: PromptFrontmatter | null) => void;
+  onDamagedChange?: (damaged: boolean) => void;
 }
 
 export default function PromptEditor({
@@ -22,10 +34,14 @@ export default function PromptEditor({
   initialBody,
   clientHash,
   initialMtimeMs = null,
+  initialDamaged = false,
+  initialParseErrorCode = null,
+  initialParseErrorMessage = null,
   insertText,
   onInserted,
   onBodyChange,
-  onFrontmatterChange
+  onFrontmatterChange,
+  onDamagedChange
 }: Props) {
   const [body, setBody] = useState(initialBody);
   const [frontmatter, setFrontmatter] = useState<PromptFrontmatter | null>(initialFrontmatter);
@@ -38,6 +54,9 @@ export default function PromptEditor({
   const [showConflictDialog, setShowConflictDialog] = useState(false);
   const [externalPreview, setExternalPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [damaged, setDamaged] = useState(initialDamaged);
+  const [parseErrorCode, setParseErrorCode] = useState<string | null>(initialParseErrorCode);
+  const [parseErrorMessage, setParseErrorMessage] = useState<string | null>(initialParseErrorMessage);
 
   const recordTelemetry = async (event: string) => {
     try {
@@ -60,6 +79,7 @@ export default function PromptEditor({
     body,
     clientHash: hash,
     clientMtime: mtimeMs ?? undefined,
+    disabled: damaged,
     onSaved: (nextHash, nextMtime) => {
       setHash(nextHash);
       if (nextMtime) setMtimeMs(nextMtime);
@@ -90,7 +110,11 @@ export default function PromptEditor({
     setConflictNotifyBy(null);
     setShowConflictDialog(false);
     setExternalPreview(null);
-  }, [initialBody, clientHash, initialMtimeMs]);
+    setDamaged(initialDamaged);
+    setParseErrorCode(initialParseErrorCode);
+    setParseErrorMessage(initialParseErrorMessage);
+    onDamagedChange?.(initialDamaged);
+  }, [initialBody, clientHash, initialMtimeMs, initialDamaged, initialParseErrorCode, initialParseErrorMessage, onDamagedChange]);
 
   useEffect(() => {
     setFrontmatter(initialFrontmatter);
@@ -122,6 +146,64 @@ export default function PromptEditor({
     });
   }, [insertText, onInserted, onBodyChange, setEditorDirty]);
 
+  const buildRepairFrontmatter = (): PromptFrontmatter => {
+    const now = toIsoWithOffset();
+    if (frontmatter) {
+      return {
+        ...frontmatter,
+        title: frontmatter.title || "untitled",
+        project: frontmatter.project || "unspecified",
+        updatedAt: frontmatter.updatedAt ?? now,
+        createdAt: frontmatter.createdAt ?? now,
+        tags: Array.isArray(frontmatter.tags) ? frontmatter.tags : []
+      };
+    }
+    return {
+      title: "untitled",
+      project: "unspecified",
+      type: "其他",
+      status: "草稿",
+      model: "",
+      tags: [],
+      updatedAt: now,
+      createdAt: now
+    };
+  };
+
+  const handleRepair = async () => {
+    if (!promptId) return;
+    const safeFrontmatter = buildRepairFrontmatter();
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/prompts/${promptId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ frontmatter: safeFrontmatter, body, clientHash: hash, clientMtime: mtimeMs ?? undefined })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setParseErrorMessage(data?.message ?? "修復失敗，請稍後再試。");
+        setParseErrorCode(data?.code ?? "frontmatter_repair_failed");
+        return;
+      }
+      const nextFrontmatter = {
+        ...safeFrontmatter,
+        updatedAt: data.updatedAt ?? safeFrontmatter.updatedAt
+      };
+      setFrontmatter(nextFrontmatter);
+      onFrontmatterChange?.(nextFrontmatter);
+      setHash(data.hash ?? hash);
+      if (data.mtimeMs) setMtimeMs(data.mtimeMs);
+      setDamaged(false);
+      setParseErrorCode(null);
+      setParseErrorMessage(null);
+      onDamagedChange?.(false);
+      setEditorDirty(false);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const reloadExternal = async () => {
     if (!promptId) return;
     setBusy(true);
@@ -134,6 +216,10 @@ export default function PromptEditor({
       setHash(data.hash);
       if (data.mtimeMs) setMtimeMs(data.mtimeMs);
       onBodyChange?.(data.body);
+      setDamaged(!!data.damaged);
+      setParseErrorCode(data.errorCode ?? null);
+      setParseErrorMessage(data.errorMessage ?? null);
+      onDamagedChange?.(!!data.damaged);
       setConflictHash(null);
       setExternalPreview(null);
       setEditorDirty(false);
@@ -160,6 +246,10 @@ export default function PromptEditor({
       if (data.hash) {
         setHash(data.hash);
         if (data.mtimeMs) setMtimeMs(data.mtimeMs);
+        setDamaged(false);
+        setParseErrorCode(null);
+        setParseErrorMessage(null);
+        onDamagedChange?.(false);
         setConflictHash(null);
         setExternalPreview(null);
         setEditorDirty(false);
@@ -177,14 +267,18 @@ export default function PromptEditor({
     try {
       const res = await fetch(`/api/prompts/${promptId}`);
       const data = await res.json();
-      setExternalPreview(buildFullContent(data.frontmatter, data.body));
+      if (data.frontmatter) {
+        setExternalPreview(buildFullContent(data.frontmatter, data.body ?? ""));
+      } else {
+        setExternalPreview(data.body ?? "");
+      }
       recordTelemetry("conflict_view_diff");
     } finally {
       setBusy(false);
     }
   };
 
-  if (!promptId || !frontmatter) {
+  if (!promptId) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-sm text-slate-500 bg-slate-50 border border-dashed border-slate-200 rounded-lg">
         請從列表選擇提示詞
@@ -207,8 +301,29 @@ export default function PromptEditor({
           else previewExternal();
         }}
       />
+      {damaged && (
+        <div className="bg-rose-50 border-b border-rose-200 p-3 flex items-center justify-between gap-4">
+          <div className="text-sm text-rose-800 flex flex-col gap-1">
+            <span className="font-semibold">需修復：Frontmatter 損壞</span>
+            <span className="text-xs text-rose-700">
+              {parseErrorMessage ?? "Frontmatter YAML 損壞，已切換為純文字模式。"}
+              {parseErrorCode ? `（${parseErrorCode}）` : ""}
+            </span>
+          </div>
+          <button
+            onClick={handleRepair}
+            disabled={busy}
+            className="px-3 py-1 bg-rose-600 text-white rounded text-xs hover:bg-rose-700 transition-colors disabled:opacity-60"
+          >
+            一鍵修復並保存
+          </button>
+        </div>
+      )}
       {conflictHash && !showConflictDialog && (
-        <div className="absolute inset-x-0 top-0 z-10 bg-amber-50 border-b border-amber-200 p-3 shadow-sm animate-in fade-in slide-in-from-top-1">
+        <div
+          className="absolute inset-x-0 top-0 z-10 bg-amber-50 border-b border-amber-200 p-3 shadow-sm animate-in fade-in slide-in-from-top-1"
+          style={{ top: damaged ? 60 : 0 }}
+        >
 
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-amber-800 text-sm">

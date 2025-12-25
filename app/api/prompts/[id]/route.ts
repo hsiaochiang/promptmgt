@@ -22,7 +22,9 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
       body: result.body,
       hash: result.hash,
       mtimeMs: result.mtimeMs,
-      damaged: result.damaged
+      damaged: result.damaged,
+      errorCode: result.errorCode ?? null,
+      errorMessage: result.errorMessage ?? null
     });
   } catch (error: any) {
     if (error?.code === "ENOENT") {

@@ -13,6 +13,7 @@ interface Options {
   delay?: number;
   onSaved?: (hash: string, mtimeMs?: number, updatedAt?: string) => void;
   onConflict?: (serverHash: string, serverMtime?: number) => void;
+  disabled?: boolean;
 }
 
 export function useAutosavePrompt({
@@ -23,7 +24,8 @@ export function useAutosavePrompt({
   clientMtime,
   delay = 2000,
   onSaved,
-  onConflict
+  onConflict,
+  disabled = false
 }: Options) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -32,8 +34,8 @@ export function useAutosavePrompt({
   const setLastSavedAt = useWorkspaceStore((s) => s.setLastSavedAt);
 
   useEffect(() => {
-    if (!promptId || !frontmatter) return;
     if (timerRef.current) clearTimeout(timerRef.current);
+    if (disabled || !promptId || !frontmatter) return;
 
     timerRef.current = setTimeout(async () => {
       setIsSaving(true);
@@ -68,7 +70,7 @@ export function useAutosavePrompt({
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [promptId, frontmatter, body, clientHash, delay, onSaved, onConflict, setEditorDirty, setLastSavedAt]);
+  }, [promptId, frontmatter, body, clientHash, delay, onSaved, onConflict, setEditorDirty, setLastSavedAt, disabled]);
 
   return { isSaving, error };
 }

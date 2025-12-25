@@ -39,6 +39,9 @@ export default function WorkspaceShell() {
   const [promptHash, setPromptHash] = useState<string | null>(null);
   const [promptLoading, setPromptLoading] = useState(false);
   const [promptError, setPromptError] = useState<string | null>(null);
+  const [promptDamaged, setPromptDamaged] = useState(false);
+  const [promptParseErrorCode, setPromptParseErrorCode] = useState<string | null>(null);
+  const [promptParseErrorMessage, setPromptParseErrorMessage] = useState<string | null>(null);
   const [pendingInsert, setPendingInsert] = useState<string | null>(null);
   const { insertSnippet } = useSnippetInsert((content) => setPendingInsert(content));
   const inboxCount = useWorkspaceStore((s) => s.inboxCount);
@@ -68,6 +71,9 @@ export default function WorkspaceShell() {
       setPromptHash(null);
       setPromptLoading(false);
       setPromptError(null);
+      setPromptDamaged(false);
+      setPromptParseErrorCode(null);
+      setPromptParseErrorMessage(null);
       return;
     }
     setPromptLoading(true);
@@ -81,6 +87,9 @@ export default function WorkspaceShell() {
       setPromptFrontmatter(data.frontmatter);
       setPromptBody(data.body);
       setPromptHash(data.hash);
+      setPromptDamaged(!!data.damaged);
+      setPromptParseErrorCode(data.errorCode ?? null);
+      setPromptParseErrorMessage(data.errorMessage ?? null);
       setEditorDirty(false);
     } catch (err) {
       setPromptError(err instanceof Error ? err.message : "讀取失敗");
@@ -148,6 +157,9 @@ export default function WorkspaceShell() {
       setPromptFrontmatter(null);
       setPromptBody("");
       setPromptHash(null);
+      setPromptDamaged(false);
+      setPromptParseErrorCode(null);
+      setPromptParseErrorMessage(null);
       setPromptRefreshKey((k) => k + 1);
       setProjectRefreshKey((k) => k + 1);
     } catch (err) {
@@ -220,6 +232,9 @@ export default function WorkspaceShell() {
       setPromptFrontmatter(data.frontmatter);
       setPromptBody(data.body ?? "");
       setPromptHash(data.hash ?? null);
+      setPromptDamaged(!!data.damaged);
+      setPromptParseErrorCode(data.errorCode ?? null);
+      setPromptParseErrorMessage(data.errorMessage ?? null);
       setPromptRefreshKey((k) => k + 1);
       setProjectRefreshKey((k) => k + 1);
       setListCollapsed(false);
@@ -432,10 +447,14 @@ export default function WorkspaceShell() {
                       initialFrontmatter={promptFrontmatter}
                       initialBody={promptBody}
                       clientHash={promptHash}
+                      initialDamaged={promptDamaged}
+                      initialParseErrorCode={promptParseErrorCode}
+                      initialParseErrorMessage={promptParseErrorMessage}
                       insertText={pendingInsert}
                       onInserted={() => setPendingInsert(null)}
                       onBodyChange={(body) => setPromptBody(body)}
                       onFrontmatterChange={(fm) => setPromptFrontmatter(fm)}
+                      onDamagedChange={(flag) => setPromptDamaged(flag)}
                     />
                   </div>
                   <div

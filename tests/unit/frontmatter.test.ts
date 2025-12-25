@@ -29,14 +29,16 @@ describe("frontmatter parse/serialize", () => {
     expect(parsed.damaged).toBe(true);
     expect(parsed.frontmatter?.project).toBe("Foo");
     expect(parsed.frontmatter?.title).toBe("untitled");
+    expect(parsed.errorCode).toBe("frontmatter_missing_required");
     expect(parsed.body.trim()).toBe("Only body");
   });
 
-  it("marks content damaged and drops frontmatter when both title and project are missing", () => {
+  it("fills fallback frontmatter when both title and project are missing", () => {
     const raw = `Just body without frontmatter`;
     const parsed = parsePrompt(raw);
     expect(parsed.damaged).toBe(true);
-    expect(parsed.frontmatter).toBeNull();
+    expect(parsed.frontmatter?.title).toBe("untitled");
+    expect(parsed.frontmatter?.project).toBe("unspecified");
     expect(parsed.body.trim()).toBe("Just body without frontmatter");
   });
 
@@ -51,9 +53,9 @@ describe("frontmatter parse/serialize", () => {
     const raw = `---\n: :\n---\nBody text`;
     const parsed = parsePrompt(raw);
     expect(parsed.damaged).toBe(true);
-    expect(parsed.frontmatter).toBeNull();
-    expect(parsed.body).toContain("Body text");
-    expect(parsed.body.trim().startsWith("---"));
+    expect(parsed.frontmatter?.title).toBe("untitled");
+    expect(parsed.errorCode).toBe("frontmatter_parse_error");
+    expect(parsed.body.trim()).toBe("Body text");
   });
 
   it("omits undefined fields when serializing", () => {
