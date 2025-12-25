@@ -32,6 +32,7 @@ npm run dev
   - 遙測匯出（Export Telemetry）：於設定頁匯出診斷檔，預設寫入 `rootPath/telemetry.log`，檔案大小應 ≤5MB
   - 更新檢查（Update Check Enabled）：預設開啟，可停用避免對外連線；可於設定頁「手動檢查更新」呼叫安全端點（`UPDATE_CHECK_ENDPOINT`）。
 - 提示詞儲存在 `DEFAULT_ROOT/{ProjectName}/{SafeTitle}.md`，含 YAML frontmatter（title/project/type/status/model/tags/updatedAt/notes）；資料沿用 OS 權限，預設無應用層加密。
+- 專案 README：建立專案時會自動生成 `rootPath/Prompts/{專案名稱}/README.md`（名稱經 `sanitizeFilename` 處理）；儲存會帶 `expectedHash/expectedMtime`，若收到 409 代表檔案已被外部修改，請重新載入後合併。
 
 ## API 概覽（App Router route handlers）
 - Projects

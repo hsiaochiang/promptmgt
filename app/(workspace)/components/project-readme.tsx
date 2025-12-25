@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { Project } from "@/lib/types/schema";
 import { formatForUI_MMDD_HHmm } from "@/lib/utils/date";
 

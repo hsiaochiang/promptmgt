@@ -6,6 +6,7 @@ import { badRequest, conflict, notFound } from "@/app/api/_lib/responses";
 import { getDb } from "@/lib/db";
 import { applyPromptMeta, setPromptMetaFromPrompts } from "@/lib/services/cache";
 import { listPrompts } from "@/lib/fs/prompts";
+import { writeProjectReadme } from "@/lib/fs/projects";
 import { sanitizeFilename } from "@/lib/utils/sanitizeFilename";
 import { toIsoWithOffset } from "@/lib/utils/date";
 
@@ -42,6 +43,15 @@ export async function POST(request: Request) {
     path: rootPath ? join(rootPath, safeName) : undefined,
     docPath: join(rootPath, "Prompts", safeName, "README.md")
   };
+  if (rootPath) {
+    const result = await writeProjectReadme({
+      docPath: project.docPath,
+      rootPath,
+      projectName: project.name,
+      content: payload.description ? `# ${project.name}\n\n${payload.description}` : `# ${project.name}\n`
+    });
+    project.docPath = result.path;
+  }
   db.data!.projects.push(project);
   await db.write();
   return NextResponse.json(project, { status: 201 });
