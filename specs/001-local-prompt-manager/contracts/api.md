@@ -23,11 +23,11 @@
 - `POST /api/snippets/{id}/usage` → 200: Snippet（usage+1）
 
 ## Settings
-- `GET /api/settings` → 200: { rootPath, telemetryEnabled, updateCheckEnabled }
-- `POST /api/settings` body: { rootPath?, telemetryEnabled?, updateCheckEnabled? } → 200: same
+- `GET /api/settings` → 200: { rootPath, telemetryEnabled, updateCheckEnabled, logPath, pinned?, layout?, fontScale? }
+- `POST /api/settings` body: { rootPath?, telemetryEnabled?, updateCheckEnabled?, logPath?, pinned?, layout?, fontScale? } → 200: same
 
 ## Search
-- `POST /api/search` body: { keyword, projectId?, limit<=1000 } → 200: matches[]（含 highlight offsets）
+- `GET /api/search?q=&projectId=&limit<=1000` → 200: matches[]（含 highlight offsets, truncated flag when >1000）
 
 ## Server Action
 - `archiveDraft(payload)`

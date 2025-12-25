@@ -1,92 +1,85 @@
 # Implementation Plan: 本機提示詞管理系統（雙層儲存＋UI Prototype 對應）
 
-**Branch**: `001-local-prompt-manager` | **Date**: 2025-12-22 | **Spec**: specs/001-local-prompt-manager/spec.md
+**Branch**: `001-local-prompt-manager` | **Date**: 2025-12-25 | **Spec**: [specs/001-local-prompt-manager/spec.md](specs/001-local-prompt-manager/spec.md)
 **Input**: Feature specification from `/specs/001-local-prompt-manager/spec.md`
 
 ## Summary
 
-本功能在本機提供提示詞管理：收件匣草稿→專案歸檔→Markdown 編輯與精準複製，資料採 Markdown 檔 + LowDB 雙層儲存，前端以 Next.js App Router。新增要求：每個專案需有專案說明 README（Markdown），所有時間欄位統一儲存為 ISO 8601（UTC+08:00），UI 顯示 `MM/DD HH:mm`，編輯器標題列顯示 `HH:mm`。時間欄位 `createdAt/updatedAt` 對所有實體為必填並自動補值。
+建立本機執行的提示詞管理系統，採雙層儲存（Markdown 檔案＋LowDB JSON）與 Next.js App Router REST API，支援收件匣草稿 → 專案歸檔 → 片語插入工作流。自動儲存 2 秒節奏、Frontmatter 檔案寫入、衝突偵測提示三選，並以結構化日誌寫入本機循環檔案（遮蔽敏感資訊、含 console mirror），滿足 Clarifications 與 NFR。
 
 ## Technical Context
 
-**Language/Version**: TypeScript 5.x、Next.js 14（App Router）、Node.js 18  
-**Primary Dependencies**: Next.js / React 18、Tailwind CSS、lowdb、fs/promises、zod、gray-matter、@uiw/react-codemirror、localStorage 偏好封裝、自訂 clipboard/frontmatter/date utils  
-**Storage**: Markdown 檔（提示詞＋專案 README）+ LowDB（db.json 指標/設定）+ localStorage（Pin/寬度/字級/偏好）。所有時間儲存為 ISO 8601（UTC+08:00），前端依格式化函式顯示  
-**Testing**: Vitest（單元/整合）、React Testing Library、契約測試（tests/contract）、整合測試（tests/integration）；覆蓋率 ≥80%，關鍵路徑力求 100%  
-**Target Platform**: 桌面瀏覽器（Chromium/Edge）本機執行，Windows/macOS；Node 18 runtime  
-**Project Type**: Web（Next.js 全端：App Router + Route Handlers）  
-**Performance Goals**: 啟動載入 50 專案/500 提示詞 ≤5 秒；搜尋 p95 ≤2 秒（1000 筆截斷）；自動儲存 2 秒節奏；Pin 收合 150–250ms；精簡複製驗收 ≤3 秒（內部目標 <150ms）；時間格式一致性（SC-021）  
-**Constraints**: 離線優先、僅本機檔案；檔案衝突需提示決策；WCAG 2.1 AA；遙測/更新檢查預設可用但可停用，遙測僅本機 5MB 環迴；UPDATE_CHECK_ENDPOINT 必須 https；時間以 UTC+08:00 儲存並顯示；專案需帶 README 檔  
-**Scale/Scope**: 目標規模專案 ~50、提示詞 ~500、收件匣 100+（需分頁）、片語數百；單機單用戶並發
+**Language/Version**: TypeScript 5.x、Next.js 14 App Router（Node.js 18+）  
+**Primary Dependencies**: Next.js Route Handlers、LowDB、zod、remark/markdown 工具、localStorage 偏好、剪貼簿 API  
+**Storage**: Markdown 檔案（Frontmatter + 內容）＋ LowDB JSON（索引/設定/狀態），使用者目錄隱藏資料夾；本機結構化日誌循環檔案  
+**Testing**: Vitest（unit/contract/integration，jsdom）、契約測試對齊 OpenAPI 3.1、覆蓋率目標 ≥80%（關鍵路徑 100%）  
+**Target Platform**: 本機瀏覽器 (localhost) + Node.js 18+（Windows/macOS）  
+**Project Type**: Web（Next.js App Router 單體）  
+**Performance Goals**: 啟動至可輸入 ≤5 秒；草稿轉正 ≤30 秒；搜尋 ≤2 秒（1000 筆）；精簡複製 ≤3 秒；Pin 收合 150–250ms；Undo 成功率 ≥95%  
+**Constraints**: 離線優先、不可外傳資料；檔名合法化；Frontmatter 損壞需降級顯示；衝突三選；字級 +2px 無裁切；本機日誌遮蔽敏感資訊  
+**Scale/Scope**: 50 專案 / 500 提示詞資料集；Inbox >100 啟用分頁；搜尋結果最多 1000 筆（提示截斷）
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+*GATE: 必須通過後才能進入 Phase 0 研究，Phase 1 完成後需再檢視。*
 
-- 語言：所有規劃文件與使用者文件需為繁體中文（憲章 V）；本計畫全程以繁中撰寫。
-- 測試：TDD、覆蓋率 ≥80%，契約/整合/單元依測試金字塔；缺測試不得過關。
-- UX/可及性：WCAG 2.1 AA，錯誤可修復、快速回饋；時間顯示與格式一致性需驗證（SC-021）。
-- 效能：需量測 SC-001/SC-002/SC-003/SC-004/SC-008/SC-011/SC-021；未達標需調優方案。
-- 觀測性：本機 5MB 環迴遙測，可停用/匯出；符合離線與隱私要求。
-- 文件：quickstart/README/plan/spec/tasks 需更新且維持一致。
+- 語言：所有規格/計畫/使用者文件皆採繁體中文（Principle V）。
+- 測試：TDD、覆蓋率 ≥80%，關鍵路徑 100%，契約測試覆蓋公開 API（Principle II）。
+- UX：WCAG 2.1 AA、介面一致、可行動的錯誤回饋、提供 Quickstart 與驗收場景（Principle III）。
+- 效能：滿足 SC-001~SC-021 SLA，必要時量測與 perf 檢核（Principle IV）。
+- 品質：遵循既有模式與模組化；複雜度如有例外需記錄在 Complexity Tracking（Principle I）。
+
+**狀態**：目前無違規項，Phase 1 完成後再複核。
 
 ## Project Structure
 
-### Documentation (this feature)
+### Documentation（本功能）
 
 ```text
 specs/001-local-prompt-manager/
-├── plan.md              # 本文件（/speckit.plan 輸出）
-├── research.md          # Phase 0 研究/決策
-├── data-model.md        # Phase 1 資料模型/驗證
-├── quickstart.md        # Phase 1 啟動/操作指南
-├── contracts/           # Phase 1 API 合約（OpenAPI）
-└── tasks.md             # Phase 2 任務列表（/speckit.tasks）
+├── plan.md          # 本文件（/speckit.plan 輸出）
+├── research.md      # Phase 0 研究決策
+├── data-model.md    # Phase 1 資料模型
+├── quickstart.md    # Phase 1 快速開始/操作指引
+├── contracts/       # Phase 1 OpenAPI/摘要
+└── tasks.md         # Phase 2 (/speckit.tasks 輸出)
 ```
 
-### Source Code (repository root)
+### Source Code（現有主要路徑）
 
 ```text
-app/
-├── globals.css
-├── layout.tsx
-├── page.tsx
-└── (workspace)/               # 前端列表/編輯/設定
-    ├── actions/
-    ├── components/
-    ├── hooks/
-    ├── settings/
-    ├── store/
-    └── utils/
-api/                           # Next.js Route Handlers
-├── inbox/
-├── projects/
-├── prompts/
-├── search/
-├── settings/
-└── snippets/
-
-lib/
-├── db.ts
-├── db/
-│   └── fs/ (prompts.ts ...)
-├── services/ (cache/conflict/search/settings/telemetry)
-└── utils/ (clipboard/frontmatter/sanitizeFilename/date)
-
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-docs/ (env-setup, perf-checks, startup-guide, ux-checks, settings/telemetry)
-coverage/ (lcov-report)
+app/                # Next.js App Router（UI + route handlers）
+app/api/            # REST API（inbox/projects/prompts/snippets/search/settings）
+lib/                # 資料層（db/fs/services/utils/types）
+tests/              # 契約/整合/單元測試（Vitest）
+docs/               # 環境、效能、UX 檢查文件
 ```
 
-**Structure Decision**: 採 Next.js 單倉全端架構；前端與 Route Handlers 同在 `app/`，資料/服務層在 `lib/`，測試依類型分布於 `tests/contract|integration|unit`。
+**Structure Decision**: 維持單體 Next.js 結構，API 以 Route Handlers 提供本機檔案/LowDB 作業，契約對齊 OpenAPI 3.1；測試集中於 tests/（contract/integration/unit）。
 
 ## Complexity Tracking
 
-目前無憲章違規需豁免。表格留空。
+無需例外複雜度，暫無條目。
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
+## Phase 0 - Outline & Research
+
+- 未列 NEEDS CLARIFICATION 項目；針對核心決策（雙層儲存、檔名合法化、衝突處理、效能門檻、本機日誌策略、localStorage 偏好、驗證格式）彙整於 research.md，依「Decision / Rationale / Alternatives considered」格式。
+- 研究檔產出：更新 [research.md](research.md) 以反映最新 Clarifications（含日誌策略 NFR-003）。
+
+## Phase 1 - Design & Contracts
+
+- 資料模型：更新 [data-model.md](data-model.md)（實體欄位、驗證規則、狀態轉換）。
+- 契約：更新 [contracts/openapi.yaml](contracts/openapi.yaml) 與 [contracts/api.md](contracts/api.md)，涵蓋 inbox/projects/prompts/snippets/search/settings，含衝突/驗證錯誤碼與時間/檔名規範。
+- 快速開始：更新 [quickstart.md](quickstart.md)，涵蓋 rootPath、日誌策略、遙測/更新設定、快捷鍵、測試指令。
+- Agent context：執行 `.specify/scripts/powershell/update-agent-context.ps1 -AgentType copilot`，新增當前計畫採用的技術/日誌策略，保留現有手動段落。
+- Phase 1 完成後重跑 Constitution Check（語言/測試/效能/UX）。
+
+## Phase 2 - Implementation Planning（預告）
+
+- 依 research/design 輸出 /speckit.tasks 以產生 tasks.md：
+  - API/檔案層：autosave 2 秒、檔名合法化、Frontmatter 驗證、衝突偵測三選。
+  - UI：Pin/寬度持久化、三欄佈局、快捷鍵、專注模式、Undo/snackbar、片語 Drawer。
+  - 日誌：結構化本機循環檔案 + console mirror，遮蔽敏感欄位；設定可停用遙測/更新。
+  - 測試：契約 + 整合 + 單元覆蓋 ≥80%，關鍵路徑 100%，含衝突/截斷/快捷鍵/Undo/片語插入量測。
+
+> Phase 2 細項將於 /speckit.tasks 流程產出，不在本階段生成。

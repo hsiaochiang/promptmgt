@@ -4,11 +4,11 @@
 
 ### 自動儲存間隔
 - **Decision**: 草稿與提示詞自動儲存間隔 2 秒，無輸入時暫停計時，恢復輸入後重新計時。
-- **Rationale**: 2 秒提供低摩擦編輯體驗並降低資料遺失風險；符合現行 hook 預設節奏，避免頻繁 I/O。
+- **Rationale**: 2 秒提供低摩擦編輯體驗並降低資料遺失風險；符合現行 hook 節奏，避免頻繁 I/O。
 - **Alternatives considered**: 3–5 秒（降低 I/O 但風險增加）；立即儲存（I/O 過於頻繁且可能阻塞）。
 
 ### 雙層儲存策略
-- **Decision**: 持續使用 LowDB 作為索引/設定，Markdown 檔案作為正文來源。
+- **Decision**: 使用 LowDB 作為索引/設定，Markdown 檔案作為正文來源（Frontmatter + 內容）。
 - **Rationale**: 兼顧快速列表/設定查詢與開放檔案格式；符合「本機所有權」與外部編輯相容要求。
 - **Alternatives considered**: 單一檔案系統（列表效能較差）；SQLite（增設依賴且與開放 Markdown 目標不符）。
 
@@ -19,13 +19,13 @@
 
 ### 外部修改衝突處理
 - **Decision**: 發現 hash/mtime 衝突時提示三選（載入外部 / 保留本地 / 檢視差異）。
-- **Rationale**: 覆蓋風險高，需用戶決策；對應規格 Clarification。
+- **Rationale**: 覆蓋風險高，需用戶決策；對應 Clarifications。
 - **Alternatives considered**: 直接覆寫或拒絕寫入（皆不符合規格）。
 
 ### 本機觀測性策略（遙測/紀錄）
-- **Decision**: 採「本機暫存、可匯出」：以 console + 環迴記憶體 buffer（輪替檔案 telemetry/log 最大 5MB），預設不外傳；設定頁提供匯出診斷檔並可停用匿名遙測。
-- **Rationale**: 僅 localhost 執行且資料敏感，需可調試但不得外送；滿足 NFR-001 並符合離線要求。
-- **Alternatives considered**: (1) 零遙測—調試難；(2) 即時上傳外部服務—違反隱私與離線假設。
+- **Decision**: 以結構化日誌寫入本機循環檔案（5MB 旋轉，含 console mirror），遮蔽潛在敏感欄位；預設不外傳，設定可停用匿名遙測與更新檢查。
+- **Rationale**: 滿足 Clarification (Session 2025-12-25) 與 NFR-001/NFR-003，兼顧除錯與隱私；離線環境可運作。
+- **Alternatives considered**: 零日誌（調試困難）；外傳雲端（違反離線/隱私）；僅 console（缺乏旋轉與歷史）。
 
 ### 檔案/LowDB 寫入一致性
 - **Decision**: API 層集中序列化寫入（per-resource queue/mutex），寫入前後以 mtime/hash 驗證；衝突交由上方彈窗決策。
@@ -54,12 +54,12 @@
 
 ### 安全與存放策略
 - **Decision**: 儲存於使用者目錄下隱藏資料夾，沿用 OS 權限，預設無應用層加密；危險操作需確認 + undo 5–10 秒。
-- **Rationale**: 符合 Clarification 選項 B，無額外密鑰管理負擔。
+- **Rationale**: 符合 Clarification，無額外密鑰管理負擔。
 - **Alternatives considered**: AES-256 應用層加密（超出需求）；公開於共享路徑（違反隱私）。
 
 ### 時間欄位與時區策略
-- **Decision**: 所有實體（Project/Prompt/Inbox/Snippet/Settings）必備 `createdAt`/`updatedAt`，儲存格式為 ISO 8601（UTC+08:00，固定偏移，不採夏令時間），缺值由系統自動補值；UI 顯示 `MM/DD HH:mm`，編輯器標題列顯示 `HH:mm`。
-- **Rationale**: 與 FR-034/FR-035、SC-021 對齊；固定偏移可避免 DST 轉換誤差，序列化/驗證一致降低前後端落差。
+- **Decision**: 所有實體（Project/Prompt/Inbox/Snippet/Settings）必備 `createdAt`/`updatedAt`，儲存格式為 ISO 8601（UTC+08:00，固定偏移），缺值由系統自動補值；UI 顯示 `MM/DD HH:mm`，編輯器標題列顯示 `HH:mm`。
+- **Rationale**: 與 FR-034/FR-035、SC-021 對齊；固定偏移避免 DST 轉換誤差，序列化/驗證一致降低前後端落差。
 - **Alternatives considered**: 儲存 UTC Z + 轉換顯示（需額外轉換且易混用 Z/偏移）；允許缺 `createdAt`（違反稽核需求）。
 
 ## 待落實的實務要點
@@ -67,6 +67,6 @@
 - Route Handlers 寫入需集中序列化，避免客戶端直寫檔案。
 - localStorage/檔案資料載入需執行 schema 驗證與版本遷移（含 fallback）。
 - 衝突彈窗提供「載入外部 / 保留目前 / 檢視差異」，並記錄本機 Telemetry。
-- Quickstart 必須說明根路徑與隱藏資料夾位置、診斷匯出步驟。
+- Quickstart 必須說明根路徑與隱藏資料夾位置、日誌循環檔案（本機、不外傳）與遙測/更新停用方法。
 - 契約需列出錯誤碼（衝突、驗證錯、檔案不存在、路徑失效）。
 - Perf：列表/搜尋>1000 筆截斷並提示；自動儲存與 Pin 收合滿足 p95 指標。

@@ -184,6 +184,14 @@ paths:
       responses:
         '204': { description: 已刪除 }
 
+  /snippets/{id}/usage:
+    post:
+      summary: 增加片語使用次數
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200': { description: 使用次數已更新, content: { application/json: { schema: { $ref: '#/components/schemas/Snippet' } } } }
+
   /search:
     get:
       summary: 全域搜尋（提示詞/草稿/片語）
@@ -355,6 +363,7 @@ components:
         rootPath: { type: string }
         telemetryEnabled: { type: boolean }
         updateCheckEnabled: { type: boolean }
+        logPath: { type: string, description: 本機結構化日誌檔案路徑（循環檔案） }
         pinned: { type: boolean }
         layout:
           type: object
@@ -368,6 +377,7 @@ components:
         rootPath: { type: string }
         telemetryEnabled: { type: boolean }
         updateCheckEnabled: { type: boolean }
+        logPath: { type: string }
         pinned: { type: boolean }
         layout:
           type: object
@@ -381,3 +391,4 @@ components:
         prompts: { type: array, items: { $ref: '#/components/schemas/Prompt' } }
         inbox: { type: array, items: { $ref: '#/components/schemas/InboxItem' } }
         snippets: { type: array, items: { $ref: '#/components/schemas/Snippet' } }
+        truncated: { type: boolean, description: 是否因超過 1000 筆而截斷 }
