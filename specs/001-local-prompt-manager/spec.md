@@ -24,6 +24,10 @@
 
 - Q: 是否要求所有實體必備 createdAt/updatedAt 且以 UTC+08:00 ISO 儲存並自動補值？ → A: 是，所有實體（Project/Prompt/Inbox/Snippet/Settings）都須具備 createdAt/updatedAt，格式為 ISO 8601（UTC+08:00），缺值由系統自動填入。
 
+### Session 2025-12-25
+
+- Q: 預設的應用層日誌策略為何？ → A: 以結構化日誌寫入本機循環檔案（含 console mirror），記錄檔案/動作/耗時/錯誤碼並遮蔽敏感內容，供除錯且不外送。
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - 收件匣快速草稿捕捉 (Priority: P1)
@@ -177,6 +181,7 @@
 
 - **NFR-001**: 應用允許匿名遙測與更新檢查，預設開啟；應提供使用者在設定中停用遙測或更新檢查的選項
 - **NFR-002**: 本機資料（草稿/提示詞/設定）存放於使用者目錄下的隱藏資料夾，沿用作業系統帳戶權限，預設不施加應用層加密
+- **NFR-003**: 應用層日誌需以結構化格式寫入本機循環檔案並鏡射至 console，記錄檔案/動作/耗時/錯誤碼；預設遮蔽潛在敏感內容，不對外傳送
 
 ### Key Entities *(include if feature involves data)*
 
