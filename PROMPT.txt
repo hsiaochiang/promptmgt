@@ -1,5 +1,8 @@
 /speckit.implement
-請繼續執行 Phase 2 的任務，專注於契約示例與 UI 空態驗收 (T089-T090)：
+請繼續執行 Final Phase: Polish & Cross-Cutting Concerns 的任務 (T044-T047, T055-T063)：
 
-- [ ] T089 [P][Edge] 契約示例與文案：`contracts/openapi.yaml` 增加搜尋截斷/分頁範例回應；`docs/ux-checks.md` 補充 UI 提示/空態文案準則
-- [ ] T090 [P][Edge] UI 空態/提示驗收：`tests/integration/search-truncate-ui.test.tsx` 覆蓋截斷提示、收件匣分頁空態與整理提示文案
+- [ ] T044 [P] 更新 quickstart.md 與 README.md：同步根路徑設定、遙測/更新檢查開關、快捷鍵、片語 Drawer、收件匣分頁/搜尋行為，並標示環境變數 INBOX_PAGE_SIZE。
+- [ ] T045 [P] 效能回歸檢查與調優：依 docs/perf-checks.md 撰寫與執行啟動/搜尋/精簡複製/Pin 動畫 p95 量測，並在 docs/perf-checks.md 記錄。
+- [ ] T046 安全與復原檢查：覆核檔名禁用字元處理、路徑失效提醒、衝突對話框，並將結果填入 docs/ux-checks.md。
+- [ ] T047 [P] 覆蓋率稽核：執行 `npm test` (vitest --coverage)，產出覆蓋率報告並記錄缺口。
+- [ ] T055-T063 相關效能指標 (SC) 驗證與覆蓋率補強。

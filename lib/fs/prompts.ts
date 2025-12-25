@@ -60,10 +60,9 @@ export async function listPrompts(rootPath: string): Promise<PromptListItem[]> {
       const fullPath = join(projectDir, file.name);
       const raw = await fs.readFile(fullPath, "utf8");
       const parsed = parsePrompt(raw, {
-        fallbackProject: entry.name,
-        fallbackTitle: file.name.replace(extname(file.name), "")
+        fallbackProject: entry.name
       });
-      if (!parsed.frontmatter) continue;
+      if (!parsed.frontmatter || parsed.errorCode === "frontmatter_parse_error") continue;
       const stat = await fs.stat(fullPath);
 
       prompts.push({
@@ -89,8 +88,7 @@ export async function listPrompts(rootPath: string): Promise<PromptListItem[]> {
 export async function readPrompt(filePath: string): Promise<PromptReadResult> {
   const raw = await fs.readFile(filePath, "utf8");
   const parsed = parsePrompt(raw, {
-    fallbackProject: basename(dirname(filePath)),
-    fallbackTitle: basename(filePath, extname(filePath))
+    fallbackProject: basename(dirname(filePath))
   });
   const stat = await fs.stat(filePath);
   return {

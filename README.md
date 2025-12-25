@@ -26,6 +26,7 @@ npm run dev
 - 環境變數
   - `DB_FILE`: LowDB 檔案路徑，預設 `<repo>/db.json`
   - `DEFAULT_ROOT`: 提示詞檔案根目錄，預設 `%USERPROFILE%/.promptmgt` 或 `~/.promptmgt`（啟動時自動建立）
+  - `INBOX_PAGE_SIZE`: 收件匣分頁大小，預設 50，搜尋會跨頁
 - 進入 Workspace 後可於 Settings 頁切換
   - 根路徑（Root Path）：缺路徑會出現 RootPathAlert 導引設定；失效時可重新定位或建立預設資料夾
   - 日誌路徑（Log Path）：預設 `rootPath/logs/app.log`，僅允許使用者目錄下路徑；結構化 JSON、遮蔽敏感資訊、5MB 自動旋轉。
@@ -68,3 +69,5 @@ npm run dev
 - 檔名經 `sanitizeFilename` 處理避免非法字元。
 - 提示詞列表排序：依 `updatedAt` 由新到舊；快取計數於掃描後寫回。
 - 遙測/更新檢查預設開啟，可在設定頁停用；遙測 payload 不含提示內容與檔名全文。
+- 收件匣 50+/分頁時持續顯示整理提示，搜尋跨頁；可用 `INBOX_PAGE_SIZE` 快速調整驗證分頁效能。
+- 片語 Drawer（Alt+S）不會重置編輯內容，插入會更新使用次數並回饋 toast/標籤。

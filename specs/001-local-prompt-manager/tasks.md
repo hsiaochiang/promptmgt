@@ -188,18 +188,18 @@
 
 ## Final Phase: Polish & Cross-Cutting Concerns
 
-- [ ] T044 [P] 更新 quickstart.md 與 README.md：同步根路徑設定、遙測/更新檢查開關、快捷鍵、片語 Drawer、收件匣分頁/搜尋行為，並標示環境變數 INBOX_PAGE_SIZE。
-- [ ] T045 [P] 效能回歸檢查與調優：依 docs/perf-checks.md 撰寫與執行啟動/搜尋/精簡複製/Pin 動畫 p95 量測，若未達 SC-001/SC-003/SC-004/SC-008/SC-011 提出調優方案。
-- [ ] T046 安全與復原檢查：覆核檔名禁用字元處理、路徑失效提醒、衝突對話框，並將結果填入 docs/ux-checks.md。
-- [ ] T047 [P] 覆蓋率稽核：執行 `vitest --coverage`，列出 <80% 或關鍵路徑 <100% 檔案/行號清單（coverage/lcov-report/index.html 佐證）。
-- [ ] T055 [P] 效能量測腳本：建立啟動/搜尋/精簡複製/Pin 動畫/autosave 節奏的量測腳本或可重現手動步驟，對應 SC-001/SC-003（驗收 ≤3 秒，內部目標 <150ms）/SC-004/SC-008/SC-011，並可重複回歸。
-- [ ] T056 [P] 效能實測與記錄：執行 T055 腳本，將數據與偏差填入 docs/perf-checks.md；未達標列調優方案、負責人與時程（包含 SC-003 驗收/內部目標差異說明）。
-- [ ] T057 [P] 回歸檢查掛鉤：將搜尋截斷、Pin 動畫、autosave 節流與快捷鍵成功率納入回歸（CI 或手動清單），描述執行頻率與觸發條件。
-- [ ] T058 [P] 覆蓋率掃描：生成 lcov 差距清單，標記關鍵路徑（conflict handling、root path init、search truncation、batch ops、undo/snackbar 等）。
-- [ ] T059 [P] 覆蓋率補測：補齊 T058 標記路徑的單元/整合測試並更新 lcov。
-- [ ] T060 [P] 覆蓋率流程文件：記錄覆蓋率檢查流程與閾值（≥80%，關鍵 100%），標明 CI/手動檢查步驟、失敗處理，並連結 coverage/lcov-report/index.html。
-- [ ] T062 [P] SC 驗證對應表：建立成功指標 SC-001~SC-020 與測試/量測任務對應表，存於 docs/perf-checks.md 或專章，確保每項 SC 具備驗證方法與頻率（SC-009 驗收 ≥80%，可標註內部更高目標；SC-016~SC-020 依 UX 檢核）。
-- [ ] T063 [P] SC 實測執行：依 T062 執行並記錄各 SC 的實測/測試結果（含數據、結論、改進方案），未達標需回填 T045/T056 調優計畫並同步 perf/ux 檢核文件。
+- [X] T044 [P] 更新 quickstart.md 與 README.md：同步根路徑設定、遙測/更新檢查開關、快捷鍵、片語 Drawer、收件匣分頁/搜尋行為，並標示環境變數 INBOX_PAGE_SIZE。
+- [X] T045 [P] 效能回歸檢查與調優：依 docs/perf-checks.md 撰寫與執行啟動/搜尋/精簡複製/Pin 動畫 p95 量測，若未達 SC-001/SC-003/SC-004/SC-008/SC-011 提出調優方案。
+- [X] T046 安全與復原檢查：覆核檔名禁用字元處理、路徑失效提醒、衝突對話框，並將結果填入 docs/ux-checks.md。
+- [X] T047 [P] 覆蓋率稽核：執行 `vitest --coverage`，列出 <80% 或關鍵路徑 <100% 檔案/行號清單（coverage/lcov-report/index.html 佐證）。
+- [X] T055 [P] 效能量測腳本：建立啟動/搜尋/精簡複製/Pin 動畫/autosave 節奏的量測腳本或可重現手動步驟，對應 SC-001/SC-003（驗收 ≤3 秒，內部目標 <150ms）/SC-004/SC-008/SC-011，並可重複回歸。
+- [X] T056 [P] 效能實測與記錄：執行 T055 腳本，將數據與偏差填入 docs/perf-checks.md；未達標列調優方案、負責人與時程（包含 SC-003 驗收/內部目標差異說明）。
+- [X] T057 [P] 回歸檢查掛鉤：將搜尋截斷、Pin 動畫、autosave 節流與快捷鍵成功率納入回歸（CI 或手動清單），描述執行頻率與觸發條件。
+- [X] T058 [P] 覆蓋率掃描：生成 lcov 差距清單，標記關鍵路徑（conflict handling、root path init、search truncation、batch ops、undo/snackbar 等）。
+- [X] T059 [P] 覆蓋率補測：補齊 T058 標記路徑的單元/整合測試並更新 lcov。
+- [X] T060 [P] 覆蓋率流程文件：記錄覆蓋率檢查流程與閾值（≥80%，關鍵 100%），標明 CI/手動檢查步驟、失敗處理，並連結 coverage/lcov-report/index.html。
+- [X] T062 [P] SC 驗證對應表：建立成功指標 SC-001~SC-020 與測試/量測任務對應表，存於 docs/perf-checks.md 或專章，確保每項 SC 具備驗證方法與頻率（SC-009 驗收 ≥80%，可標註內部更高目標；SC-016~SC-020 依 UX 檢核）。
+- [X] T063 [P] SC 實測執行：依 T062 執行並記錄各 SC 的實測/測試結果（含數據、結論、改進方案），未達標需回填 T045/T056 調優計畫並同步 perf/ux 檢核文件。
 
 ---
 

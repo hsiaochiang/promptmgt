@@ -7,7 +7,7 @@
 ## 安裝與啟動
 1) 安裝依賴：`npm install`。  
 2) 設定根路徑：預設為使用者目錄下隱藏資料夾（例：`%USERPROFILE%/.promptmgt` 或 `~/.promptmgt`），啟動時自動建立；可在設定頁修改 `rootPath`。  
-3) 遙測/更新/日誌：預設啟用匿名遙測與更新檢查；可在設定頁關閉 `telemetryEnabled`、`updateCheckEnabled`，並調整 `logPath`（僅允許使用者目錄內路徑）。日誌為結構化 JSON，寫入本機循環檔案（預設 `rootPath/logs/app.log`，5MB 旋轉，含 console mirror，遮蔽敏感欄位），不外傳。  
+3) 遙測/更新/日誌：預設啟用匿名遙測與更新檢查；可在設定頁關閉 `telemetryEnabled`、`updateCheckEnabled`，並調整 `logPath`（僅允許使用者目錄內路徑）。日誌為結構化 JSON，寫入本機循環檔案（預設 `rootPath/logs/app.log`，5MB 旋轉，含 console mirror，遮蔽敏感欄位），不外傳。`INBOX_PAGE_SIZE` 環境變數可覆寫收件匣分頁大小（預設 50）。  
 4) 時間格式：所有時間欄位儲存為 ISO 8601（UTC+08:00）；列表/詳情顯示 `MM/DD HH:mm`，編輯器標題列顯示 `HH:mm`。  
 5) 啟動開發伺服：`npm run dev` → http://localhost:3000。  
 6) 首次載入確認 RootPathAlert 無錯誤；若路徑失效，依提示重新定位。
@@ -18,7 +18,8 @@
 - **提示詞編輯**：左欄列表依專案/狀態/搜尋篩選，點擊後右側 Markdown 編輯，提供完整/精簡複製、專注模式、Pin（預設 ON），標題列顯示最後儲存時間（HH:mm）。  
 - **專案說明**：每個專案建立時會自動生成 README（路徑：`rootPath/Prompts/{專案名稱}/README.md`，名稱會經 `sanitizeFilename` 處理），可在專案視圖開啟/編輯以記錄資訊與進度；若檔案外部修改導致 409，請重新載入後合併再儲存。  
 - **片語插入**：按 Alt+S 或按鈕開啟右側 Drawer，搜尋/點擊片語即插入游標並累計使用次數。  
-- **危險操作**：刪除/移動/歸檔需二段式確認並提供 5–10 秒 Undo。
+- **危險操作**：刪除/移動/歸檔需二段式確認並提供 5–10 秒 Undo。  
+- **收件匣分頁/搜尋**：超過 50 筆時自動分頁（可由 `INBOX_PAGE_SIZE` 覆寫），搜尋會跨頁，空態仍顯示整理提示。
 
 ## 快捷鍵
 - Alt+L 列表顯示/隱藏  

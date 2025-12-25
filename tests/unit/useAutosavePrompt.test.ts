@@ -56,9 +56,9 @@ describe("useAutosavePrompt Hook 節奏與 Hash 傳遞測試", () => {
     const fetchArgs = (fetch as any).mock.calls[0];
     const body = JSON.parse(fetchArgs[1].body);
     expect(body.clientHash).toBe("old-hash");
-    
+
     // 應呼叫 onSaved 並帶入新 Hash
-    expect(onSaved).toHaveBeenCalledWith("new-hash");
+    expect(onSaved).toHaveBeenCalledWith("new-hash", undefined, expect.any(String));
   });
 
   it("偵測到 409 衝突時應設定錯誤訊息且不呼叫 onSaved", async () => {
@@ -98,7 +98,7 @@ describe("useAutosavePrompt Hook 節奏與 Hash 傳遞測試", () => {
 
     expect(result.current.error).toContain("發現外部變更");
     expect(onSaved).not.toHaveBeenCalled();
-    expect(onConflict).toHaveBeenCalledWith("server-hash");
+    expect(onConflict).toHaveBeenCalledWith("server-hash", undefined);
   });
 
   it("無輸入時不重複儲存，恢復輸入後重新計時", async () => {

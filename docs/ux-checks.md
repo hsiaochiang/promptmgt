@@ -39,6 +39,11 @@
 - **SC-020 視覺延遲回饋**：
    - 在長操作（搜尋 1000+、大量載入）期間是否顯示忙碌/進度指示，避免誤判為卡死。
 
+## 安全與復原檢查（T046）
+- 檔名禁用字元：`tests/unit/adapters-utils.test.ts` 覆蓋非法/保留字情境，`sanitizeFilename` 會降級並維持 valid path。  
+- 路徑失效提醒：`tests/unit/root-path-guidance.test.tsx` 驗證 RootPathAlert 在路徑缺失時顯示修復導引。  
+- 衝突對話框：`tests/integration/us2-conflict-resolution.test.ts` 及 autosave 節奏測試確認 5 秒內提示衝突並提供載入/覆寫選項，錯誤訊息可理解。  
+
 ## 產出記錄格式
 
 | SC | 場景 | 結果 | 證據 | 發現/需改進 | 負責人 |

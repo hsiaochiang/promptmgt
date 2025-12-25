@@ -128,8 +128,10 @@ describe("frontmatter parsing", () => {
 
     const broken = parsePrompt("---\n: bad yaml\n---\ntext");
     expect(broken.damaged).toBe(true);
-    expect(broken.frontmatter).toBeNull();
-    expect(broken.body).toContain("bad yaml");
+    expect(broken.errorCode).toBe("frontmatter_parse_error");
+    expect(broken.frontmatter?.title).toBe("untitled");
+    expect(broken.frontmatter?.project).toBe("unspecified");
+    expect(broken.body.trim()).toBe("text");
   });
 
   it("flags missing required keys as damaged but keeps data", async () => {

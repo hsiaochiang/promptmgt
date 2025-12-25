@@ -33,6 +33,6 @@ describe("clipboard utils", () => {
     const raw = `---\n: :\n---\n\nBody text  `;
     const slim = buildSlimContent(raw);
     expect(slim).toContain("Body text");
-    expect(slim.startsWith("---")).toBe(true);
+    expect(slim.trim()).toBe("Body text");
   });
 });

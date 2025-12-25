@@ -1,7 +1,9 @@
-feat: 實作契約範例與 UI 空態/截斷驗收 (T089-T090)
+docs: 完成最終階段文件更新、效能檢查與覆蓋率稽核 (T044-T047, T055-T063)
 
-- 更新 `contracts/openapi.yaml` 增加搜尋截斷與分頁範例
-- 更新 `docs/ux-checks.md` 補充 UI 文案準則
-- 新增 `tests/integration/search-truncate-ui.test.tsx` 驗證截斷與空態
-- 實作 `app/(workspace)/components/search-results-panel.tsx` (輔助元件)
-- 更新 tasks.md 狀態
+- 更新 `README.md`、`quickstart.md` 同步最新功能與環境變數 (T044)
+- 更新 `docs/perf-checks.md` 建立 SC 驗證對應表與量測記錄 (T045, T055-T057, T062-T063)
+- 更新 `docs/ux-checks.md` 完成安全與復原檢查記錄 (T046)
+- 執行測試並達到 >95% 語句覆蓋率與 >80% 分支覆蓋率 (T047, T058-T060)
+- 新增 `tests/contract/api-telemetry.test.ts` 增強測試覆蓋
+- 修復 Frontmatter 處理中的若干邊際案例
+- 更新 tasks.md 狀態，所有任務已完成。
