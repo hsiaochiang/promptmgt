@@ -23,7 +23,7 @@
 - 緩衝：在記憶體維持 5MB 環迴，超過時移除最舊事件。
 - 匯出路徑：
 	- 若 `settings.telemetry.exportPath` 存在則寫入該檔案。
-	- 否則使用 `settings.rootPath/telemetry.log`。
+	- 否則使用 `settings.logPath`（預設 `rootPath/logs/app.log`，僅允許使用者目錄），寫入前若檔案 ≥5MB 會自動旋轉為 `.1`。
 - 格式：以換行分隔的 JSON，每行一筆事件，可供問題回報時匯出。
 - 呼叫 `exportTelemetry()` 時立即落盤，僅包含已緩衝的事件。
 

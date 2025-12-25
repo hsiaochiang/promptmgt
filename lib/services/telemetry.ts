@@ -65,7 +65,9 @@ const FORBIDDEN_KEYS = [
 ];
 
 const MAX_BUFFER_BYTES = 5 * 1024 * 1024; // 5MB 環迴
-const DEFAULT_EXPORT = "telemetry.log";
+const MAX_LOG_FILE_BYTES = 5 * 1024 * 1024; // 5MB 旋轉
+const DEFAULT_EXPORT = join("logs", "app.log");
+const MASK_PLACEHOLDER = "[REDACTED]";
 
 let buffer: TelemetryEntry[] = [];
 let bufferBytes = 0;
@@ -135,21 +137,67 @@ export async function sendTelemetry(payload: Record<string, unknown>, options: S
   return { ok: true, buffered: true, size: bufferBytes } as const;
 }
 
-async function resolveExportPath(explicitPath?: string) {
+function maskTelemetryEntry(entry: TelemetryPayload, rootPath?: string | null): TelemetryPayload {
+  const normalizedRoot = rootPath ? rootPath.replace(/\\/g, "/").toLowerCase() : null;
+  const maskValue = (value: unknown): unknown => {
+    if (typeof value === "string") {
+      const normalized = value.replace(/\\/g, "/");
+      const lowered = normalized.toLowerCase();
+      if (
+        (normalizedRoot && lowered.includes(normalizedRoot)) ||
+        /^[a-z]:\//i.test(normalized) ||
+        normalized.startsWith("/")
+      ) {
+        return MASK_PLACEHOLDER;
+      }
+      return value;
+    }
+    if (Array.isArray(value)) {
+      return value.map((v) => maskValue(v));
+    }
+    if (value && typeof value === "object") {
+      return Object.fromEntries(
+        Object.entries(value as Record<string, unknown>).map(([key, val]) => [key, maskValue(val)])
+      );
+    }
+    return value;
+  };
+
+  return maskValue(entry) as TelemetryPayload;
+}
+
+async function resolveExportTarget(explicitPath?: string) {
   const settings = await getSettings();
-  const candidate = explicitPath ?? settings.telemetry?.exportPath;
-  if (candidate) return candidate;
-  if (settings.rootPath) return join(settings.rootPath, DEFAULT_EXPORT);
-  return null;
+  const candidate = explicitPath ?? settings.telemetry?.exportPath ?? settings.logPath;
+  const normalizedCandidate = typeof candidate === "string" && candidate.trim().length > 0 ? candidate.trim() : null;
+  const fallback = settings.rootPath ? join(settings.rootPath, DEFAULT_EXPORT) : null;
+  return { path: normalizedCandidate ?? fallback, settings };
+}
+
+async function rotateIfNeeded(targetPath: string) {
+  try {
+    const stats = await fs.stat(targetPath);
+    if (stats.size >= MAX_LOG_FILE_BYTES) {
+      const rotated = `${targetPath}.1`;
+      await fs.rm(rotated, { force: true });
+      await fs.rename(targetPath, rotated);
+    }
+  } catch (err: any) {
+    if (err?.code !== "ENOENT") throw err;
+  }
 }
 
 export async function exportTelemetry(filePath?: string) {
-  const targetPath = await resolveExportPath(filePath);
+  const { path: targetPath, settings } = await resolveExportTarget(filePath);
   if (!targetPath) return { skipped: true, reason: "no-path" } as const;
 
   const dir = dirname(targetPath);
   await fs.mkdir(dir, { recursive: true });
-  const contents = buffer.map((b) => JSON.stringify(b.entry)).join("\n");
+  await rotateIfNeeded(targetPath);
+
+  const contents = buffer
+    .map((b) => JSON.stringify(maskTelemetryEntry(b.entry, settings.rootPath)))
+    .join("\n");
   await fs.writeFile(targetPath, contents, "utf8");
 
   return { ok: true, path: targetPath, bytesWritten: Buffer.byteLength(contents, "utf8") } as const;

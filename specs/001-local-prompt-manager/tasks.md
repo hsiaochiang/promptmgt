@@ -58,9 +58,9 @@
 - [X] T083 [US3] Frontmatter 損壞降級：`lib/utils/frontmatter.ts` 增加 YAML 損壞時的降級路徑（純文字顯示、標記需修復），統一錯誤碼/訊息
 - [X] T084 [US3] UI 顯示與修復：`app/(workspace)/components/prompt-editor.tsx` 顯示「需修復」橫幅並提供一鍵重新保存為有效 Frontmatter
 - [X] T085 [P][US3] 測試：`tests/unit/frontmatter-fallback.test.ts` + `tests/integration/frontmatter-repair.test.tsx` 覆蓋損壞 YAML → 降級顯示 → 修復保存成功
-- [ ] T086 [P][NFR] Settings API/UI 支援 `logPath`：`app/api/settings/route.ts`、`app/(workspace)/settings/page.tsx` 讀寫 `logPath`，預設 `rootPath/logs/app.log`，限制不可指向非使用者目錄
-- [ ] T087 [P][NFR] 日誌遮蔽與旋轉測試：`lib/services/telemetry.ts` 實作敏感欄位遮蔽與 5MB 旋轉檢查；`tests/unit/telemetry-rotation.test.ts` 驗證
-- [ ] T088 [P][NFR] 文件同步：更新 `quickstart.md`/`README.md` 說明 `logPath`、遮蔽/旋轉特性與設定開關；列出相關環境變數（若有）
+- [X] T086 [P][NFR] Settings API/UI 支援 `logPath`：`app/api/settings/route.ts`、`app/(workspace)/settings/page.tsx` 讀寫 `logPath`，預設 `rootPath/logs/app.log`，限制不可指向非使用者目錄
+- [X] T087 [P][NFR] 日誌遮蔽與旋轉測試：`lib/services/telemetry.ts` 實作敏感欄位遮蔽與 5MB 旋轉檢查；`tests/unit/telemetry-rotation.test.ts` 驗證
+- [X] T088 [P][NFR] 文件同步：更新 `quickstart.md`/`README.md` 說明 `logPath`、遮蔽/旋轉特性與設定開關；列出相關環境變數（若有）
 - [ ] T089 [P][Edge] 契約示例與文案：`contracts/openapi.yaml` 增加搜尋截斷/分頁範例回應；`docs/ux-checks.md` 補充 UI 提示/空態文案準則
 - [ ] T090 [P][Edge] UI 空態/提示驗收：`tests/integration/search-truncate-ui.test.tsx` 覆蓋截斷提示、收件匣分頁空態與整理提示文案
 

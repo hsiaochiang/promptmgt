@@ -1,10 +1,20 @@
 import { getDb } from "../db";
 import type { Settings } from "../types/schema";
 import { toIsoWithOffset } from "../utils/date";
+import { join } from "path";
+
+function resolveLogPath(rootPath?: string | null, logPath?: string | null) {
+  const candidate = typeof logPath === "string" && logPath.trim().length > 0 ? logPath.trim() : null;
+  if (candidate) return candidate;
+  if (rootPath) return join(rootPath, "logs", "app.log");
+  return null;
+}
 
 export async function getSettings(): Promise<Settings> {
   const db = await getDb();
-  return db.data!.settings;
+  const settings = db.data!.settings;
+  const logPath = resolveLogPath(settings.rootPath, settings.logPath) ?? settings.logPath;
+  return { ...settings, logPath: logPath ?? "" };
 }
 
 export async function updateSettings(partial: Partial<Settings>): Promise<Settings> {
@@ -12,9 +22,26 @@ export async function updateSettings(partial: Partial<Settings>): Promise<Settin
   const { pathExists: _omitPathExists, ...rest } = partial;
   const { pathExists: _prevOmitted, ...prev } = db.data!.settings as Settings & { pathExists?: boolean };
   const now = toIsoWithOffset();
+  const rootPath =
+    rest.rootPath === null
+      ? null
+      : typeof rest.rootPath === "string"
+        ? rest.rootPath
+        : prev.rootPath;
+  const rootChanged = rest.rootPath !== undefined && rootPath !== prev.rootPath;
+  const prevDefaultLog = resolveLogPath(prev.rootPath, null);
+  const shouldRebaseLogPath = rootChanged && prevDefaultLog && prev.logPath === prevDefaultLog && rest.logPath === undefined;
+  const logPathInput = rest.logPath === null ? null : shouldRebaseLogPath ? null : rest.logPath ?? prev.logPath;
+  const resolvedLogPath =
+    resolveLogPath(rootPath, logPathInput) ??
+    prev.logPath ??
+    resolveLogPath(rootPath, null) ??
+    "logs/app.log";
   const next: Settings = {
     ...prev,
     ...rest,
+    rootPath,
+    logPath: resolvedLogPath,
     createdAt: prev.createdAt ?? now,
     updatedAt: now
   };

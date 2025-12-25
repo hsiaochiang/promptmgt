@@ -8,6 +8,7 @@ import { toIsoWithOffset } from "./utils/date";
 
 const DB_FILE = process.env.DB_FILE || join(process.cwd(), "db.json");
 const DEFAULT_ROOT = process.env.DEFAULT_ROOT || join(homedir(), ".promptmgt");
+const DEFAULT_LOG_PATH = join(DEFAULT_ROOT, "logs", "app.log");
 
 function ensureIsoUtc8(value?: string) {
   if (value && value.includes("+08:00") && !Number.isNaN(Date.parse(value))) {
@@ -113,6 +114,7 @@ const seedData: DatabaseSchema = {
     telemetryEnabled: true,
     updateCheckEnabled: true,
     telemetry: { enabled: true },
+    logPath: DEFAULT_LOG_PATH,
     createdAt: ensureIsoUtc8(),
     updatedAt: ensureIsoUtc8()
   }
@@ -152,10 +154,13 @@ function normalizeData(raw?: Partial<DatabaseSchema>): DatabaseSchema {
     };
   });
 
+  const rootPath = (source.settings ?? {}).rootPath ?? seedData.settings.rootPath;
+  const logPath = (source.settings ?? {}).logPath ?? join(rootPath ?? DEFAULT_ROOT, "logs", "app.log");
   const settings = {
     ...seedData.settings,
     ...(source.settings ?? {}),
-    rootPath: (source.settings ?? {}).rootPath ?? seedData.settings.rootPath,
+    rootPath,
+    logPath,
     createdAt: ensureIsoUtc8((source.settings as any)?.createdAt),
     updatedAt: ensureIsoUtc8((source.settings as any)?.updatedAt)
   };

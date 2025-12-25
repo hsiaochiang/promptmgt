@@ -1,7 +1,7 @@
-feat: 實作 Frontmatter 損壞降級與修復機制 (T083-T085)
+feat: 實作日誌路徑設定與遙測增強 (T086-T088)
 
-- 更新 `lib/utils/frontmatter.ts` 支援損壞降級
-- 更新 `PromptEditor` 顯示修復橫幅並支援修復
-- 新增 `tests/unit/frontmatter-fallback.test.ts` 與 `tests/integration/frontmatter-repair.test.tsx`
-- 通過相關單元與整合測試
+- Settings API 與 UI 支援 `logPath` 設定 (T086)
+- 遙測日誌實作敏感欄位遮蔽與 5MB 自動旋轉 (T087)
+- 新增 `tests/unit/telemetry-rotation.test.ts` 驗證日誌旋轉邏輯 (T087)
+- 更新 `quickstart.md`、`README.md` 與 `telemetry.md` 說明日誌特性 (T088)
 - 更新 tasks.md 狀態

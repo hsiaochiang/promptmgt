@@ -13,6 +13,7 @@ const baseDefaults: Settings = {
   telemetryEnabled: true,
   updateCheckEnabled: true,
   telemetry: { enabled: true },
+  logPath: "",
   createdAt: toIsoWithOffset(),
   updatedAt: toIsoWithOffset()
 };
@@ -49,6 +50,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rootPathInput, setRootPathInput] = useState("");
+  const [logPathInput, setLogPathInput] = useState("");
   const [pathExists, setPathExists] = useState<boolean | null>(null);
   const [updateStatus, setUpdateStatus] = useState<string>("");
   const [updateChecking, setUpdateChecking] = useState(false);
@@ -61,6 +63,7 @@ export default function SettingsPage() {
       const data = (await res.json()) as Settings;
       setSettings(data);
       setRootPathInput(data.rootPath ?? "");
+      setLogPathInput((data as any).logPath ?? "");
       setPathExists((data as any).pathExists ?? null);
       persistFlags(data);
     } catch (err) {
@@ -87,6 +90,7 @@ export default function SettingsPage() {
       const data = (await res.json()) as Settings;
       setSettings(data);
       setRootPathInput(data.rootPath ?? "");
+      setLogPathInput((data as any).logPath ?? "");
       setPathExists((data as any).pathExists ?? null);
       persistFlags(data);
     } catch (err) {
@@ -187,6 +191,35 @@ export default function SettingsPage() {
               {pathExists === true && rootPathInput ? (
                 <div className="text-[11px] text-emerald-700">路徑可用：{rootPathInput}</div>
               ) : null}
+            </div>
+            <div className="p-4 border border-slate-200 rounded-lg space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-semibold text-sm">日誌路徑</div>
+                  <div className="text-sm text-slate-500">結構化 JSON 日誌（5MB 旋轉、遮蔽敏感欄位）。預設 rootPath/logs/app.log。</div>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                  <span className="text-[11px] text-slate-400">{saving ? "儲存中…" : null}</span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
+                  value={logPathInput}
+                  onChange={(e) => setLogPathInput(e.target.value)}
+                  placeholder="例如：C:\\Users\\me\\AppData\\Local\\promptmgt\\logs\\app.log"
+                />
+                <button
+                  onClick={() => update({ logPath: logPathInput })}
+                  className="px-3 py-2 rounded-lg bg-slate-900 text-white text-sm hover:bg-slate-800 disabled:opacity-60"
+                  disabled={!logPathInput}
+                >
+                  儲存日誌路徑
+                </button>
+              </div>
+              <div className="text-[11px] text-slate-500">
+                預設值：{settings?.rootPath ? `${settings.rootPath}\\logs\\app.log` : "rootPath/logs/app.log"}
+              </div>
             </div>
             <ToggleRow
               title="匿名遙測"

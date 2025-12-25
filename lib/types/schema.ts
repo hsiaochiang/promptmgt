@@ -144,6 +144,7 @@ export const settingsSchema = z.object({
   telemetryEnabled: z.boolean().default(true),
   updateCheckEnabled: z.boolean().default(true),
   telemetry: telemetrySettingsSchema.default({ enabled: true }),
+  logPath: z.string().min(1).default("logs/app.log"),
   pathExists: z.boolean().optional(),
   createdAt: isoUtc8StringWithDefault,
   updatedAt: isoUtc8StringWithDefault

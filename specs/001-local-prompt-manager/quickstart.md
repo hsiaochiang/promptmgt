@@ -7,7 +7,7 @@
 ## 安裝與啟動
 1) 安裝依賴：`npm install`。  
 2) 設定根路徑：預設為使用者目錄下隱藏資料夾（例：`%USERPROFILE%/.promptmgt` 或 `~/.promptmgt`），啟動時自動建立；可在設定頁修改 `rootPath`。  
-3) 遙測/更新/日誌：預設啟用匿名遙測與更新檢查；可在設定頁關閉 `telemetryEnabled`、`updateCheckEnabled`。日誌為結構化 JSON，寫入本機循環檔案（預設 `rootPath/logs/app.log`，5MB 旋轉，含 console mirror，遮蔽敏感欄位），不外傳。  
+3) 遙測/更新/日誌：預設啟用匿名遙測與更新檢查；可在設定頁關閉 `telemetryEnabled`、`updateCheckEnabled`，並調整 `logPath`（僅允許使用者目錄內路徑）。日誌為結構化 JSON，寫入本機循環檔案（預設 `rootPath/logs/app.log`，5MB 旋轉，含 console mirror，遮蔽敏感欄位），不外傳。  
 4) 時間格式：所有時間欄位儲存為 ISO 8601（UTC+08:00）；列表/詳情顯示 `MM/DD HH:mm`，編輯器標題列顯示 `HH:mm`。  
 5) 啟動開發伺服：`npm run dev` → http://localhost:3000。  
 6) 首次載入確認 RootPathAlert 無錯誤；若路徑失效，依提示重新定位。
@@ -35,7 +35,7 @@
 - 資料存放於使用者目錄隱藏資料夾，沿用 OS 權限，預設無應用層加密；必要時可手動加密目錄或放置在加密磁碟區。
 
 ## 遙測與診斷
-- 日誌：結構化 JSON，落地本機循環檔案（5MB 旋轉，含 console mirror，遮蔽敏感欄位），不外傳；需調查時可直接複製該檔案。  
+- 日誌：結構化 JSON，落地本機循環檔案（預設 `rootPath/logs/app.log`，5MB 旋轉，含 console mirror，遮蔽敏感欄位），不外傳；需調查時可直接複製該檔案或在設定頁更新 `logPath`。  
 - 事件：記錄 CRUD、衝突對話框選擇、搜尋/插入耗時、設定變更；無外部上傳。  
 - 更新檢查：僅在 `updateCheckEnabled` 為 true 時執行；停用即為 no-op。
 
