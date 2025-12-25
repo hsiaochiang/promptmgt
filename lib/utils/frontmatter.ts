@@ -41,7 +41,7 @@ function normalizeFrontmatter(data: Record<string, unknown>): { fm: PromptFrontm
     tags,
     note,
     updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : toIsoWithOffset(),
-    createdAt: typeof data.createdAt === "string" ? data.createdAt : undefined
+    createdAt: typeof data.createdAt === "string" ? data.createdAt : toIsoWithOffset()
   };
 
   return { fm, damaged };

@@ -3,7 +3,7 @@ import { promises as fs } from "fs";
 import { getSettings, updateSettings } from "@/lib/services/settings";
 import { badRequest } from "@/app/api/_lib/responses";
 
-export async function GET(_request?: Request) {
+export async function GET(_request: Request) {
   const settings = await getSettings();
   const rootPath = settings.rootPath ?? "";
   const pathExists = rootPath ? await fs.access(rootPath).then(() => true).catch(() => false) : false;

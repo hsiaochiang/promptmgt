@@ -17,7 +17,7 @@ function toUsageCount(snippet: any) {
   return Number.isFinite(current) && current >= 0 ? current : 0;
 }
 
-export async function GET(request?: Request) {
+export async function GET(request: Request) {
   const db = await getDb();
   const url = request ? new URL(request.url) : new URL("http://localhost/api/snippets");
   const keyword = url.searchParams.get("q")?.toLowerCase().trim();

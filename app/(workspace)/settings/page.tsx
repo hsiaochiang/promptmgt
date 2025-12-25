@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import type { Settings } from "@/lib/types/schema";
+import { toIsoWithOffset } from "@/lib/utils/date";
 
 const FLAGS_STORAGE_KEY = "pm-settings-flags";
 const baseDefaults: Settings = {
@@ -11,7 +12,9 @@ const baseDefaults: Settings = {
   fontScale: 2,
   telemetryEnabled: true,
   updateCheckEnabled: true,
-  telemetry: { enabled: true }
+  telemetry: { enabled: true },
+  createdAt: toIsoWithOffset(),
+  updatedAt: toIsoWithOffset()
 };
 
 function persistFlags(next: Partial<Settings>) {

@@ -6,6 +6,7 @@ import { getDb } from "@/lib/db";
 import { listPrompts, readPrompt, writePrompt } from "@/lib/fs/prompts";
 import { applyPromptMeta, setPromptMetaFromPrompts } from "@/lib/services/cache";
 import { toIsoWithOffset } from "@/lib/utils/date";
+import type { PromptFrontmatter } from "@/lib/types/schema";
 
 function decodeId(id: string) {
   return Buffer.from(id, "base64url").toString("utf8");
@@ -47,12 +48,13 @@ export async function POST(request: Request, { params }: { params: { id: string 
     return conflict("Conflict detected", { currentHash: current.hash });
   }
 
-  const baseFrontmatter = current.frontmatter ?? {};
-  const updatedFrontmatter = {
+  const baseFrontmatter: Partial<PromptFrontmatter> = current.frontmatter ?? {};
+  const updatedFrontmatter: PromptFrontmatter = {
     ...baseFrontmatter,
     ...frontmatter,
+    createdAt: frontmatter?.createdAt ?? baseFrontmatter.createdAt ?? toIsoWithOffset(),
     updatedAt: frontmatter?.updatedAt ?? baseFrontmatter.updatedAt ?? toIsoWithOffset()
-  };
+  } as PromptFrontmatter;
   const projectName = updatedFrontmatter.project ?? baseFrontmatter.project;
 
   if (!projectName) {

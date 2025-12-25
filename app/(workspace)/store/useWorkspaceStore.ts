@@ -56,7 +56,7 @@ function readPreferences(): Preferences {
   }
 }
 
-let persistTimer: ReturnType<typeof setTimeout> | null = null;
+let persistTimer: number | null = null;
 
 function queuePersist(state: Preferences) {
   if (!canUseStorage()) return;
