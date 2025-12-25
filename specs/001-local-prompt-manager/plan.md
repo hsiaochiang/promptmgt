@@ -71,6 +71,7 @@ docs/               # 環境、效能、UX 檢查文件
 - 資料模型：更新 [data-model.md](data-model.md)（實體欄位、驗證規則、狀態轉換）。
 - 契約：更新 [contracts/openapi.yaml](contracts/openapi.yaml) 與 [contracts/api.md](contracts/api.md)，涵蓋 inbox/projects/prompts/snippets/search/settings，含衝突/驗證錯誤碼與時間/檔名規範。
 - 快速開始：更新 [quickstart.md](quickstart.md)，涵蓋 rootPath、日誌策略、遙測/更新設定、快捷鍵、測試指令。
+- rootPath/時間規範：在 schema/契約中明確 rootPath 驗證（使用者目錄、非空、持久化）與全實體 createdAt/updatedAt 自動補值（ISO 8601, UTC+08:00），API/檔案回應需帶齊。
 - Agent context：執行 `.specify/scripts/powershell/update-agent-context.ps1 -AgentType copilot`，新增當前計畫採用的技術/日誌策略，保留現有手動段落。
 - Phase 1 完成後重跑 Constitution Check（語言/測試/效能/UX）。
 
@@ -79,7 +80,9 @@ docs/               # 環境、效能、UX 檢查文件
 - 依 research/design 輸出 /speckit.tasks 以產生 tasks.md：
   - API/檔案層：autosave 2 秒、檔名合法化、Frontmatter 驗證、衝突偵測三選。
   - UI：Pin/寬度持久化、三欄佈局、快捷鍵、專注模式、Undo/snackbar、片語 Drawer。
+  - 設定：rootPath API/UI/持久化與錯誤處理（使用者目錄限制、LowDB+localStorage），保存後觸發資料刷新。
   - 日誌：結構化本機循環檔案 + console mirror，遮蔽敏感欄位；設定可停用遙測/更新。
   - 測試：契約 + 整合 + 單元覆蓋 ≥80%，關鍵路徑 100%，含衝突/截斷/快捷鍵/Undo/片語插入量測。
+  - 時間欄位：所有實體建立/更新時自動補齊 createdAt/updatedAt（ISO 8601, UTC+08:00），API/檔案/LowDB/前端顯示一致，缺值自動填補。
 
 > Phase 2 細項將於 /speckit.tasks 流程產出，不在本階段生成。

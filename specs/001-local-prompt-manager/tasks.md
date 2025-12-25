@@ -45,9 +45,21 @@
 - [X] T075 [US2] 專案 README 編輯 UI 驗收：載入/編輯/保存/錯誤提示整合測試（建議 tests/integration/project-readme-ui.test.tsx），確保與 docPath 一致
 - [X] T076 [P] 專案 README 操作文件：於 quickstart.md/README.md 補充 README 路徑、建立流程、常見錯誤與修復指引
 
+## 根路徑設定（FR-022）
+
+- [ ] T091 [P][FR-022] 後端：rootPath GET/PUT API（LowDB + localStorage 同步），驗證不得為空且必須位於使用者目錄；錯誤碼覆蓋無效路徑/權限不足/非使用者目錄。
+- [ ] T092 [FR-022] 前端：設定頁 rootPath 表單與錯誤提示，RootPathAlert 導回設定頁並顯示當前狀態；保存成功後刷新 projects/prompts/inbox 資料。
+- [ ] T093 [P][FR-022] 測試：契約測試 rootPath GET/PUT、整合測試（設定→重載→RootPathAlert 消失且路徑生效）、單元測試驗證預設值/錯誤訊息。
+- [ ] T094 [P][FR-022] 文件：quickstart.md/README.md 補充 rootPath 配置、使用者目錄限制、常見錯誤排查與重試步驟。
+
 ## 時間欄位完整性（FR-035）
 
-
+- [ ] T095 [P][FR-035] 資料層：對 Project/Prompt/Inbox/Snippet/Settings 的建立與更新自動補齊 createdAt/updatedAt（ISO 8601, UTC+08:00），輸入缺值時由系統填補。
+- [ ] T096 [FR-035] Schema：lib/types/schema.ts 強制所有實體包含 createdAt/updatedAt 並驗證格式；更新對應 zod schema 測試。
+- [ ] T097 [P][FR-035] 契約/整合測試：抽樣每實體建立/更新 API 回應必帶 createdAt/updatedAt，並覆蓋檔案/LowDB 寫入時間格式。
+- [ ] T098 [FR-035] UI：列表/詳情/標題列使用 formatter 顯示時間；缺值時不得渲染空白，需依補值後顯示；驗證 HH:mm / "MM/DD HH:mm" 規則。
+- [ ] T099 [P][FR-035] 文件：在 docs/perf-checks.md / docs/ux-checks.md 增列時間欄位檢核流程與抽樣結果；標記 ISO+08:00 儲存、UI 格式要求。
+- [ ] T100 [P][FR-035] 覆蓋率/回歸：新增或調整測試以滿足 ≥80% 覆蓋並納入回歸清單（createdAt/updatedAt 自動補值與顯示）。
 ---
 
 ## 衝突處理、Frontmatter 修復與本機日誌（新增）
@@ -182,7 +194,7 @@
 - [X] T054 [P] 更新檢查開關基礎（NFR-001）：設定 schema/LowDB+localStorage 持久化，預設 ON，支援手動觸發與離線 noop；記錄端點/頻率策略。
 - [X] T054a [P] 更新檢查 UI/Route：設定頁 toggle + 手動檢查按鈕，若有 API 則補契約測試；錯誤提示/重試行為。
 - [X] T054b [P] 更新檢查測試與文件：單元/整合涵蓋 toggle/手動檢查/離線；quickstart/README 同步說明端點/頻率/離線策略。
-- [X] T061 [P] 片語需求對齊（FR-010/FR-021）：統一需求敘述/命名於 spec/plan/tasks；更新相關測試/文件引用避免重複。
+- [X] T061 [P] 片語需求對齊（FR-010）：統一需求敘述/命名於 spec/plan/tasks；更新相關測試/文件引用避免重複。
 
 ---
 
