@@ -26,6 +26,7 @@ export default function DraftEditor({ draft, projects, onArchived, onDeleted }: 
   const [archiveTags, setArchiveTags] = useState("");
   const [archiveNote, setArchiveNote] = useState("");
   const [archiving, setArchiving] = useState(false);
+  const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const setEditorDirty = useWorkspaceStore((s) => s.setEditorDirty);
   const setLoading = useWorkspaceStore((s) => s.setLoading);
@@ -100,18 +101,20 @@ export default function DraftEditor({ draft, projects, onArchived, onDeleted }: 
             title: title || "未命名草稿",
             project: projectName,
             type: archiveType,
-            status: archiveStatus,
-            model: archiveModel,
-            tags: tagsArray,
-            note: archiveNote,
-            updatedAt: new Date().toISOString()
-          },
-          body: content
-        })
-      });
-      if (!res.ok) throw new Error("歸檔失敗");
-      const data = await res.json();
-      onArchived({ ...data, projectName });
+          status: archiveStatus,
+          model: archiveModel,
+          tags: tagsArray,
+          note: archiveNote,
+          updatedAt: new Date().toISOString(),
+          createdAt: draft.createdAt ?? new Date().toISOString()
+        },
+        body: content
+      })
+    });
+    if (!res.ok) throw new Error("歸檔失敗");
+    const data = await res.json();
+    onArchived({ ...data, projectName });
+    setShowArchiveDialog(false);
     } catch (err) {
       window.alert(err instanceof Error ? err.message : "歸檔失敗");
     } finally {
@@ -151,54 +154,16 @@ export default function DraftEditor({ draft, projects, onArchived, onDeleted }: 
           {isSaving ? "自動儲存中…" : lastSavedAt ? `已儲存：${lastSavedAt}` : "等待編輯"}
         </span>
       </div>
-      <div className="px-3 pt-3 pb-2 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-3 text-[11px]">
-        <div className="flex items-center gap-2 flex-wrap">
-          <label className="text-slate-500">專案</label>
-          <select
-            className="border border-slate-300 rounded px-2 py-1"
-            value={archiveProject}
-            onChange={(e) => setArchiveProject(e.target.value)}
-          >
-            {projects.map((p) => (
-              <option key={p.id} value={p.name}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-          <label className="text-slate-500">狀態</label>
-          <select
-            className="border border-slate-300 rounded px-2 py-1"
-            value={archiveStatus}
-            onChange={(e) => setArchiveStatus(e.target.value as PromptStatus)}
-          >
-            <option value="使用中">使用中</option>
-            <option value="草稿">草稿</option>
-            <option value="已封存">已封存</option>
-          </select>
-          <label className="text-slate-500">類型</label>
-          <select
-            className="border border-slate-300 rounded px-2 py-1"
-            value={archiveType}
-            onChange={(e) => setArchiveType(e.target.value as PromptType)}
-          >
-            <option value="簡報生成">簡報生成</option>
-            <option value="結構設計">結構設計</option>
-            <option value="RAG 調教">RAG 調教</option>
-            <option value="其他">其他</option>
-          </select>
-          <label className="text-slate-500">模型</label>
-          <input
-            className="border border-slate-300 rounded px-2 py-1 w-32"
-            value={archiveModel}
-            onChange={(e) => setArchiveModel(e.target.value)}
-          />
-          <label className="text-slate-500">標籤</label>
-          <input
-            className="border border-slate-300 rounded px-2 py-1 w-40"
-            value={archiveTags}
-            onChange={(e) => setArchiveTags(e.target.value)}
-            placeholder="以逗號分隔"
-          />
+      <div className="px-3 pt-3 pb-2 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-3 text-[11px] flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap text-slate-600">
+          <span className="font-semibold text-slate-800">歸檔設定</span>
+          <span>專案：{archiveProject || "尚未選擇"}</span>
+          <span>狀態：{archiveStatus}</span>
+          <span>類型：{archiveType}</span>
+          <span>模型：{archiveModel}</span>
+          <span className="text-slate-500">
+            標籤：{tagsArray.length > 0 ? tagsArray.join(", ") : "尚未設定"}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -209,7 +174,7 @@ export default function DraftEditor({ draft, projects, onArchived, onDeleted }: 
             {deleting ? "刪除中…" : "刪除草稿"}
           </button>
           <button
-            onClick={handleArchive}
+            onClick={() => setShowArchiveDialog(true)}
             disabled={archiving || deleting}
             className="px-3 py-1 rounded-full bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-60"
           >
@@ -255,16 +220,125 @@ export default function DraftEditor({ draft, projects, onArchived, onDeleted }: 
             placeholder="開始撰寫或貼上草稿內容，系統將自動儲存"
           />
         </div>
-        <div className="space-y-1">
-          <label className="text-xs text-slate-500">前言備註</label>
-          <textarea
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
-            value={archiveNote}
-            onChange={(e) => setArchiveNote(e.target.value)}
-            placeholder="可選：補充使用說明"
-          />
-        </div>
       </div>
+      {showArchiveDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-auto rounded-xl bg-white shadow-2xl border border-slate-200 p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-semibold text-slate-900">將草稿歸檔為提示詞</div>
+                <div className="text-[11px] text-slate-500">請確認標題與目標專案後提交</div>
+              </div>
+              <button
+                onClick={() => setShowArchiveDialog(false)}
+                className="text-slate-500 hover:text-slate-800 text-sm"
+                aria-label="關閉歸檔對話框"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="grid gap-3 text-xs text-slate-700">
+              <div className="space-y-1">
+                <label className="text-slate-600 font-semibold">標題</label>
+                <input
+                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:border-slate-400"
+                  value={title}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setEditorDirty(true);
+                  }}
+                  placeholder="輸入草稿標題"
+                />
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-slate-600 font-semibold">目標專案</label>
+                  <select
+                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:border-slate-400"
+                    value={archiveProject}
+                    onChange={(e) => setArchiveProject(e.target.value)}
+                  >
+                    {projects.map((p) => (
+                      <option key={p.id} value={p.name}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-600 font-semibold">狀態</label>
+                  <select
+                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:border-slate-400"
+                    value={archiveStatus}
+                    onChange={(e) => setArchiveStatus(e.target.value as PromptStatus)}
+                  >
+                    <option value="使用中">使用中</option>
+                    <option value="草稿">草稿</option>
+                    <option value="已封存">已封存</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-600 font-semibold">類型</label>
+                  <select
+                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm bg-white focus:outline-none focus:border-slate-400"
+                    value={archiveType}
+                    onChange={(e) => setArchiveType(e.target.value as PromptType)}
+                  >
+                    <option value="簡報生成">簡報生成</option>
+                    <option value="結構設計">結構設計</option>
+                    <option value="RAG 調教">RAG 調教</option>
+                    <option value="其他">其他</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-600 font-semibold">模型</label>
+                  <input
+                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:border-slate-400"
+                    value={archiveModel}
+                    onChange={(e) => setArchiveModel(e.target.value)}
+                    placeholder="例如：gpt-4o-mini"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-slate-600 font-semibold">標籤（以逗號分隔）</label>
+                <input
+                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:border-slate-400"
+                  value={archiveTags}
+                  onChange={(e) => setArchiveTags(e.target.value)}
+                  placeholder="如：RAG, 文案, 產碼"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-slate-600 font-semibold">前言備註（選填）</label>
+                <textarea
+                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:border-slate-400"
+                  value={archiveNote}
+                  onChange={(e) => setArchiveNote(e.target.value)}
+                  placeholder="補充使用說明或注意事項"
+                  rows={3}
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => setShowArchiveDialog(false)}
+                className="px-3 py-1 rounded-full border border-slate-300 bg-white text-[11px] hover:bg-slate-50"
+                disabled={archiving}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleArchive}
+                disabled={archiving || deleting}
+                className="px-3 py-1 rounded-full bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-60"
+              >
+                {archiving ? "歸檔中…" : "確認歸檔"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -21,6 +21,7 @@ export default function SnippetPanel({ onInsert, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [insertedId, setInsertedId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [form, setForm] = useState<SnippetForm>({ name: "", category: "其他", content: "" });
@@ -38,6 +39,12 @@ export default function SnippetPanel({ onInsert, onClose }: Props) {
   useEffect(() => {
     fetchSnippets();
   }, [fetchSnippets]);
+
+  useEffect(() => {
+    if (!insertedId) return;
+    const timer = window.setTimeout(() => setInsertedId(null), 1800);
+    return () => window.clearTimeout(timer);
+  }, [insertedId]);
 
   const filtered = useMemo(() => snippets, [snippets]);
 
@@ -181,6 +188,14 @@ export default function SnippetPanel({ onInsert, onClose }: Props) {
               <span className="text-[9px] text-slate-400 flex items-center gap-1">
                 使用 {s.usageCount ?? s.usage ?? 0}
                 {busyId === s.id && <span className="text-amber-600">更新中…</span>}
+                {insertedId === s.id && (
+                  <span
+                    className="px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    data-testid={`snippet-inserted-${s.id}`}
+                  >
+                    已插入
+                  </span>
+                )}
               </span>
             </div>
             <div className="text-[10px] text-slate-500 truncate">{s.content}</div>
@@ -212,6 +227,7 @@ export default function SnippetPanel({ onInsert, onClose }: Props) {
                           )
                         );
                       }
+                      setInsertedId(s.id);
                     } catch (err) {
                       setError(err instanceof Error ? err.message : "插入失敗");
                     } finally {

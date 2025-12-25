@@ -1,9 +1,9 @@
-docs: 完成最終階段文件更新、效能檢查與覆蓋率稽核 (T044-T047, T055-T063)
+feat: 補齊 GUI 功能缺口與整合測試 (Phase A-F)
 
-- 更新 `README.md`、`quickstart.md` 同步最新功能與環境變數 (T044)
-- 更新 `docs/perf-checks.md` 建立 SC 驗證對應表與量測記錄 (T045, T055-T057, T062-T063)
-- 更新 `docs/ux-checks.md` 完成安全與復原檢查記錄 (T046)
-- 執行測試並達到 >95% 語句覆蓋率與 >80% 分支覆蓋率 (T047, T058-T060)
-- 新增 `tests/contract/api-telemetry.test.ts` 增強測試覆蓋
-- 修復 Frontmatter 處理中的若干邊際案例
-- 更新 tasks.md 狀態，所有任務已完成。
+- 實作 WorkspaceShell 接入 DraftEditor 並顯示收件匣模式標示 (T100-T101)
+- 實作專案建立 UI 與自動刷新選取邏輯 (T110-T111)
+- 實作草稿歸檔對話框與轉正流程 (T120-T121)
+- 優化提示詞列表刷新體驗與空狀態指引 (T130-T131)
+- 新增片語插入成功回饋 (T140)
+- 新增 Phase F 完整流程整合測試並全數通過 (T150-T153)
+- 更新 tasks.md 狀態，所有 GUI 補齊任務已完成。

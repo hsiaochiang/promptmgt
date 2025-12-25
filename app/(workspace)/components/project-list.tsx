@@ -15,6 +15,13 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const statusOptions: ProjectStatus[] = ["規劃中", "進行中", "已結案"];
+  const [newProject, setNewProject] = useState<{ name: string; description: string; status: ProjectStatus }>({
+    name: "",
+    description: "",
+    status: statusOptions[0]
+  });
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedProjectId = useWorkspaceStore((s) => s.selectedProjectId);
@@ -42,16 +49,22 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
     if (undoTimer.current) clearTimeout(undoTimer.current);
   }, []);
 
-  const handleAdd = async () => {
-    const name = window.prompt("輸入新專案名稱", "新專案");
-    if (!name) return;
+  const handleAdd = async (event?: React.FormEvent) => {
+    event?.preventDefault();
+    const name = newProject.name.trim();
+    if (!name) {
+      setNotice("請輸入專案名稱");
+      return;
+    }
+    const description = newProject.description.trim();
+    const status = (newProject.status ?? statusOptions[0]) as ProjectStatus;
     setBusy(true);
     setNotice(null);
     try {
       const res = await fetch("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, status: "規劃中" })
+        body: JSON.stringify({ name, status, description })
       });
       if (!res.ok) {
         const payload = await res.json().catch(() => ({} as any));
@@ -63,8 +76,13 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
       const created = (await res.json()) as Project;
       await fetchProjects();
       setSelectedProjectId(created.name);
+      setNotice("已建立專案");
+      setNewProject({ name: "", description: "", status: statusOptions[0] });
+      setShowCreateForm(false);
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "新增專案失敗");
+      const message = err instanceof Error ? err.message : "新增專案失敗";
+      setNotice(message);
+      window.alert(message);
     } finally {
       setBusy(false);
     }
@@ -127,14 +145,85 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
         <span className="text-[11px] font-semibold text-slate-500">專案列表</span>
         <div className="flex items-center gap-1">
           <button
-            onClick={handleAdd}
+            onClick={() => setShowCreateForm((v) => !v)}
             disabled={busy}
             className="text-[10px] px-2 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-60"
           >
-            新增專案
+            {showCreateForm ? "收起表單" : "新增專案"}
           </button>
         </div>
       </div>
+      {showCreateForm && (
+        <form onSubmit={handleAdd} className="mb-2 rounded-lg border border-slate-200 bg-white p-3 text-xs space-y-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] text-slate-600 font-semibold" htmlFor="project-name">
+              專案名稱
+            </label>
+            <input
+              id="project-name"
+              value={newProject.name}
+              onChange={(e) => setNewProject((p) => ({ ...p, name: e.target.value }))}
+              disabled={busy}
+              className="rounded border border-slate-300 px-2 py-1 text-xs focus:outline-none focus:border-slate-400"
+              placeholder="例如：行銷活動 A"
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] text-slate-600 font-semibold" htmlFor="project-desc">
+              簡述（選填）
+            </label>
+            <textarea
+              id="project-desc"
+              value={newProject.description}
+              onChange={(e) => setNewProject((p) => ({ ...p, description: e.target.value }))}
+              disabled={busy}
+              rows={3}
+              className="rounded border border-slate-300 px-2 py-1 text-xs focus:outline-none focus:border-slate-400 resize-none"
+              placeholder="專案目標、範圍或備註"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] text-slate-600 font-semibold" htmlFor="project-status">
+              狀態
+            </label>
+            <select
+              id="project-status"
+              value={newProject.status}
+              onChange={(e) => setNewProject((p) => ({ ...p, status: e.target.value as ProjectStatus }))}
+              disabled={busy}
+              className="rounded border border-slate-300 px-2 py-1 text-xs bg-white focus:outline-none focus:border-slate-400"
+            >
+              {statusOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="submit"
+              disabled={busy}
+              className="px-3 py-1 rounded-full bg-slate-900 text-white text-[11px] hover:bg-slate-800 disabled:opacity-60"
+            >
+              建立專案
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setShowCreateForm(false);
+                setNewProject({ name: "", description: "", status: statusOptions[0] });
+                setNotice(null);
+              }}
+              className="px-3 py-1 rounded-full border border-slate-300 bg-white text-[11px] hover:bg-slate-50 disabled:opacity-60"
+            >
+              取消
+            </button>
+          </div>
+        </form>
+      )}
       {notice ? <div className="text-[11px] text-amber-700 mb-1">{notice}</div> : null}
       {pendingDelete && (
         <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 px-3 py-2 rounded mb-1 flex items-center justify-between">

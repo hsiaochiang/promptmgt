@@ -263,6 +263,10 @@ export default function WorkspaceShell() {
       });
       if (!res.ok) throw new Error("建立草稿失敗");
       const created = await res.json();
+      setInboxItems((prev) => {
+        const next = prev.filter((item) => item.id !== created.id);
+        return [created, ...next];
+      });
       setSelectedInboxId(created.id);
       setSelectedPromptId(null);
       setInboxRefreshKey((k) => k + 1);
@@ -410,12 +414,20 @@ export default function WorkspaceShell() {
         >
           <div className="flex flex-col gap-3 h-full">
             {selectedInboxId ? (
-              <DraftEditor
-                draft={inboxItems.find((i) => i.id === selectedInboxId) ?? null}
-                projects={projects}
-                onArchived={handleArchiveSuccess}
-                onDeleted={handleDraftDeleted}
-              />
+              <>
+                <div className="flex items-center gap-2 text-[11px] text-amber-700">
+                  <span className="px-2 py-1 rounded-full bg-amber-50 border border-amber-200 font-semibold text-amber-800">
+                    收件匣模式
+                  </span>
+                  <span className="text-slate-500">目前正在編輯收件匣草稿，完成後可歸檔到專案。</span>
+                </div>
+                <DraftEditor
+                  draft={inboxItems.find((i) => i.id === selectedInboxId) ?? null}
+                  projects={projects}
+                  onArchived={handleArchiveSuccess}
+                  onDeleted={handleDraftDeleted}
+                />
+              </>
             ) : (
               <AsyncBoundary
                 loading={promptLoading}

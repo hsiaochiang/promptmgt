@@ -33,6 +33,12 @@ export default function PromptList({ refreshKey = 0, onDeletePrompt, onSelectedW
   const setSearchQuery = useWorkspaceStore((s) => s.setSearchQuery);
   const setFilterStatus = useWorkspaceStore((s) => s.setFilterStatus);
 
+  const latestSelectedPromptId = useRef<string | null>(selectedPromptId);
+
+  useEffect(() => {
+    latestSelectedPromptId.current = selectedPromptId;
+  }, [selectedPromptId]);
+
   const fetchPrompts = useCallback(async () => {
     if (!selectedProjectId) {
       setPrompts([]);
@@ -51,10 +57,10 @@ export default function PromptList({ refreshKey = 0, onDeletePrompt, onSelectedW
       const data = (await res.json()) as PromptListItem[];
       setPrompts(data);
       setSelectedIds(new Set());
-      const hasSelected = data.some((p) => p.id === selectedPromptId);
+      const hasSelected = data.some((p) => p.id === latestSelectedPromptId.current);
       if (data.length === 0) {
         setSelectedPromptId(null);
-      } else if (!selectedPromptId || !hasSelected) {
+      } else if (!latestSelectedPromptId.current || !hasSelected) {
         setSelectedPromptId(data[0].id);
       }
     } catch (err) {
@@ -472,8 +478,15 @@ export default function PromptList({ refreshKey = 0, onDeletePrompt, onSelectedW
               </div>
             </div>
           ))}
-          {prompts.length === 0 && !loading && (
-            <div className="text-xs text-slate-400">尚無提示詞，請先將草稿轉正或新增提示詞。</div>
+          {!loading && !selectedProjectId && (
+            <div className="rounded border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+              尚未選擇專案，請先建立專案或將草稿轉正後再查看提示詞。
+            </div>
+          )}
+          {!loading && selectedProjectId && prompts.length === 0 && (
+            <div className="rounded border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+              目前專案尚無提示詞，請先建立專案提示詞或將草稿轉正。
+            </div>
           )}
         </div>
       </AsyncBoundary>

@@ -141,6 +141,7 @@ describe("US4 - 點擊片語插入並計數", () => {
     await waitFor(() => {
       expect(screen.getByTestId("body-preview")).toHaveTextContent(/系統分析與網站規劃顧問/);
     });
+    await screen.findByText("已插入", {}, { timeout: 1500 });
 
     const updatedCard = await screen.findByText("角色設定－資深系統分析顧問");
     const updatedContainer = updatedCard.closest("div")?.parentElement?.parentElement as HTMLElement;
