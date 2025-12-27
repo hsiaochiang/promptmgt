@@ -1,9 +1,1 @@
 /speckit.implement
-請繼續執行 specs/001-prompt-management-app/tasks.md 的 Phase F 任務，確保所有 GUI 變更都有對應的整合測試：
-
-- [ ] T150 Integration：新增草稿→主畫面可編輯並自動儲存。
-- [ ] T151 Integration：新增專案後可選取且提示詞列表刷新。
-- [ ] T152 Integration：草稿轉正後出現在提示詞列表並移除收件匣。
-- [ ] T153 Unit/contract：補足新增表單（如新增專案、歸檔對話框）的最小渲染/行為測試。
-
-請檢視現有的 tests/integration 目錄，並新增或更新測試檔案以覆蓋上述場景。

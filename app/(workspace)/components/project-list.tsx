@@ -49,15 +49,15 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
     if (undoTimer.current) clearTimeout(undoTimer.current);
   }, []);
 
-  const handleAdd = async (event?: React.FormEvent) => {
+  const handleAdd = async (event?: React.FormEvent, override?: Partial<typeof newProject>) => {
     event?.preventDefault();
-    const name = newProject.name.trim();
+    const name = (override?.name ?? newProject.name).trim();
     if (!name) {
       setNotice("請輸入專案名稱");
       return;
     }
-    const description = newProject.description.trim();
-    const status = (newProject.status ?? statusOptions[0]) as ProjectStatus;
+    const description = (override?.description ?? newProject.description).trim();
+    const status = ((override?.status ?? newProject.status) ?? statusOptions[0]) as ProjectStatus;
     setBusy(true);
     setNotice(null);
     try {
@@ -86,6 +86,12 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
     } finally {
       setBusy(false);
     }
+  };
+
+  const handleQuickCreate = async () => {
+    const name = (window.prompt("輸入專案名稱", "新專案") ?? "").trim();
+    if (!name) return;
+    await handleAdd(undefined, { name, description: "", status: statusOptions[0] });
   };
 
   const handleEdit = async (project: Project) => {
@@ -145,11 +151,17 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
         <span className="text-[11px] font-semibold text-slate-500">專案列表</span>
         <div className="flex items-center gap-1">
           <button
-            onClick={() => setShowCreateForm((v) => !v)}
+            onClick={(e) => {
+              if (e.shiftKey) {
+                setShowCreateForm((v) => !v);
+                return;
+              }
+              void handleQuickCreate();
+            }}
             disabled={busy}
             className="text-[10px] px-2 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-60"
           >
-            {showCreateForm ? "收起表單" : "新增專案"}
+            新增專案
           </button>
         </div>
       </div>

@@ -6,6 +6,229 @@ info:
 servers:
   - url: http://localhost:3000/api
 paths:
+  /projects:
+    get:
+      summary: 列出專案
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+    post:
+      summary: 新增專案
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectCreateInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409":
+          description: 名稱重複
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ErrorResponse"
+                  - type: object
+                    properties:
+                      details:
+                        $ref: "#/components/schemas/ConflictFieldDetails"
+    patch:
+      summary: 更新專案（名稱/狀態/提示詞數量）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectUpdateInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: 名稱重複
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ErrorResponse"
+                  - type: object
+                    properties:
+                      details:
+                        $ref: "#/components/schemas/ConflictFieldDetails"
+    delete:
+      summary: 刪除專案
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /projects/{id}/readme:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      summary: 取得專案 README
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectReadme"
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      summary: 更新專案 README
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectReadmeUpdateInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectReadmeUpdateResult"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: README 已被其他來源修改
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ErrorResponse"
+                  - type: object
+                    properties:
+                      details:
+                        $ref: "#/components/schemas/ConflictHashDetails"
+
+  /prompts:
+    get:
+      summary: 列出提示詞（支援篩選/搜尋）
+      parameters:
+        - in: query
+          name: projectId
+          schema: { type: string }
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 1000 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PromptListItem"
+    post:
+      summary: 新增提示詞
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromptCreateInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromptDetail"
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /prompts/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PromptId"
+    get:
+      summary: 取得提示詞（含 frontmatter/body/hash/mtime）
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromptReadResult"
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      summary: 更新提示詞（含 autosave；具衝突偵測）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromptUpdateInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromptUpdateResult"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: 提示詞已被外部修改
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ErrorResponse"
+                  - type: object
+                    properties:
+                      details:
+                        $ref: "#/components/schemas/ConflictHashMtimeDetails"
+    delete:
+      summary: 永久刪除提示詞
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
   /inbox:
     get:
       summary: 列出收件匣草稿（可分頁/搜尋）
@@ -15,800 +238,753 @@ paths:
           schema: { type: string }
         - in: query
           name: limit
-          schema: { type: integer, minimum: 1, maximum: 100 }
+          schema: { type: integer, minimum: 1, maximum: 200 }
         - in: query
-           name: cursor
-           schema: { type: string }
+          name: offset
+          schema: { type: integer, minimum: 0 }
       responses:
-        openapi: 3.1.0
-        info:
-          title: PromptMgt Local API
-          version: 0.1.0
-          description: 本機提示詞管理（Next.js Route Handlers）API 合約
-        servers:
-          - url: http://localhost:3000/api
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InboxList"
+    post:
+      summary: 新增收件匣草稿
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InboxCreateInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InboxItem"
 
-        paths:
-          /projects:
-            get:
-              summary: 列出專案
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/Project"
-            post:
-              summary: 新增專案
-              requestBody:
-                required: true
-                content:
-                  application/json:
-                    schema:
-                      $ref: "#/components/schemas/ProjectCreateInput"
-              responses:
-                "201":
-                  description: Created
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Project"
-                "400": { $ref: "#/components/responses/BadRequest" }
-                "409": { $ref: "#/components/responses/Conflict" }
-            patch:
-              summary: 更新專案（名稱/狀態/提示詞數量）
-              requestBody:
-                required: true
-                content:
-                  application/json:
-                    schema:
-                      $ref: "#/components/schemas/ProjectUpdateInput"
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Project"
-                "400": { $ref: "#/components/responses/BadRequest" }
-                "404": { $ref: "#/components/responses/NotFound" }
-                "409": { $ref: "#/components/responses/Conflict" }
-            delete:
-              summary: 刪除專案
-              requestBody:
-                required: true
-                content:
-                  application/json:
-                    schema:
-                      type: object
-                      required: [id]
-                      properties:
-                        id: { type: string }
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/OkResponse"
-                "400": { $ref: "#/components/responses/BadRequest" }
-                "404": { $ref: "#/components/responses/NotFound" }
+  /inbox/{id}:
+    parameters:
+      - $ref: "#/components/parameters/InboxId"
+    get:
+      summary: 取得草稿
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InboxItem"
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      summary: 更新草稿（含 autosave；具衝突偵測）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InboxUpdateInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InboxItem"
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: 草稿已被更新
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ErrorResponse"
+                  - type: object
+                    properties:
+                      details:
+                        $ref: "#/components/schemas/ConflictInboxUpdatedAtDetails"
+    delete:
+      summary: 刪除草稿
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "404": { $ref: "#/components/responses/NotFound" }
 
-          /projects/{id}/readme:
-            parameters:
-              - $ref: "#/components/parameters/ProjectId"
-            get:
-              summary: 取得專案 README
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/ProjectReadme"
-                "404": { $ref: "#/components/responses/NotFound" }
-            put:
-              summary: 更新專案 README
-              requestBody:
-                required: true
-                content:
-                  application/json:
-                    schema:
-                      $ref: "#/components/schemas/ProjectReadmeUpdateInput"
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/ProjectReadmeUpdateResult"
-                "400": { $ref: "#/components/responses/BadRequest" }
-                "404": { $ref: "#/components/responses/NotFound" }
-                "409": { $ref: "#/components/responses/Conflict" }
-
-          /prompts:
-            get:
-              summary: 列出提示詞（支援篩選/搜尋）
-              parameters:
-                - in: query
-                  name: projectId
-                  schema: { type: string }
-                - in: query
-                  name: status
-                  schema: { type: string }
-                - in: query
-                  name: q
-                  schema: { type: string }
-                - in: query
-                  name: limit
-                  schema: { type: integer, minimum: 1, maximum: 1000 }
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/PromptListItem"
-            post:
-              summary: 新增提示詞
-              requestBody:
-                required: true
-                content:
-                  application/json:
-                    schema:
-                      $ref: "#/components/schemas/PromptCreateInput"
-              responses:
-                "201":
-                  description: Created
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/PromptDetail"
-                "400": { $ref: "#/components/responses/BadRequest" }
-
-          /prompts/{id}:
-            parameters:
-              - $ref: "#/components/parameters/PromptId"
-            get:
-              summary: 取得提示詞（含 frontmatter/body/hash/mtime）
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/PromptReadResult"
-                "404": { $ref: "#/components/responses/NotFound" }
-            post:
-              summary: 更新提示詞（含 autosave；具衝突偵測）
-              requestBody:
-                required: true
-                content:
-                  application/json:
-                    schema:
-                      $ref: "#/components/schemas/PromptUpdateInput"
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/PromptUpdateResult"
-                "400": { $ref: "#/components/responses/BadRequest" }
-                "404": { $ref: "#/components/responses/NotFound" }
-                "409": { $ref: "#/components/responses/Conflict" }
-            delete:
-              summary: 永久刪除提示詞
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/OkResponse"
-
-          /inbox:
-            get:
-              summary: 列出收件匣草稿（可分頁/搜尋）
-              parameters:
-                - in: query
-                  name: q
-                  schema: { type: string }
-                - in: query
-                  name: limit
-                  schema: { type: integer, minimum: 1, maximum: 200 }
-                - in: query
-                  name: offset
-                  schema: { type: integer, minimum: 0 }
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/InboxList"
-            post:
-              summary: 新增收件匣草稿
-              requestBody:
-                required: true
-                content:
-                  application/json:
-                    schema:
-                      $ref: "#/components/schemas/InboxCreateInput"
-              responses:
-                "201":
-                  description: Created
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/InboxItem"
-
-          /inbox/{id}:
-            parameters:
-              - $ref: "#/components/parameters/InboxId"
-            get:
-              summary: 取得草稿
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/InboxItem"
-                "404": { $ref: "#/components/responses/NotFound" }
-            patch:
-              summary: 更新草稿（含 autosave；具衝突偵測）
-              requestBody:
-                required: true
-                content:
-                  application/json:
-                    schema:
-                      $ref: "#/components/schemas/InboxUpdateInput"
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/InboxItem"
-                "404": { $ref: "#/components/responses/NotFound" }
-                "409": { $ref: "#/components/responses/Conflict" }
-            delete:
-              summary: 刪除草稿
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/OkResponse"
-                "404": { $ref: "#/components/responses/NotFound" }
-
-          /snippets:
-            get:
-              summary: 列出片語（可搜尋）
-              parameters:
-                - in: query
-                  name: q
-                  schema: { type: string }
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/Snippet"
-            post:
-              summary: 新增片語
-              requestBody:
-                required: true
-                content:
-                  application/json:
-                    schema:
-                      $ref: "#/components/schemas/SnippetCreateInput"
-              responses:
-                "201":
-                  description: Created
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Snippet"
-                "400": { $ref: "#/components/responses/BadRequest" }
-                "409": { $ref: "#/components/responses/Conflict" }
-            patch:
-              summary: 更新片語（collection 形式；以 body.id 指定）
-              requestBody:
-                required: true
-                content:
-                  application/json:
-                    schema:
-                      $ref: "#/components/schemas/SnippetUpdateByBodyInput"
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Snippet"
-                "400": { $ref: "#/components/responses/BadRequest" }
-                "404": { $ref: "#/components/responses/NotFound" }
-                "409": { $ref: "#/components/responses/Conflict" }
-            delete:
-              summary: 刪除片語（collection 形式；以 body.id 指定）
-              requestBody:
-                required: true
-                content:
-                  application/json:
-                    schema:
-                      type: object
-                      required: [id]
-                      properties:
-                        id: { type: string }
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/OkResponse"
-                "400": { $ref: "#/components/responses/BadRequest" }
-                "404": { $ref: "#/components/responses/NotFound" }
-
-          /snippets/{id}:
-            parameters:
-              - $ref: "#/components/parameters/SnippetId"
-            get:
-              summary: 取得片語
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Snippet"
-                "404": { $ref: "#/components/responses/NotFound" }
-            patch:
-              summary: 更新片語（item 形式）
-              requestBody:
-                required: true
-                content:
-                  application/json:
-                    schema:
-                      $ref: "#/components/schemas/SnippetUpdateInput"
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Snippet"
-                "404": { $ref: "#/components/responses/NotFound" }
-                "409": { $ref: "#/components/responses/Conflict" }
-            delete:
-              summary: 刪除片語（item 形式）
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/OkResponse"
-                "404": { $ref: "#/components/responses/NotFound" }
-
-          /snippets/{id}/usage:
-            parameters:
-              - $ref: "#/components/parameters/SnippetId"
-            post:
-              summary: 增加片語使用次數
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Snippet"
-                "404": { $ref: "#/components/responses/NotFound" }
-
-          /search:
-            get:
-              summary: 搜尋提示詞（可依專案/狀態篩選；最多 1000 筆）
-              parameters:
-                - in: query
-                  name: q
-                  schema: { type: string }
-                - in: query
-                  name: projectId
-                  schema: { type: string }
-                - in: query
-                  name: status
-                  schema: { type: string }
-                - in: query
-                  name: limit
-                  schema: { type: integer, minimum: 1, maximum: 1000 }
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/SearchResult"
-
-          /settings:
-            get:
-              summary: 取得設定（含 rootPath 可用性）
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Settings"
-            post:
-              summary: 更新設定
-              requestBody:
-                required: true
-                content:
-                  application/json:
-                    schema:
-                      $ref: "#/components/schemas/SettingsUpdateInput"
-              responses:
-                "200":
-                  description: OK
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Settings"
-                "400": { $ref: "#/components/responses/BadRequest" }
-
-        components:
-          parameters:
-            ProjectId:
-              name: id
-              in: path
-              required: true
-              schema: { type: string }
-            PromptId:
-              name: id
-              in: path
-              required: true
-              schema: { type: string, description: base64url 檔案路徑 id }
-            InboxId:
-              name: id
-              in: path
-              required: true
-              schema: { type: string }
-            SnippetId:
-              name: id
-              in: path
-              required: true
-              schema: { type: string }
-
-          responses:
-            BadRequest:
-              description: 驗證失敗
-              content:
-                application/json:
-                  schema: { $ref: "#/components/schemas/ErrorResponse" }
-            NotFound:
-              description: 資源不存在
-              content:
-                application/json:
-                  schema: { $ref: "#/components/schemas/ErrorResponse" }
-            Conflict:
-              description: 外部修改或版本衝突
-              content:
-                application/json:
-                  schema: { $ref: "#/components/schemas/ErrorResponse" }
-
-          schemas:
-            ErrorResponse:
-              type: object
-              required: [code, message]
-              properties:
-                code: { type: string, description: e.g. bad_request | not_found | conflict }
-                message: { type: string }
-                details: { description: 錯誤細節（依端點而異） }
-
-            OkResponse:
-              type: object
-              required: [ok]
-              properties:
-                ok: { type: boolean }
-
-            IsoDateTime:
-              type: string
-              format: date-time
-              description: ISO 8601（UTC+08:00）
-
-            Project:
-              type: object
-              required: [id, name, status, promptCount, docPath, createdAt, updatedAt]
-              properties:
-                id: { type: string }
-                name: { type: string }
-                status: { type: string }
-                promptCount: { type: integer }
-                docPath: { type: string }
-                path: { type: string }
-                createdAt: { $ref: "#/components/schemas/IsoDateTime" }
-                updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
-
-            ProjectCreateInput:
-              type: object
-              required: [name]
-              properties:
-                id: { type: string }
-                name: { type: string }
-                status: { type: string }
-                description: { type: string }
-
-            ProjectUpdateInput:
-              type: object
-              required: [id]
-              properties:
-                id: { type: string }
-                name: { type: string }
-                status: { type: string }
-                promptCount: { type: integer }
-
-            ProjectReadme:
-              type: object
-              required: [content, path, hash, mtimeMs]
-              properties:
-                content: { type: string }
-                path: { type: string }
-                hash: { type: string }
-                mtimeMs: { type: number }
-
-            ProjectReadmeUpdateInput:
-              type: object
-              required: [content]
-              properties:
-                content: { type: string }
-                expectedHash: { type: string }
-                expectedMtime: { type: number }
-
-            ProjectReadmeUpdateResult:
-              type: object
-              required: [path, hash, mtimeMs, updatedAt]
-              properties:
-                path: { type: string }
-                hash: { type: string }
-                mtimeMs: { type: number }
-                updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
-
-            PromptFrontmatter:
-              type: object
-              required: [title, project, type, status, tags, createdAt, updatedAt]
-              properties:
-                title: { type: string }
-                project: { type: string }
-                type: { type: string }
-                status: { type: string }
-                model: { type: string }
-                tags:
-                  type: array
-                  items: { type: string }
-                note: { type: string }
-                createdAt: { $ref: "#/components/schemas/IsoDateTime" }
-                updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
-
-            PromptListItem:
-              type: object
-              required: [id, projectId, title, type, status, tags, createdAt, updatedAt]
-              properties:
-                id: { type: string }
-                projectId: { type: string }
-                title: { type: string }
-                type: { type: string }
-                status: { type: string }
-                model: { type: string }
-                tags:
-                  type: array
-                  items: { type: string }
-                note: { type: string }
-                createdAt: { $ref: "#/components/schemas/IsoDateTime" }
-                updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
-                path: { type: string }
-                preview: { type: string }
-
-            PromptDetail:
-              type: object
-              required: [id, projectId, frontmatter, body, hash, mtimeMs]
-              properties:
-                id: { type: string }
-                projectId: { type: string }
-                frontmatter: { $ref: "#/components/schemas/PromptFrontmatter" }
-                body: { type: string }
-                hash: { type: string }
-                mtimeMs: { type: number }
-
-            PromptCreateInput:
-              type: object
-              required: [frontmatter]
-              properties:
-                frontmatter: { $ref: "#/components/schemas/PromptFrontmatter" }
-                body: { type: string }
-
-            PromptReadResult:
-              type: object
-              required: [id, hash, mtimeMs]
-              properties:
-                id: { type: string }
-                frontmatter: { $ref: "#/components/schemas/PromptFrontmatter" }
-                body: { type: string }
-                hash: { type: string }
-                mtimeMs: { type: number }
-                damaged: { type: boolean }
-                errorCode: { type: string, nullable: true }
-                errorMessage: { type: string, nullable: true }
-
-            PromptUpdateInput:
-              type: object
-              required: [body]
-              properties:
-                frontmatter: { $ref: "#/components/schemas/PromptFrontmatter" }
-                body: { type: string }
-                clientHash: { type: string }
-                clientMtime: { type: number }
-
-            PromptUpdateResult:
-              type: object
-              required: [hash, mtimeMs, updatedAt]
-              properties:
-                hash: { type: string }
-                mtimeMs: { type: number }
-                updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
-
-            InboxItem:
-              type: object
-              required: [id, title, content, createdAt, updatedAt]
-              properties:
-                id: { type: string }
-                title: { type: string }
-                content: { type: string }
-                hint: { type: string }
-                createdAt: { $ref: "#/components/schemas/IsoDateTime" }
-                updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
-
-            InboxList:
-              type: object
-              required: [items, total, hasMore, limit, offset]
-              properties:
+  /snippets:
+    get:
+      summary: 列出片語（可搜尋）
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
                 items:
-                  type: array
-                  items: { $ref: "#/components/schemas/InboxItem" }
-                total: { type: integer }
-                hasMore: { type: boolean }
-                limit: { type: integer }
-                offset: { type: integer }
-
-            InboxCreateInput:
-              type: object
-              properties:
-                title: { type: string }
-                content: { type: string }
-                hint: { type: string }
-
-            InboxUpdateInput:
-              type: object
-              properties:
-                title: { type: string }
-                content: { type: string }
-                hint: { type: string }
-                expectedUpdatedAt: { $ref: "#/components/schemas/IsoDateTime" }
-
-            Snippet:
-              type: object
-              required: [id, name, category, content, usageCount, createdAt, updatedAt]
-              properties:
-                id: { type: string }
-                name: { type: string }
-                category: { type: string }
-                content: { type: string }
-                usageCount: { type: integer }
-                usage: { type: integer }
-                lastUsedAt: { $ref: "#/components/schemas/IsoDateTime" }
-                createdAt: { $ref: "#/components/schemas/IsoDateTime" }
-                updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
-
-            SnippetCreateInput:
-              type: object
-              required: [name]
-              properties:
-                id: { type: string }
-                name: { type: string }
-                category: { type: string }
-                content: { type: string }
-
-            SnippetUpdateByBodyInput:
+                  $ref: "#/components/schemas/Snippet"
+    post:
+      summary: 新增片語
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SnippetCreateInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Snippet"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    patch:
+      summary: 更新片語（collection 形式；以 body.id 指定）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SnippetUpdateByBodyInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Snippet"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      summary: 刪除片語（collection 形式；以 body.id 指定）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
               type: object
               required: [id]
               properties:
                 id: { type: string }
-                name: { type: string }
-                category: { type: string }
-                content: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
-            SnippetUpdateInput:
-              type: object
-              properties:
-                name: { type: string }
-                category: { type: string }
-                content: { type: string }
+  /snippets/{id}:
+    parameters:
+      - $ref: "#/components/parameters/SnippetId"
+    get:
+      summary: 取得片語
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Snippet"
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      summary: 更新片語（item 形式）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SnippetUpdateInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Snippet"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      summary: 刪除片語（item 形式）
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "404": { $ref: "#/components/responses/NotFound" }
 
-            SearchResult:
-              type: object
-              required: [results, truncated]
-              properties:
-                results:
-                  type: array
-                  items: { $ref: "#/components/schemas/SearchMatch" }
-                truncated: { type: boolean }
+  /snippets/{id}/usage:
+    parameters:
+      - $ref: "#/components/parameters/SnippetId"
+    post:
+      summary: 增加片語使用次數
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Snippet"
+        "404": { $ref: "#/components/responses/NotFound" }
 
-            SearchMatch:
-              type: object
-              required: [id, title, projectId, status, updatedAt, createdAt]
-              properties:
-                id: { type: string }
-                title: { type: string }
-                projectId: { type: string }
-                status: { type: string }
-                model: { type: string }
-                tags:
-                  type: array
-                  items: { type: string }
-                snippet: { type: string }
-                updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
-                createdAt: { $ref: "#/components/schemas/IsoDateTime" }
+  /search:
+    get:
+      summary: 搜尋提示詞（可依專案/狀態篩選；最多 1000 筆）
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: projectId
+          schema: { type: string }
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 1000 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponse"
 
-            Settings:
-              type: object
-              required: [rootPath, pinned, layout, fontScale, telemetryEnabled, updateCheckEnabled, logPath, createdAt, updatedAt]
-              properties:
-                rootPath: { type: string, nullable: true }
-                pinned: { type: boolean }
-                layout:
-                  type: object
-                  properties:
-                    leftWidth: { type: number }
-                    middleWidth: { type: number }
-                fontScale: { type: number }
-                telemetryEnabled: { type: boolean }
-                updateCheckEnabled: { type: boolean }
-                telemetry:
-                  type: object
-                  properties:
-                    enabled: { type: boolean }
-                    exportPath: { type: string }
-                logPath: { type: string }
-                pathExists: { type: boolean }
-                createdAt: { $ref: "#/components/schemas/IsoDateTime" }
-                updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
+  /settings:
+    get:
+      summary: 取得設定（含 rootPath 可用性）
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+    post:
+      summary: 更新設定
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsUpdateInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+        "400": { $ref: "#/components/responses/BadRequest" }
 
-            SettingsUpdateInput:
-              type: object
-              properties:
-                rootPath: { type: string, nullable: true }
-                pinned: { type: boolean }
-                layout:
-                  type: object
-                  properties:
-                    leftWidth: { type: number }
-                    middleWidth: { type: number }
-                fontScale: { type: number }
-                telemetryEnabled: { type: boolean }
-                updateCheckEnabled: { type: boolean }
-                telemetry:
-                  type: object
-                  properties:
-                    enabled: { type: boolean }
-                    exportPath: { type: string }
-                logPath: { type: string }
+  /settings/update-check:
+    get:
+      summary: 檢查是否有更新版本
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateCheckResult"
+
+  /settings/change-report:
+    get:
+      summary: 取得 24 小時內的提示詞/草稿異動摘要
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChangeReportItem"
+        "500":
+          description: 變更報告無法提供
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+
+  /telemetry:
+    post:
+      summary: 傳送遙測事件
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TelemetryEvent"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  result: { type: object }
+                  error: { type: string }
+        "400":
+          description: 輸入無效
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  error: { type: string }
+
+  /archive:
+    post:
+      summary: 將草稿歸檔為提示詞
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArchiveDraftInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArchiveDraftResult"
+
+components:
+  parameters:
+    ProjectId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+    PromptId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        description: base64url 檔案路徑 id
+    InboxId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+    SnippetId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+
+  responses:
+    BadRequest:
+      description: 驗證失敗
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    NotFound:
+      description: 資源不存在
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Conflict:
+      description: 外部修改或版本衝突
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, description: e.g. bad_request | not_found | conflict }
+        message: { type: string }
+        details: { description: 錯誤細節（依端點而異） }
+
+    OkResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok: { type: boolean }
+
+    IsoDateTime:
+      type: string
+      format: date-time
+      description: ISO 8601（UTC+08:00）
+
+    ConflictFieldDetails:
+      type: object
+      properties:
+        field: { type: string }
+
+    ConflictHashDetails:
+      type: object
+      properties:
+        currentHash: { type: string }
+
+    ConflictHashMtimeDetails:
+      type: object
+      properties:
+        currentHash: { type: string }
+        currentMtime: { type: number }
+
+    ConflictInboxUpdatedAtDetails:
+      type: object
+      properties:
+        currentUpdatedAt: { type: string }
+
+    Project:
+      type: object
+      required: [id, name, status, promptCount, docPath, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        status: { type: string }
+        promptCount: { type: integer }
+        docPath: { type: string }
+        path: { type: string }
+        createdAt: { $ref: "#/components/schemas/IsoDateTime" }
+        updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
+
+    ProjectCreateInput:
+      type: object
+      required: [name]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        status: { type: string }
+        description: { type: string }
+
+    ProjectUpdateInput:
+      type: object
+      required: [id]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        status: { type: string }
+        promptCount: { type: integer }
+
+    ProjectReadme:
+      type: object
+      required: [content, path, hash, mtimeMs]
+      properties:
+        content: { type: string }
+        path: { type: string }
+        hash: { type: string }
+        mtimeMs: { type: number }
+
+    ProjectReadmeUpdateInput:
+      type: object
+      required: [content]
+      properties:
+        content: { type: string }
+        expectedHash: { type: string }
+        expectedMtime: { type: number }
+
+    ProjectReadmeUpdateResult:
+      type: object
+      required: [path, hash, mtimeMs, updatedAt]
+      properties:
+        path: { type: string }
+        hash: { type: string }
+        mtimeMs: { type: number }
+        updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
+
+    PromptFrontmatter:
+      type: object
+      required: [title, project, type, status, tags, createdAt, updatedAt]
+      properties:
+        title: { type: string }
+        project: { type: string }
+        type: { type: string }
+        status: { type: string }
+        model: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        note: { type: string }
+        createdAt: { $ref: "#/components/schemas/IsoDateTime" }
+        updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
+
+    PromptListItem:
+      type: object
+      required: [id, projectId, title, type, status, tags, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        projectId: { type: string }
+        path: { type: string }
+        title: { type: string }
+        project: { type: string }
+        type: { type: string }
+        status: { type: string }
+        model: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        note: { type: string }
+        createdAt: { $ref: "#/components/schemas/IsoDateTime" }
+        updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
+        preview: { type: string }
+
+    PromptDetail:
+      type: object
+      required: [id, projectId, frontmatter, body, hash, mtimeMs]
+      properties:
+        id: { type: string }
+        projectId: { type: string }
+        frontmatter: { $ref: "#/components/schemas/PromptFrontmatter" }
+        body: { type: string }
+        hash: { type: string }
+        mtimeMs: { type: number }
+
+    PromptCreateInput:
+      type: object
+      required: [frontmatter]
+      properties:
+        frontmatter: { $ref: "#/components/schemas/PromptFrontmatter" }
+        body: { type: string }
+
+    PromptReadResult:
+      type: object
+      required: [id, hash, mtimeMs]
+      properties:
+        id: { type: string }
+        frontmatter:
+          allOf:
+            - $ref: "#/components/schemas/PromptFrontmatter"
+          nullable: true
+        body: { type: string }
+        hash: { type: string }
+        mtimeMs: { type: number }
+        damaged: { type: boolean }
+        errorCode: { type: string, nullable: true }
+        errorMessage: { type: string, nullable: true }
+
+    PromptUpdateInput:
+      type: object
+      required: [body]
+      properties:
+        frontmatter: { $ref: "#/components/schemas/PromptFrontmatter" }
+        body: { type: string }
+        clientHash: { type: string }
+        clientMtime: { type: number }
+
+    PromptUpdateResult:
+      type: object
+      required: [hash, mtimeMs, updatedAt]
+      properties:
+        hash: { type: string }
+        mtimeMs: { type: number }
+        updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
+
+    InboxItem:
+      type: object
+      required: [id, title, content, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        content: { type: string }
+        hint: { type: string }
+        createdAt: { $ref: "#/components/schemas/IsoDateTime" }
+        updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
+
+    InboxList:
+      type: object
+      required: [items, total, hasMore, limit, offset]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/InboxItem" }
+        total: { type: integer }
+        hasMore: { type: boolean }
+        limit: { type: integer }
+        offset: { type: integer }
+
+    InboxCreateInput:
+      type: object
+      properties:
+        title: { type: string }
+        content: { type: string }
+        hint: { type: string }
+
+    InboxUpdateInput:
+      type: object
+      properties:
+        title: { type: string }
+        content: { type: string }
+        hint: { type: string }
+        expectedUpdatedAt: { $ref: "#/components/schemas/IsoDateTime" }
+
+    Snippet:
+      type: object
+      required: [id, name, category, content, usageCount, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        category: { type: string }
+        content: { type: string }
+        usageCount: { type: integer }
+        usage: { type: integer }
+        lastUsedAt: { $ref: "#/components/schemas/IsoDateTime" }
+        createdAt: { $ref: "#/components/schemas/IsoDateTime" }
+        updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
+
+    SnippetCreateInput:
+      type: object
+      required: [name]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        category: { type: string }
+        content: { type: string }
+
+    SnippetUpdateByBodyInput:
+      type: object
+      required: [id]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        category: { type: string }
+        content: { type: string }
+
+    SnippetUpdateInput:
+      type: object
+      properties:
+        name: { type: string }
+        category: { type: string }
+        content: { type: string }
+
+    SearchMatch:
+      allOf:
+        - $ref: "#/components/schemas/PromptListItem"
+        - type: object
+          required: [snippet]
+          properties:
+            snippet: { type: string }
+
+    SearchResponse:
+      type: object
+      required: [results, truncated]
+      properties:
+        results:
+          type: array
+          items: { $ref: "#/components/schemas/SearchMatch" }
+        truncated: { type: boolean }
+
+    Settings:
+      type: object
+      required:
+        [rootPath, pinned, layout, fontScale, telemetryEnabled, updateCheckEnabled, logPath, createdAt, updatedAt]
+      properties:
+        rootPath: { type: string, nullable: true }
+        pinned: { type: boolean }
+        layout:
+          type: object
+          properties:
+            leftWidth: { type: number }
+            middleWidth: { type: number }
+        fontScale: { type: number }
+        telemetryEnabled: { type: boolean }
+        updateCheckEnabled: { type: boolean }
+        telemetry:
+          type: object
+          properties:
+            enabled: { type: boolean }
+            exportPath: { type: string }
+        logPath: { type: string }
+        pathExists: { type: boolean }
+        createdAt: { $ref: "#/components/schemas/IsoDateTime" }
+        updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
+
+    SettingsUpdateInput:
+      type: object
+      properties:
+        rootPath: { type: string, nullable: true }
+        pinned: { type: boolean }
+        layout:
+          type: object
+          properties:
+            leftWidth: { type: number }
+            middleWidth: { type: number }
+        fontScale: { type: number }
+        telemetryEnabled: { type: boolean }
+        updateCheckEnabled: { type: boolean }
+        telemetry:
+          type: object
+          properties:
+            enabled: { type: boolean }
+            exportPath: { type: string }
+        logPath: { type: string }
+
+    UpdateCheckResult:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [up-to-date, update-available, skipped, failed]
+        latestVersion: { type: string }
+        reason: { type: string }
+
+    ChangeReportItem:
+      type: object
+      required: [id, kind, title, action, timestamp]
+      properties:
+        id: { type: string }
+        kind:
+          type: string
+          enum: [prompt, inbox]
+        title: { type: string }
+        action: { type: string }
+        timestamp: { type: string }
+        path: { type: string }
+        projectId: { type: string }
+
+    TelemetryEvent:
+      type: object
+      properties:
+        event: { type: string }
+        timestamp: { type: string }
+      additionalProperties: true
+
+    ArchiveDraftInput:
+      type: object
+      required: [draftId, projectName, frontmatter, body]
+      properties:
+        draftId: { type: string }
+        projectName: { type: string }
+        frontmatter: { $ref: "#/components/schemas/PromptFrontmatter" }
+        body: { type: string }
+
+    ArchiveDraftResult:
+      type: object
+      required: [filePath, promptId, hash, mtimeMs]
+      properties:
+        filePath: { type: string }
+        promptId: { type: string }
+        hash: { type: string }
+        mtimeMs: { type: number }

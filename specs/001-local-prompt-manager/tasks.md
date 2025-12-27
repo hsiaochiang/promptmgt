@@ -18,10 +18,10 @@
 
 **Purpose**: 確立工作分支與開發基線（不做 story 開發）
 
-- [ ] T001 確認本 feature 文件齊備且互相一致：specs/001-local-prompt-manager/{plan.md,spec.md,research.md,data-model.md,quickstart.md}
-- [ ] T002 確認本 repo 的 dev/build/test 腳本可用並記錄到文件：package.json
-- [ ] T003 [P] 確認 API 錯誤格式文件與實作一致（{code,message,details?}）：specs/001-local-prompt-manager/contracts/api.md
-- [ ] T004 [P] 確認 OpenAPI 與 Route Handlers 一致（method/path/409 details）：specs/001-local-prompt-manager/contracts/openapi.yaml
+ - [X] T001 確認本 feature 文件齊備且互相一致：specs/001-local-prompt-manager/{plan.md,spec.md,research.md,data-model.md,quickstart.md}
+ - [X] T002 確認本 repo 的 dev/build/test 腳本可用並記錄到文件：package.json
+ - [X] T003 [P] 確認 API 錯誤格式文件與實作一致（{code,message,details?}）：specs/001-local-prompt-manager/contracts/api.md
+ - [X] T004 [P] 確認 OpenAPI 與 Route Handlers 一致（method/path/409 details）：specs/001-local-prompt-manager/contracts/openapi.yaml
 
 ---
 
