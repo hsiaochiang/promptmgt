@@ -9,6 +9,7 @@ import PromptEditor from "./components/prompt-editor";
 import ChangeReportModal, { ChangeReportItem } from "./components/change-report-modal";
 import SnippetPanel from "./components/snippet-panel";
 import DraftEditor from "./components/draft-editor";
+import TabPlaceholders from "./components/tab-placeholders";
 import { AsyncBoundary, ErrorBoundary } from "./components/error-boundary";
 import ProjectReadme from "./components/project-readme";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -30,6 +31,8 @@ export default function WorkspaceShell() {
   const setSelectedProjectId = useWorkspaceStore((s) => s.setSelectedProjectId);
   const setSelectedPromptId = useWorkspaceStore((s) => s.setSelectedPromptId);
   const selectedProjectId = useWorkspaceStore((s) => s.selectedProjectId);
+  const activeTab = useWorkspaceStore((s) => s.activeTab);
+  const setActiveTab = useWorkspaceStore((s) => s.setActiveTab);
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectRefreshKey, setProjectRefreshKey] = useState(0);
   const [promptRefreshKey, setPromptRefreshKey] = useState(0);
@@ -324,169 +327,180 @@ export default function WorkspaceShell() {
         creating={creatingPrompt}
         onToggleSnippetPanel={() => toggleSnippetPanel()}
         snippetOpen={isSnippetPanelOpen}
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          setListCollapsed(false);
+        }}
       />
       <RootPathAlert className="fixed left-1/2 top-16 z-30 w-[min(960px,calc(100%-32px))] -translate-x-1/2 drop-shadow" />
-      <div className="flex flex-1 overflow-hidden">
-        <aside
-          className="flex-shrink-0 border-r border-slate-200 bg-white flex flex-col transition-all duration-200"
-          style={{ width: leftWidth }}
-        >
-          <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-            <div className="font-semibold text-xs tracking-wide text-slate-600">專案與收件匣</div>
-            <div className="text-[10px] rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 border border-amber-200">
-              收件匣 {inboxCount}
+      {activeTab === "prompts" ? (
+        <div className="flex flex-1 overflow-hidden">
+          <aside
+            className="flex-shrink-0 border-r border-slate-200 bg-white flex flex-col transition-all duration-200"
+            style={{ width: leftWidth }}
+          >
+            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+              <div className="font-semibold text-xs tracking-wide text-slate-600">專案與收件匣</div>
+              <div className="text-[10px] rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 border border-amber-200">
+                收件匣 {inboxCount}
+              </div>
             </div>
-          </div>
-          <div className="flex-1 overflow-auto px-3 py-3 space-y-3">
-            <ProjectList
-              refreshKey={projectRefreshKey}
-              onProjectsChange={(list) => {
-                setProjects(list);
-                if (!selectedProjectId && list.length > 0) {
-                  setSelectedProjectId(list[0].name);
-                }
-              }}
-            />
-            <div className="pt-2 border-t border-slate-200 mt-2">
-              <InboxList
-                selectedId={selectedInboxId}
-                onSelect={(id) => {
-                  setSelectedInboxId(id);
-                  setSelectedPromptId(null);
-                }}
-                onLoaded={(list) => {
-                  setInboxItems(list);
-                  if (!selectedInboxId && list.length > 0) {
-                    setSelectedInboxId(list[0].id);
-                    setSelectedPromptId(null);
+            <div className="flex-1 overflow-auto px-3 py-3 space-y-3">
+              <ProjectList
+                refreshKey={projectRefreshKey}
+                onProjectsChange={(list) => {
+                  setProjects(list);
+                  if (!selectedProjectId && list.length > 0) {
+                    setSelectedProjectId(list[0].name);
                   }
                 }}
-                refreshKey={inboxRefreshKey}
               />
-            </div>
-          </div>
-        </aside>
-        <div className="w-[6px] cursor-col-resize bg-slate-200/70" onMouseDown={startResize("left")} role="separator" />
-        <main
-          className={`flex flex-col border-r border-slate-200 transition-all duration-200 ${focusMode ? "hidden" : ""} ${
-            listCollapsed ? "hidden" : ""
-          }`}
-          style={{ width: middleWidth }}
-          data-testid="prompt-list-panel"
-        >
-          <div className="h-16 bg-slate-50 border-b border-slate-200 px-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 flex-1">
-              <div className="text-xs text-slate-500">提示詞列表</div>
-            </div>
-            <div className="flex items-center gap-2 text-[11px]">
-              <button className="px-2 py-1 rounded-full bg-slate-900 text-white">進行中</button>
-              <button className="px-2 py-1 rounded-full border border-slate-300 bg-white">
-                全部
-              </button>
-            </div>
-          </div>
-          <ErrorBoundary label="提示詞列表">
-            <PromptList
-              refreshKey={promptRefreshKey}
-              onDeletePrompt={handleDeletePrompt}
-              onSelectedWhileUnpinned={() => setListCollapsed(true)}
-              searchInputRef={searchInputRef}
-              pinned={pinned}
-              onTogglePinned={() => setPinned(!pinned)}
-            />
-          </ErrorBoundary>
-        </main>
-        {listCollapsed && !focusMode && (
-          <button
-            className="absolute left-2 top-16 z-30 px-3 py-1 rounded-full bg-white shadow border border-slate-200 text-[11px]"
-            onClick={() => setListCollapsed(false)}
-            data-testid="list-recall"
-          >
-            顯示列表 (Alt+L)
-          </button>
-        )}
-        <div className="w-[6px] cursor-col-resize bg-slate-200/70" onMouseDown={startResize("middle")} role="separator" />
-        <section
-          className={`relative flex flex-col p-4 bg-slate-50 transition-all ${focusMode ? "flex-[1_1_100%]" : "flex-[1.8]"}`}
-          data-testid="editor-panel"
-        >
-          <div className="flex flex-col gap-3 h-full">
-            {selectedInboxId ? (
-              <>
-                <div className="flex items-center gap-2 text-[11px] text-amber-700">
-                  <span className="px-2 py-1 rounded-full bg-amber-50 border border-amber-200 font-semibold text-amber-800">
-                    收件匣模式
-                  </span>
-                  <span className="text-slate-500">目前正在編輯收件匣草稿，完成後可歸檔到專案。</span>
-                </div>
-                <DraftEditor
-                  draft={inboxItems.find((i) => i.id === selectedInboxId) ?? null}
-                  projects={projects}
-                  onArchived={handleArchiveSuccess}
-                  onDeleted={handleDraftDeleted}
+              <div className="pt-2 border-t border-slate-200 mt-2">
+                <InboxList
+                  selectedId={selectedInboxId}
+                  onSelect={(id) => {
+                    setSelectedInboxId(id);
+                    setSelectedPromptId(null);
+                  }}
+                  onLoaded={(list) => {
+                    setInboxItems(list);
+                    if (!selectedInboxId && list.length > 0) {
+                      setSelectedInboxId(list[0].id);
+                      setSelectedPromptId(null);
+                    }
+                  }}
+                  refreshKey={inboxRefreshKey}
                 />
-              </>
-            ) : (
-              <AsyncBoundary
-                loading={promptLoading}
-                error={promptError}
-                onRetry={loadPrompt}
-                label="提示詞內容"
-              >
-                <div className={`flex h-full gap-3 relative ${isSnippetPanelOpen ? "md:pr-[320px]" : ""}`}>
-                  <div className="flex-1 flex flex-col gap-3">
-                    <ProjectReadme
-                      project={selectedProject}
-                      onSaved={() => setProjectRefreshKey((k) => k + 1)}
-                    />
-                    {promptFrontmatter && (
-                      <FrontmatterAccordion
+              </div>
+            </div>
+          </aside>
+          <div className="w-[6px] cursor-col-resize bg-slate-200/70" onMouseDown={startResize("left")} role="separator" />
+          <main
+            className={`flex flex-col border-r border-slate-200 transition-all duration-200 ${focusMode ? "hidden" : ""} ${
+              listCollapsed ? "hidden" : ""
+            }`}
+            style={{ width: middleWidth }}
+            data-testid="prompt-list-panel"
+          >
+            <div className="h-16 bg-slate-50 border-b border-slate-200 px-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="text-xs text-slate-500">提示詞列表</div>
+              </div>
+              <div className="flex items-center gap-2 text-[11px]">
+                <button className="px-2 py-1 rounded-full bg-slate-900 text-white">進行中</button>
+                <button className="px-2 py-1 rounded-full border border-slate-300 bg-white">
+                  全部
+                </button>
+              </div>
+            </div>
+            <ErrorBoundary label="提示詞列表">
+              <PromptList
+                refreshKey={promptRefreshKey}
+                onDeletePrompt={handleDeletePrompt}
+                onSelectedWhileUnpinned={() => setListCollapsed(true)}
+                searchInputRef={searchInputRef}
+                pinned={pinned}
+                onTogglePinned={() => setPinned(!pinned)}
+              />
+            </ErrorBoundary>
+          </main>
+          {listCollapsed && !focusMode && (
+            <button
+              className="absolute left-2 top-16 z-30 px-3 py-1 rounded-full bg-white shadow border border-slate-200 text-[11px]"
+              onClick={() => setListCollapsed(false)}
+              data-testid="list-recall"
+            >
+              顯示列表 (Alt+L)
+            </button>
+          )}
+          <div className="w-[6px] cursor-col-resize bg-slate-200/70" onMouseDown={startResize("middle")} role="separator" />
+          <section
+            className={`relative flex flex-col p-4 bg-slate-50 transition-all ${focusMode ? "flex-[1_1_100%]" : "flex-[1.8]"}`}
+            data-testid="editor-panel"
+          >
+            <div className="flex flex-col gap-3 h-full">
+              {selectedInboxId ? (
+                <>
+                  <div className="flex items-center gap-2 text-[11px] text-amber-700">
+                    <span className="px-2 py-1 rounded-full bg-amber-50 border border-amber-200 font-semibold text-amber-800">
+                      收件匣模式
+                    </span>
+                    <span className="text-slate-500">目前正在編輯收件匣草稿，完成後可歸檔到專案。</span>
+                  </div>
+                  <DraftEditor
+                    draft={inboxItems.find((i) => i.id === selectedInboxId) ?? null}
+                    projects={projects}
+                    onArchived={handleArchiveSuccess}
+                    onDeleted={handleDraftDeleted}
+                  />
+                </>
+              ) : (
+                <AsyncBoundary
+                  loading={promptLoading}
+                  error={promptError}
+                  onRetry={loadPrompt}
+                  label="提示詞內容"
+                >
+                  <div className={`flex h-full gap-3 relative ${isSnippetPanelOpen ? "md:pr-[320px]" : ""}`}>
+                    <div className="flex-1 flex flex-col gap-3">
+                      <ProjectReadme
+                        project={selectedProject}
+                        onSaved={() => setProjectRefreshKey((k) => k + 1)}
+                      />
+                      {promptFrontmatter && (
+                        <FrontmatterAccordion
+                          frontmatter={promptFrontmatter}
+                          onChange={handleFrontmatterChange}
+                          onDelete={() => selectedPromptId && handleDeletePrompt(selectedPromptId)}
+                        />
+                      )}
+                      <PromptHeader
+                        title={promptFrontmatter?.title ?? "尚未選擇提示詞"}
                         frontmatter={promptFrontmatter}
-                        onChange={handleFrontmatterChange}
-                        onDelete={() => selectedPromptId && handleDeletePrompt(selectedPromptId)}
+                        body={promptBody}
+                        onToggleFocus={toggleFocusMode}
+                      />
+                      <PromptEditor
+                        promptId={selectedPromptId}
+                        initialFrontmatter={promptFrontmatter}
+                        initialBody={promptBody}
+                        clientHash={promptHash}
+                        initialDamaged={promptDamaged}
+                        initialParseErrorCode={promptParseErrorCode}
+                        initialParseErrorMessage={promptParseErrorMessage}
+                        insertText={pendingInsert}
+                        onInserted={() => setPendingInsert(null)}
+                        onBodyChange={(body) => setPromptBody(body)}
+                        onFrontmatterChange={(fm) => setPromptFrontmatter(fm)}
+                        onDamagedChange={(flag) => setPromptDamaged(flag)}
+                      />
+                    </div>
+                    <div
+                      className={`fixed md:static top-14 md:top-0 right-0 md:right-auto bottom-0 md:bottom-auto z-30 md:z-0 w-[320px] md:w-72 transition-transform duration-200 ${isSnippetPanelOpen ? "translate-x-0" : "translate-x-full"}`}
+                      data-testid="snippet-drawer"
+                      data-open={isSnippetPanelOpen}
+                    >
+                      <SnippetPanel onInsert={(snippet: Snippet) => insertSnippet(snippet)} onClose={() => toggleSnippetPanel(false)} />
+                    </div>
+                    {isSnippetPanelOpen && (
+                      <div
+                        className="fixed inset-0 top-14 bg-black/10 md:hidden"
+                        onClick={() => toggleSnippetPanel(false)}
+                        data-testid="snippet-overlay"
                       />
                     )}
-                    <PromptHeader
-                      title={promptFrontmatter?.title ?? "尚未選擇提示詞"}
-                      frontmatter={promptFrontmatter}
-                      body={promptBody}
-                      onToggleFocus={toggleFocusMode}
-                    />
-                    <PromptEditor
-                      promptId={selectedPromptId}
-                      initialFrontmatter={promptFrontmatter}
-                      initialBody={promptBody}
-                      clientHash={promptHash}
-                      initialDamaged={promptDamaged}
-                      initialParseErrorCode={promptParseErrorCode}
-                      initialParseErrorMessage={promptParseErrorMessage}
-                      insertText={pendingInsert}
-                      onInserted={() => setPendingInsert(null)}
-                      onBodyChange={(body) => setPromptBody(body)}
-                      onFrontmatterChange={(fm) => setPromptFrontmatter(fm)}
-                      onDamagedChange={(flag) => setPromptDamaged(flag)}
-                    />
                   </div>
-                  <div
-                    className={`fixed md:static top-14 md:top-0 right-0 md:right-auto bottom-0 md:bottom-auto z-30 md:z-0 w-[320px] md:w-72 transition-transform duration-200 ${isSnippetPanelOpen ? "translate-x-0" : "translate-x-full"}`}
-                    data-testid="snippet-drawer"
-                    data-open={isSnippetPanelOpen}
-                  >
-                    <SnippetPanel onInsert={(snippet: Snippet) => insertSnippet(snippet)} onClose={() => toggleSnippetPanel(false)} />
-                  </div>
-                  {isSnippetPanelOpen && (
-                    <div
-                      className="fixed inset-0 top-14 bg-black/10 md:hidden"
-                      onClick={() => toggleSnippetPanel(false)}
-                      data-testid="snippet-overlay"
-                    />
-                  )}
-                </div>
-              </AsyncBoundary>
-            )}
-          </div>
-        </section>
-      </div>
+                </AsyncBoundary>
+              )}
+            </div>
+          </section>
+        </div>
+      ) : (
+        <div className="flex flex-1 overflow-hidden">
+          <TabPlaceholders tab={activeTab} />
+        </div>
+      )}
       <ChangeReportModal
         open={showChangeLog}
         onClose={() => setShowChangeLog(false)}

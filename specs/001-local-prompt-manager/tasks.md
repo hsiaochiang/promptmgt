@@ -52,8 +52,8 @@
 - [ ] T043 [P] [US1] 整合測試：Topbar Tabs 切換 + RootPathAlert 顯示不阻擋：tests/integration/us1-shell-tabs-rootpath.test.tsx
 - [ ] T044 [P] [US1] 契約測試：Settings rootPath 讀寫與錯誤格式（含不可存取路徑）：tests/contract/api-settings.test.ts
 
-- [ ] T012 [US1] 將 Topbar 改為 Tabs 導覽（Projects/Prompts/Scratchpad）並保留設定入口：app/(workspace)/components/top-bar.tsx
-- [ ] T013 [US1] 在 workspace shell 實作 tab routing/state（不依賴 URL 亦可）：app/(workspace)/workspace-shell.tsx
+- [X] T012 [US1] 將 Topbar 改為 Tabs 導覽（Projects/Prompts/Scratchpad）並保留設定入口：app/(workspace)/components/top-bar.tsx
+- [X] T013 [US1] 在 workspace shell 實作 tab routing/state（不依賴 URL 亦可）：app/(workspace)/workspace-shell.tsx
 - [ ] T014 [P] [US1] 建立三個 Tab 的 placeholder views（未完成空態也可切換）：app/(workspace)/components/tab-placeholders.tsx
 - [ ] T015 [US1] 將 placeholder views 接到 workspace shell 的 tab switch（Main/Side 都切換）：app/(workspace)/workspace-shell.tsx
 - [ ] T016 [US1] 於 Shell 內掛載 Snackbar Undo（供後續刪除故事共用）：app/(workspace)/workspace-shell.tsx

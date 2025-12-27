@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { join } from "path";
+import { join, resolve } from "path";
+import { homedir } from "os";
 import { setupIsolatedWorkspace } from "../utils/testEnv";
 
 let restoreWorkspace: (() => Promise<void>) | undefined;
@@ -13,7 +14,7 @@ afterEach(async () => {
 });
 
 describe("Settings API", () => {
-  it("reports pathExists when rootPath is available", async () => {
+  it("回傳 rootPath 與 pathExists", async () => {
     const targetRoot = process.env.DEFAULT_ROOT!;
     const { mkdir } = await import("fs/promises");
     await mkdir(targetRoot, { recursive: true });
@@ -23,9 +24,10 @@ describe("Settings API", () => {
     const data = await res.json();
     expect(data.rootPath).toBeTruthy();
     expect(data.pathExists).toBe(true);
+    expect(data.logPath).toBeDefined();
   });
 
-  it("rejects empty rootPath on update", async () => {
+  it("空字串 rootPath 會以標準錯誤格式回傳", async () => {
     const { POST } = await import("@/app/api/settings/route");
     const res = await POST(
       new Request("http://localhost/api/settings", {
@@ -33,12 +35,34 @@ describe("Settings API", () => {
         body: JSON.stringify({ rootPath: "" })
       })
     );
+    const payload = await res.json();
     expect(res.status).toBe(400);
+    expect(payload).toMatchObject({
+      code: "bad_request",
+      message: expect.stringContaining("rootPath"),
+      details: { field: "rootPath" }
+    });
   });
 
-  it("allows updating toggles without changing rootPath", async () => {
+  it("logPath 不在使用者目錄下會被拒絕並回傳 details", async () => {
     const { POST } = await import("@/app/api/settings/route");
+    const outsideHome = resolve(homedir(), "..", "outside-app.log");
+    const res = await POST(
+      new Request("http://localhost/api/settings", {
+        method: "POST",
+        body: JSON.stringify({ logPath: outsideHome })
+      })
+    );
+    const payload = await res.json();
+    expect(res.status).toBe(400);
+    expect(payload).toMatchObject({
+      code: "bad_request",
+      details: { field: "logPath" }
+    });
+  });
 
+  it("允許更新布林旗標且不更動 rootPath", async () => {
+    const { POST } = await import("@/app/api/settings/route");
     const res = await POST(
       new Request("http://localhost/api/settings", {
         method: "POST",
@@ -52,7 +76,7 @@ describe("Settings API", () => {
     expect(data.updateCheckEnabled).toBe(false);
   });
 
-  it("saves provided rootPath and ensures accessibility", async () => {
+  it("保存提供的 rootPath 並確認可存取", async () => {
     const { POST } = await import("@/app/api/settings/route");
     const targetRoot = join(process.env.DEFAULT_ROOT!, "new-root");
     const res = await POST(
@@ -67,7 +91,7 @@ describe("Settings API", () => {
     expect(data.pathExists).toBe(true);
   });
 
-  it("reports pathExists false when rootPath is unset", async () => {
+  it("rootPath 為 null 時 pathExists 為 false", async () => {
     const { updateSettings } = await import("@/lib/services/settings");
     const { GET } = await import("@/app/api/settings/route");
 
