@@ -105,7 +105,7 @@ const data = {
       deliverableTags: ["MD", "PPTX"],
       tags: ["NEED_CONFIRM"],
       files: [{ name: "內容SOP.xlsx", size: "64 KB", type: "xlsx", date: "2025-01-15", desc: "草案版本" }],
-      progress: [{ id: "pg3", date: "2025-01-16", note: "整理內容節奏與輸出格式", link: "https://gemini.google.com/share/xxxx", stage: "一般" }],
+      progress: [{ id: "pg3", date: "2025-01-16", note: "整理內容節奏與輸出格式", link: "https://gemini.google.com/share/xxxx", stage: "進行中" }],
     },
     {
       id: "p3",
@@ -263,7 +263,7 @@ function renderTagChecklist(list, field, selected, variant) {
       const checked = (selected || []).includes(item.code);
       return `
         <button class="chip chip-${variant} ${checked ? "chip-active" : ""}" data-action="toggle-tag" data-field="${field}" data-code="${item.code}">
-          ${item.name}
+          ${checked ? "✓ " : ""}${item.name}
         </button>
       `;
     })
@@ -276,7 +276,7 @@ function renderProjectTagChecklist(list, field, selected, variant) {
       const checked = (selected || []).includes(item.code);
       return `
         <button class="chip chip-${variant} ${checked ? "chip-active" : ""}" data-action="toggle-project-tag" data-field="${field}" data-code="${item.code}">
-          ${item.name}
+          ${checked ? "✓ " : ""}${item.name}
         </button>
       `;
     })
@@ -486,13 +486,13 @@ function renderProjectDetail() {
             </div>
             <div class="expand-panel">
               <div class="grid-3">
-                <input class="input" data-progress-field="date" value="${state.progressDraft.date}" placeholder="YYYY-MM-DD" />
-                <input class="input" data-progress-field="link" value="${state.progressDraft.link || ""}" placeholder="對話連結（ChatGPT/Gemini）" />
-                <select class="select" data-progress-field="stage">
-                  ${["一般", "關鍵", "阻塞"]
+                <input class="input input-short" data-progress-field="date" value="${state.progressDraft.date}" placeholder="YYYY-MM-DD" />
+                <select class="select select-short" data-progress-field="stage">
+                  ${["一般", "關鍵", "進行中"]
                     .map((option) => `<option value="${option}" ${option === state.progressDraft.stage ? "selected" : ""}>${option}</option>`)
                     .join("")}
                 </select>
+                <input class="input" data-progress-field="link" value="${state.progressDraft.link || ""}" placeholder="對話連結（ChatGPT/Gemini）" />
               </div>
               <textarea class="textarea" style="min-height: 140px; margin-top: 12px" data-progress-field="note" placeholder="更新內容">${state.progressDraft.note}</textarea>
               <div class="editor-actions" style="margin-top: 12px; justify-content: flex-end">
@@ -507,9 +507,11 @@ function renderProjectDetail() {
         <div class="card">
           <div class="header-row">
             <div>
-              <div class="section-sub">${item.date}</div>
+              <div class="progress-meta">
+                <span class="section-sub">${item.date}</span>
+                <span class="chip chip-soft">${item.stage || "一般"}</span>
+              </div>
               <div>${item.note}</div>
-              <div class="section-sub" style="margin-top: 6px">狀態：${item.stage || "一般"}</div>
             </div>
             <div class="inline-actions">
               ${linkEl}
@@ -559,7 +561,7 @@ function renderProjectDetail() {
       <div class="header-row">
         <div>
           <div class="section-title">檔案上傳</div>
-          <div class="section-sub">新增類型、日期、描述欄位（原型示意）。</div>
+          <div class="section-sub">新增日期、描述欄位（原型示意）。</div>
         </div>
         <label class="btn btn-ghost">
           上傳檔案
@@ -568,7 +570,6 @@ function renderProjectDetail() {
       </div>
       <div class="table-head file-head" style="margin-top: 12px">
         <div>檔名</div>
-        <div>類型</div>
         <div>日期</div>
         <div>描述</div>
       </div>
@@ -579,7 +580,6 @@ function renderProjectDetail() {
                 (file) => `
               <div class="row row-files">
                 <div>${file.name}</div>
-                <div>${file.type || "-"}</div>
                 <div>${file.date || "-"}</div>
                 <div><input class="input input-inline" data-file-desc="${file.name}" value="${file.desc || ""}" placeholder="補充描述" /></div>
               </div>

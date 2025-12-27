@@ -383,17 +383,29 @@ h3 {
 }
 
 .file-head {
-  grid-template-columns: 1.6fr 0.6fr 0.8fr 1.2fr;
+  grid-template-columns: 1.6fr 0.8fr 1.2fr;
 }
 
 .row-files {
-  grid-template-columns: 1.6fr 0.6fr 0.8fr 1.2fr;
+  grid-template-columns: 1.6fr 0.8fr 1.2fr;
 }
 
 .input-inline {
   height: 36px;
   padding: 6px 10px;
   border-radius: 10px;
+}
+
+.input-short,
+.select-short {
+  max-width: 160px;
+}
+
+.progress-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .inline-actions {
