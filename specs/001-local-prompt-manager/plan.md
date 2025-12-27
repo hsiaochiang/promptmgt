@@ -1,88 +1,69 @@
-# Implementation Plan: 本機提示詞管理系統（雙層儲存＋UI Prototype 對應）
+# 原型對齊 Implementation Plan：提示詞工作台（UI/UX 以 prototype 為準）
 
-**Branch**: `001-local-prompt-manager` | **Date**: 2025-12-25 | **Spec**: [specs/001-local-prompt-manager/spec.md](specs/001-local-prompt-manager/spec.md)
-**Input**: Feature specification from `/specs/001-local-prompt-manager/spec.md`
+**Branch**: `001-local-prompt-manager` | **Date**: 2025-12-27 | **Spec**: [specs/001-local-prompt-manager/spec.md](specs/001-local-prompt-manager/spec.md)
 
-## Summary
+## 目標
 
-建立本機執行的提示詞管理系統，採雙層儲存（Markdown 檔案＋LowDB JSON）與 Next.js App Router REST API，支援收件匣草稿 → 專案歸檔 → 片語插入工作流。自動儲存 2 秒節奏、Frontmatter 檔案寫入、衝突偵測提示三選，並以結構化日誌寫入本機循環檔案（遮蔽敏感資訊、含 console mirror），滿足 Clarifications 與 NFR。
+以 `0resource/prototype/` 的畫面與互動為 UI/UX 權威來源，讓實作計畫聚焦在：
 
-## Technical Context
+- Tabs（專案/提示詞/剪貼簿）+ Main/Side 兩欄 Shell
+- Confirm + Snackbar Undo（5 秒）+ Toast 的一致回饋
+- 五個頁面（Projects / Project Detail / Prompts / Prompt Detail / Scratchpad）的互動一致
 
-**Language/Version**: TypeScript 5.x、Next.js 14 App Router（Node.js 18+）  
-**Primary Dependencies**: Next.js Route Handlers、LowDB、zod、remark/markdown 工具、localStorage 偏好、剪貼簿 API  
-**Storage**: Markdown 檔案（Frontmatter + 內容）＋ LowDB JSON（索引/設定/狀態），使用者目錄隱藏資料夾；本機結構化日誌循環檔案  
-**Testing**: Vitest（unit/contract/integration，jsdom）、契約測試對齊 OpenAPI 3.1、覆蓋率目標 ≥80%（關鍵路徑 100%）  
-**Target Platform**: 本機瀏覽器 (localhost) + Node.js 18+（Windows/macOS）  
-**Project Type**: Web（Next.js App Router 單體）  
-**Performance Goals**: 啟動至可輸入 ≤5 秒；草稿轉正 ≤30 秒；搜尋 ≤2 秒（1000 筆）；精簡複製 ≤3 秒；Pin 收合 150–250ms；Undo 成功率 ≥95%  
-**Constraints**: 離線優先、不可外傳資料；檔名合法化；Frontmatter 損壞需降級顯示；衝突三選；字級 +2px 無裁切；本機日誌遮蔽敏感資訊  
-**Scale/Scope**: 50 專案 / 500 提示詞資料集；Inbox >100 啟用分頁；搜尋結果最多 1000 筆（提示截斷）
+同時，檔案系統、rootPath、Frontmatter 等非 UI/UX，沿用現有系統資料層（Markdown + YAML frontmatter、rootPath 設定頁、衝突偵測等）。
 
-## Constitution Check
+## In Scope（本次落地範圍）
 
-*GATE: 必須通過後才能進入 Phase 0 研究，Phase 1 完成後需再檢視。*
+### A. 導覽與版型（原型一致）
 
-- 語言：所有規格/計畫/使用者文件皆採繁體中文（Principle V）。
-- 測試：TDD、覆蓋率 ≥80%，關鍵路徑 100%，契約測試覆蓋公開 API（Principle II）。
-- UX：WCAG 2.1 AA、介面一致、可行動的錯誤回饋、提供 Quickstart 與驗收場景（Principle III）。
-- 效能：滿足 SC-001~SC-021 SLA，必要時量測與 perf 檢核（Principle IV）。
-- 品質：遵循既有模式與模組化；複雜度如有例外需記錄在 Complexity Tracking（Principle I）。
+- Topbar + Tabs：專案 / 提示詞 / 剪貼簿
+- Shell：Main + Side
+- 操作指引（Help）與新增提示詞入口
 
-**狀態**：目前無違規項，Phase 1 完成後再複核。
+### B. Projects + Project Detail（原型一致）
 
-## Project Structure
+- 專案列表與篩選（狀態/分類/標籤；搜尋可先視為示意）
+- 專案詳情：提示詞清單、檔案列表、進度紀錄
+- 危險操作：Confirm → Snackbar Undo（5 秒）
 
-### Documentation（本功能）
+### C. Prompts + Prompt Detail（原型一致 + 補齊必要能力）
 
-```text
-specs/001-local-prompt-manager/
-├── plan.md          # 本文件（/speckit.plan 輸出）
-├── research.md      # Phase 0 研究決策
-├── data-model.md    # Phase 1 資料模型
-├── quickstart.md    # Phase 1 快速開始/操作指引
-├── contracts/       # Phase 1 OpenAPI/摘要
-└── tasks.md         # Phase 2 (/speckit.tasks 輸出)
-```
+- 提示詞列表與篩選（分類/階段/平台/共通標籤）
+- 提示詞編輯：沿用原型版面與 Side Panel 欄位，並補入
+  - Markdown 編輯器 + 預覽（語法高亮）
+  - 自動儲存（2 秒；無輸入暫停計時）
+  - 完整/精簡複製（含 Frontmatter / 去除 Frontmatter）
 
-### Source Code（現有主要路徑）
+### D. Scratchpad（原型一致）
 
-```text
-app/                # Next.js App Router（UI + route handlers）
-app/api/            # REST API（inbox/projects/prompts/snippets/search/settings）
-lib/                # 資料層（db/fs/services/utils/types）
-tests/              # 契約/整合/單元測試（Vitest）
-docs/               # 環境、效能、UX 檢查文件
-```
+- 新增/編輯/複製/刪除剪貼簿項目
+- 刪除採 Confirm + Snackbar Undo（5 秒）
 
-**Structure Decision**: 維持單體 Next.js 結構，API 以 Route Handlers 提供本機檔案/LowDB 作業，契約對齊 OpenAPI 3.1；測試集中於 tests/（contract/integration/unit）。
+### E. 設定與資料層（沿用現有系統）
 
-## Complexity Tracking
+- rootPath：設定頁可輸入並儲存；缺路徑時 RootPathAlert 導引
+- 檔案儲存：正式提示詞存為 Markdown + YAML frontmatter
+- 專案 README：每個專案維護專案說明 Markdown 檔
+- timestamps：所有實體 createdAt/updatedAt（ISO 8601, UTC+08:00）缺值自動補
 
-無需例外複雜度，暫無條目。
+## Out of Scope（原型未呈現且本次不做）
 
-## Phase 0 - Outline & Research
+- 片語 Drawer / 片語庫插入與使用次數統計 UI
+- 三欄拖曳寬度、Pin/列表收合、專注模式、全域快捷鍵、全域搜尋等效率功能
+- 任何更動既有資料層格式或替換儲存架構
 
-- 未列 NEEDS CLARIFICATION 項目；針對核心決策（雙層儲存、檔名合法化、衝突處理、效能門檻、本機日誌策略、localStorage 偏好、驗證格式）彙整於 research.md，依「Decision / Rationale / Alternatives considered」格式。
-- 研究檔產出：更新 [research.md](research.md) 以反映最新 Clarifications（含日誌策略 NFR-003）。
+## 實作順序（建議）
 
-## Phase 1 - Design & Contracts
+1. UI 框架：Topbar + Tabs + Shell + 全域 Toast/Confirm/Snackbar
+2. Projects：列表與專案詳情頁面（含 side panel chips 與刪除流程）
+3. Prompts：列表 → Prompt Detail（補齊 Markdown/預覽、2 秒 autosave、複製模式）
+4. Scratchpad：列表/編輯/複製/刪除 + Undo
+5. 設定/資料層對接：rootPath 指引、frontmatter 格式、README 編輯、timestamps 規範一致
 
-- 資料模型：更新 [data-model.md](data-model.md)（實體欄位、驗證規則、狀態轉換）。
-- 契約：更新 [contracts/openapi.yaml](contracts/openapi.yaml) 與 [contracts/api.md](contracts/api.md)，涵蓋 inbox/projects/prompts/snippets/search/settings，含衝突/驗證錯誤碼與時間/檔名規範。
-- 快速開始：更新 [quickstart.md](quickstart.md)，涵蓋 rootPath、日誌策略、遙測/更新設定、快捷鍵、測試指令。
-- rootPath/時間規範：在 schema/契約中明確 rootPath 驗證（使用者目錄、非空、持久化）與全實體 createdAt/updatedAt 自動補值（ISO 8601, UTC+08:00），API/檔案回應需帶齊。
-- Agent context：執行 `.specify/scripts/powershell/update-agent-context.ps1 -AgentType copilot`，新增當前計畫採用的技術/日誌策略，保留現有手動段落。
-- Phase 1 完成後重跑 Constitution Check（語言/測試/效能/UX）。
+## 驗收（對齊原型 + 必要非 UI 規範）
 
-## Phase 2 - Implementation Planning（預告）
-
-- 依 research/design 輸出 /speckit.tasks 以產生 tasks.md：
-  - API/檔案層：autosave 2 秒、檔名合法化、Frontmatter 驗證、衝突偵測三選。
-  - UI：Pin/寬度持久化、三欄佈局、快捷鍵、專注模式、Undo/snackbar、片語 Drawer。
-  - 設定：rootPath API/UI/持久化與錯誤處理（使用者目錄限制、LowDB+localStorage），保存後觸發資料刷新。
-  - 日誌：結構化本機循環檔案 + console mirror，遮蔽敏感欄位；設定可停用遙測/更新。
-  - 測試：契約 + 整合 + 單元覆蓋 ≥80%，關鍵路徑 100%，含衝突/截斷/快捷鍵/Undo/片語插入量測。
-  - 時間欄位：所有實體建立/更新時自動補齊 createdAt/updatedAt（ISO 8601, UTC+08:00），API/檔案/LowDB/前端顯示一致，缺值自動填補。
-
-> Phase 2 細項將於 /speckit.tasks 流程產出，不在本階段生成。
+- Tabs/版型/回饋元件行為與原型一致。
+- 刪除皆需 Confirm，刪除後 Snackbar Undo（5 秒）。
+- Prompt Detail 支援 Markdown 預覽與完整/精簡複製。
+- autosave 2 秒行為符合釐清：無輸入不重複觸發、恢復輸入再計時。
+- rootPath 可在設定頁修改；缺路徑時 RootPathAlert 導向設定頁。
