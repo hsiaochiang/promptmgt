@@ -6,7 +6,7 @@
       "status": "進行中",
       "promptCount": 1,
       "docPath": "D:\\program\\promptmgt\\Prompts\\Prompts\\AI-工作流課程\\README.md",
-      "updatedAt": "2025-12-24T05:52:27.836+08:00",
+      "updatedAt": "2025-12-24T05:52:27.836Z",
       "createdAt": "2025-12-22T03:36:13.315+08:00",
       "path": "D:\\program\\promptmgt\\Prompts\\AI-工作流課程"
     },
@@ -16,7 +16,7 @@
       "status": "進行中",
       "promptCount": 3,
       "docPath": "C:\\Users\\wilson_hsiao\\.promptmgt\\Prompts\\企業資金詢價平台\\README.md",
-      "updatedAt": "2025-12-22T02:29:21.313+08:00",
+      "updatedAt": "2025-12-22T02:29:21.313Z",
       "createdAt": "2025-12-22T03:36:13.315+08:00"
     },
     {
@@ -25,7 +25,7 @@
       "status": "規劃中",
       "promptCount": 1,
       "docPath": "C:\\Users\\wilson_hsiao\\.promptmgt\\Prompts\\貿易管理業務知識資料庫\\README.md",
-      "updatedAt": "2025-12-21T04:25:18.477+08:00",
+      "updatedAt": "2025-12-21T04:25:18.477Z",
       "createdAt": "2025-12-22T03:36:13.315+08:00"
     }
   ],
@@ -76,7 +76,7 @@
     }
   ],
   "settings": {
-    "rootPath": "C:\\Users\\WILSON~1\\AppData\\Local\\Temp\\pm-search-ayUkOX",
+    "rootPath": "D:\\\\program\\\\promptmgt\\\\Prompts",
     "pinned": true,
     "layout": {},
     "fontScale": 2,
@@ -87,6 +87,6 @@
     },
     "logPath": "D:\\program\\promptmgt\\Prompts\\logs\\app.log",
     "createdAt": "2025-12-22T03:36:13.315+08:00",
-    "updatedAt": "2025-12-25T14:19:47.230+08:00"
+    "updatedAt": "2025-12-25T14:49:21.338+08:00"
   }
 }

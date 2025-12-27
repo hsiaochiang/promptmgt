@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>提示詞工作台 | 可點擊原型</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-dot"></span>
+          <div>
+            <div class="brand-title">提示詞工作台</div>
+            <div class="brand-sub">內容編輯 · 專案管理 · 本機原型</div>
+          </div>
+        </div>
+        <nav class="tabs">
+          <button class="tab" data-action="nav-projects">專案</button>
+          <button class="tab" data-action="nav-prompts">提示詞</button>
+          <button class="tab" data-action="nav-scratchpad">剪貼簿</button>
+        </nav>
+        <div class="top-actions">
+          <button class="btn btn-ghost" data-action="open-help">操作指引</button>
+          <button class="btn btn-primary" data-action="new-prompt">新增提示詞</button>
+        </div>
+      </header>
+
+      <main class="shell">
+        <section id="main" class="main panel"></section>
+        <aside id="side" class="side panel"></aside>
+      </main>
+
+      <div id="toast" class="toast" aria-live="polite"></div>
+
+      <div id="modal" class="modal hidden">
+        <div class="modal-backdrop" data-action="close-help"></div>
+        <div class="modal-card">
+          <div class="modal-head">
+            <div class="modal-title">操作指引</div>
+            <button class="btn btn-ghost" data-action="close-help">關閉</button>
+          </div>
+          <div class="modal-body">
+            <div class="help-grid">
+              <div class="help-card">
+                <div class="help-title">新增提示詞</div>
+                <div class="help-text">從列表或頂部按鈕建立，直接進入編輯；儲存後回列表。</div>
+              </div>
+              <div class="help-card">
+                <div class="help-title">專案 → 提示詞</div>
+                <div class="help-text">在專案詳情中點選任一提示詞，右側資料欄同步更新。</div>
+              </div>
+              <div class="help-card">
+                <div class="help-title">剪貼簿整理</div>
+                <div class="help-text">將臨時內容一鍵轉成提示詞，保留原始內容。</div>
+              </div>
+              <div class="help-card">
+                <div class="help-title">友善互動</div>
+                <div class="help-text">主要操作皆有明確文案與提示，避免不確定行為。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
