@@ -27,6 +27,11 @@
 **效能目標**（可驗收）：
 - 互動 API p95 < 200ms（本機，非大量資料）
 - 列表/搜尋結果上限 1000，超出需截斷或提示收斂
+
+### Performance Validation
+
+- 針對互動路徑（列表載入、Prompt Detail 讀取/寫入、autosave）建立可重複的量測步驟（手動或簡易腳本皆可），並記錄 p95 結果。
+- 若 p95 未達標，需在同一變更集中附上原因與改善計畫，避免效能回歸。
 **限制條件**：離線可用；rootPath 缺失/不可存取時不得靜默失敗；文件/規格/計畫需維持繁體中文  
 **規模/範圍**：以 prototype 的五個頁面為 UI 範圍；資料層仍保留既有 inbox/snippets/settings 結構但不擴張其 UI（除非後續 spec 另開）
 
@@ -45,6 +50,15 @@
 ### Gate 結果（Post-Design）
 
 完成 contracts/data-model/quickstart 更新後再次檢查：OK（無新增語言或測試規範違反）。
+
+## Testing Plan（落地規範）
+
+> 依專案 Constitution：測試為非選配；需先寫、先失敗，再實作使其通過（Red-Green-Refactor）。
+
+- **契約測試**：所有修改/新增的 Route Handlers 必須新增或更新 `tests/contract`，覆蓋成功回應與 `{code,message,details?}` 錯誤格式，並包含 409 衝突案例。
+- **整合測試**：針對使用者旅程（Prompt Detail 的 autosave、409 三選一、刪除後 Undo）新增或更新 `tests/integration`，以確保 UX 行為一致。
+- **單元測試**：工具函式與關鍵邏輯（frontmatter、日期、deferred delete 計時/狀態）新增或更新 `tests/unit`。
+- **門檻**：單元測試 ≥80%；關鍵路徑（autosave、409 衝突三選一、deferred delete/undo）需 100%。
 
 ## Project Structure
 

@@ -40,6 +40,17 @@
 - Tabs：專案（Projects）/ 提示詞（Prompts）/ 剪貼簿（Scratchpad）
 - Top actions：操作指引（Help）/ 新增提示詞
 
+## User Stories（對照頁面 / 方便拆 tasks）
+
+> 本 spec 主要以「原型五頁面」描述；下列 User Stories 僅用於讓 `tasks.md` 的 US 編號有可追溯來源。
+
+- **US1（P1）Workspace Shell + Topbar Tabs**：使用者可在 Projects / Prompts / Scratchpad 三個 Tabs 間切換；Main/Side 區塊隨 Tab 切換；rootPath 缺失/不可存取時顯示全站提示但不阻擋瀏覽。
+- **US2（P1）Projects + Project Detail + README**：使用者可瀏覽/切換專案並進入 Project Detail；可編輯與儲存專案 README.md（專案說明檔）。
+- **US3（P1）Prompts（列表）**：使用者可在 Prompts 列表瀏覽提示詞並進入 Prompt Detail。
+- **US4（P1）Prompt Detail（編輯/預覽 + autosave + 複製 + 409 三選一）**：使用者可在 Prompt Detail 編輯與預覽 Markdown；停止輸入 2 秒自動儲存；支援精簡/完整複製；遇到 409 衝突提供三選一（重新載入 / 另存副本 / 強制覆寫）。
+- **US5（P1）Scratchpad（剪貼簿）**：使用者可新增/編輯/複製/刪除剪貼簿項目；Side 顯示 KPI。
+- **US6（P1）刪除 + Undo（5 秒 deferred delete）**：刪除操作需 Confirm；刪除後 5 秒內可 Undo 並完整復原；逾時才永久刪除（套用到 Project/Prompt/Scratchpad）。
+
 ## 全域互動元件（跨頁一致）
 
 - Toast：短提示（約 2.4 秒自動消失）
@@ -119,13 +130,23 @@
 4. **Given** 使用者刪除專案/提示詞/剪貼簿項目，**When** 確認刪除，**Then** 顯示 Snackbar Undo（5 秒）且可在時限內復原；逾時則永久刪除
 5. **Given** 使用者編輯提示詞且該檔案被外部修改，**When** autosave 觸發並偵測寫入衝突（409），**Then** 顯示衝突提示並提供「重新載入 / 另存副本 / 強制覆寫」三選一
 
+## Testing / Quality Gates（依 Constitution，非選配）
+
+- 本功能的所有變更必須遵循專案 Constitution 的 **Testing Standards (NON-NEGOTIABLE)**：測試需先寫、先失敗、再實作使其通過（Red-Green-Refactor）。
+- 所有 public API（Route Handlers）需具備契約測試，並涵蓋成功回應、錯誤格式與衝突情境（含 409）。
+- 覆蓋率門檻：單元測試至少 80%；關鍵路徑（autosave、409 衝突三選一、deferred delete/undo）需 100%。
+
 ## Functional Requirements（收斂後）
 
 - **FR-002**: 系統必須在使用者輸入過程自動保存草稿與提示詞（間隔 2 秒，無輸入時暫停，恢復輸入後重新計時），並顯示最後保存時間；若偵測到寫入衝突（例如 409），必須提示並提供「重新載入 / 另存副本 / 強制覆寫」三選一
 - **FR-005**: 系統必須將正式提示詞以 Markdown 檔案儲存於專案資料夾，包含 YAML Frontmatter 與內容本體
+	- 驗收補充：提示詞檔案必須維持「Markdown + YAML frontmatter」格式；不得靜默寫出不含 frontmatter 的檔案。
 - **FR-006**: 系統必須在 Frontmatter 中保存至少：標題、專案、類型、狀態、模型、標籤、最後更新時間、備註
+	- 驗收補充：若 frontmatter 缺必要欄位，需由系統補值或以可操作錯誤提示阻擋靜默寫入（不得默默產生不完整檔）。
 - **FR-008**: 系統必須提供 Markdown 編輯器與預覽，支援語法高亮與多種區塊（程式碼、列表、標題）
 - **FR-009**: 系統必須提供兩種複製模式：完整複製（含 Frontmatter）與精簡複製（僅內容本體，排除元數據）
 - **FR-022**: 系統必須在設定頁提供 rootPath 輸入與儲存，RootPathAlert 需導向設定頁以補齊路徑
+	- 驗收補充：設定頁需可輸入/儲存 rootPath；若路徑不可存取需顯示可操作錯誤訊息（含建議修復方式）。rootPath 缺失/不可存取時 RootPathAlert 顯示但不阻擋瀏覽，且提供導向設定頁入口。
 - **FR-033**: 系統必須為每個專案建立並維護專案說明 Markdown 檔，記錄專案資訊與進度，存放於專案資料夾且可由使用者編輯
 - **FR-035**: 系統必須確保所有實體（Project/Prompt/Inbox/Snippet/Settings）在建立與更新時自動補齊 createdAt 與 updatedAt，格式為 ISO 8601（UTC+08:00）；若輸入缺值由系統填入
+	- 驗收補充：createdAt 僅首次建立；updatedAt 每次成功儲存（含 autosave）更新，且以 server/資料層為準。

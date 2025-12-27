@@ -17,6 +17,11 @@ npm install
 - `npm run lint`：通過（next lint，無警告/錯誤）。
 - `npm run test`：通過（vitest coverage，82 tests，coverage 約 97% / branch 80%）。
 
+## 測試指令補充
+- `npm run test`：含 coverage 與全域門檻（CI/合併前建議使用）。
+- `npm run test:fast -- <test-file>`：不含 coverage 閘門（適合單檔快速迭代）。
+- `npm run test:contract`：只跑契約測試（不含 coverage 閘門）。
+
 ## 其他注意事項
 - 遙測與更新檢查預設開啟，可在 UI Settings 關閉。
 - 如使用 CI/CD，確保 workflow 環境具備 Node 18 並執行 `npm run lint && npm run typecheck && npm run test`。

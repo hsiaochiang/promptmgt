@@ -19,7 +19,10 @@ npm run dev
 - Lint：`npm run lint`
 - 型別檢查：`npm run typecheck`
 - 格式化：`npm run format`
-- 單元/整合/契約測試含覆蓋率：`npm run test`
+- 單元/整合/契約測試含覆蓋率（CI/合併前必跑）：`npm run test`
+- 快速跑測試（不含覆蓋率閘門，適合單檔迭代）：`npm run test:fast -- tests/contract/api-project-readme.test.ts`
+- 跑契約測試（不含覆蓋率閘門）：`npm run test:contract`
+- Watch 模式（不含覆蓋率閘門）：`npm run test:watch`
 - 生產建置：`npm run build`（之後可 `npm start`）
 
 ## 設定與資料位置
@@ -63,7 +66,8 @@ npm run dev
 
 ## 測試
 - 使用 Vitest（jsdom）涵蓋契約、單元、整合測試，覆蓋率門檻 80%（臨界路徑更高）。
-- 執行：`npm run test`
+- 合併前/CI：`npm run test`（含 coverage，會套用全域 coverage threshold）
+- 本機快速驗證：`npm run test:fast -- <test-file>`（不含 coverage threshold）
 
 ## 開發提示
 - 檔名經 `sanitizeFilename` 處理避免非法字元。

@@ -23,7 +23,8 @@ npm start
 ## 健康檢查
 - `npm run lint`：語法/風格檢查
 - `npm run typecheck`：型別檢查
-- `npm run test`：單元/整合/契約測試（含 80% 覆蓋率閘門）
+- `npm run test`：單元/整合/契約測試（含 80% 覆蓋率閘門；CI/合併前必跑）
+- `npm run test:fast -- <test-file>`：本機快速驗證（不含 coverage 閘門，適合單檔迭代）
 
 ## 常見操作
 - 變更根路徑：進入 Settings → 更新 Root Path（建議指向 `~/.promptmgt`）。
