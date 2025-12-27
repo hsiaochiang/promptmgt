@@ -489,6 +489,10 @@ h3 {
   display: flex;
   align-items: center;
   gap: 16px;
+  min-width: 320px;
+  min-height: 48px;
+  padding-bottom: 18px;
+  isolation: isolate;
   opacity: 0;
   pointer-events: none;
   transition: all 0.2s ease;
@@ -510,6 +514,7 @@ h3 {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 999px;
   overflow: hidden;
+  z-index: 0;
 }
 
 .snackbar-progress::after {
@@ -523,11 +528,27 @@ h3 {
 
 .snackbar-text {
   font-size: 13px;
+  color: #fff;
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  line-height: 1.4;
 }
 
 .snackbar-actions {
   display: flex;
   gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.snackbar .btn {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.snackbar .btn:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .confirm-card {
