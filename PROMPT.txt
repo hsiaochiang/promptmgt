@@ -1,5 +1,6 @@
 /speckit.implement
-Please focus on Phase 2 tasks.
-Dependencies check: react-markdown, rehype-sanitize, remark-gfm are already in package.json.
-Please mark T005 as completed if verified, and proceed to implement T006 (MarkdownPreview component).
-Ensure to create app/(workspace)/components/markdown-preview.tsx.
+Phase 2 check:
+- T005, T006 are marked done.
+- T007 (editor-tabs.tsx), T008 (snackbar-undo.tsx), T009 (useWorkspaceStore.ts) seem implemented but not marked in tasks.md. Please verify and mark them.
+- Proceed to implement T010 (RootPathAlert placement) and T011 (409 conflict details in responses.ts).
+- Finally, verify the checkpoint.

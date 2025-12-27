@@ -6,6 +6,24 @@ export interface ApiErrorBody {
   details?: unknown;
 }
 
+export interface ConflictDetails {
+  currentHash?: string;
+  currentMtime?: number;
+  currentUpdatedAt?: string;
+  field?: string;
+}
+
+function normalizeConflictDetails(details?: unknown): ConflictDetails | undefined {
+  if (!details || typeof details !== "object") return details as ConflictDetails | undefined;
+  const payload = details as Record<string, unknown>;
+  const normalized: ConflictDetails = {};
+  if (typeof payload.currentHash === "string") normalized.currentHash = payload.currentHash;
+  if (typeof payload.currentMtime === "number") normalized.currentMtime = payload.currentMtime;
+  if (typeof payload.currentUpdatedAt === "string") normalized.currentUpdatedAt = payload.currentUpdatedAt;
+  if (typeof payload.field === "string") normalized.field = payload.field;
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
+}
+
 export function apiError(status: number, code: string, message: string, details?: unknown) {
   return NextResponse.json({ code, message, details }, { status });
 }
@@ -19,7 +37,7 @@ export function notFound(message = "Not Found", details?: unknown) {
 }
 
 export function conflict(message = "Conflict", details?: unknown) {
-  return apiError(409, "conflict", message, details);
+  return apiError(409, "conflict", message, normalizeConflictDetails(details));
 }
 
 export function unauthorized(message = "Unauthorized", details?: unknown) {

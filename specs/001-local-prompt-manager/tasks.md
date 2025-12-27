@@ -31,11 +31,11 @@
 
 - [X] T005 [P] 安裝 Markdown 預覽相依並更新 lockfile：package.json
 - [X] T006 [P] 新增可重用的 Markdown 預覽元件（含基本樣式與 XSS 防護策略）：app/(workspace)/components/markdown-preview.tsx
-- [ ] T007 [P] 新增可重用的「編輯/預覽」Tabs 元件（供 Prompt Detail 使用）：app/(workspace)/components/editor-tabs.tsx
-- [ ] T008 [P] 新增可重用的 Snackbar Undo 元件（5 秒倒數、可注入 undo callback）：app/(workspace)/components/snackbar-undo.tsx
-- [ ] T009 [P] 擴充 workspace 狀態以支援 activeTab 與 scratchpad 內容：app/(workspace)/store/useWorkspaceStore.ts
-- [ ] T010 將 RootPathAlert 視為全站提示（不阻擋瀏覽）並統一掛載位置：app/(workspace)/workspace-shell.tsx
-- [ ] T011 統一 409 衝突回應 details（含 currentHash/currentMtime）以供 UI 顯示：app/api/_lib/responses.ts
+- [X] T007 [P] 新增可重用的「編輯/預覽」Tabs 元件（供 Prompt Detail 使用）：app/(workspace)/components/editor-tabs.tsx
+- [X] T008 [P] 新增可重用的 Snackbar Undo 元件（5 秒倒數、可注入 undo callback）：app/(workspace)/components/snackbar-undo.tsx
+- [X] T009 [P] 擴充 workspace 狀態以支援 activeTab 與 scratchpad 內容：app/(workspace)/store/useWorkspaceStore.ts
+- [X] T010 將 RootPathAlert 視為全站提示（不阻擋瀏覽）並統一掛載位置：app/(workspace)/workspace-shell.tsx
+- [X] T011 統一 409 衝突回應 details（含 currentHash/currentMtime）以供 UI 顯示：app/api/_lib/responses.ts
 
 **Checkpoint**: Foundational 完成後，US1~US6 可並行開發。
 

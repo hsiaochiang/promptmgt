@@ -325,9 +325,7 @@ export default function WorkspaceShell() {
         onToggleSnippetPanel={() => toggleSnippetPanel()}
         snippetOpen={isSnippetPanelOpen}
       />
-      <div className="px-4 pt-3">
-        <RootPathAlert />
-      </div>
+      <RootPathAlert className="fixed left-1/2 top-16 z-30 w-[min(960px,calc(100%-32px))] -translate-x-1/2 drop-shadow" />
       <div className="flex flex-1 overflow-hidden">
         <aside
           className="flex-shrink-0 border-r border-slate-200 bg-white flex flex-col transition-all duration-200"
