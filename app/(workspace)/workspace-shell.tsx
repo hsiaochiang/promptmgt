@@ -325,6 +325,9 @@ export default function WorkspaceShell() {
         onToggleSnippetPanel={() => toggleSnippetPanel()}
         snippetOpen={isSnippetPanelOpen}
       />
+      <div className="px-4 pt-3">
+        <RootPathAlert />
+      </div>
       <div className="flex flex-1 overflow-hidden">
         <aside
           className="flex-shrink-0 border-r border-slate-200 bg-white flex flex-col transition-all duration-200"
@@ -383,9 +386,6 @@ export default function WorkspaceShell() {
                 全部
               </button>
             </div>
-          </div>
-          <div className="px-4 pt-4">
-            <RootPathAlert />
           </div>
           <ErrorBoundary label="提示詞列表">
             <PromptList

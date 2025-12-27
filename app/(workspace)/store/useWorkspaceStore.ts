@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { z } from "zod";
 
 export type FilterStatus = "全部" | "使用中" | "草稿" | "已封存";
+export type WorkspaceTab = "projects" | "prompts" | "scratchpad";
 
 const STORAGE_KEY = "pm-settings";
 const PREFERENCES_VERSION = 1;
@@ -75,6 +76,7 @@ function queuePersist(state: Preferences) {
 interface WorkspaceState {
   selectedProjectId: string | null;
   selectedPromptId: string | null;
+  activeTab: WorkspaceTab;
   searchQuery: string;
   filterStatus: FilterStatus;
   editorContent: string;
@@ -88,8 +90,10 @@ interface WorkspaceState {
   listCollapsed: boolean;
   layout: { leftWidth?: number; middleWidth?: number };
   fontScale: number;
+  scratchpadContent: string;
   setSelectedProjectId: (id: string | null) => void;
   setSelectedPromptId: (id: string | null) => void;
+  setActiveTab: (tab: WorkspaceTab) => void;
   setSearchQuery: (q: string) => void;
   setFilterStatus: (status: FilterStatus) => void;
   setEditorContent: (content: string) => void;
@@ -106,11 +110,13 @@ interface WorkspaceState {
   setFontScale: (fontScale: number) => void;
   setFocusMode: (focus: boolean) => void;
   toggleFocusMode: () => void;
+  setScratchpadContent: (content: string) => void;
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   selectedProjectId: null,
   selectedPromptId: null,
+  activeTab: "prompts",
   searchQuery: "",
   filterStatus: "全部",
   editorContent: "",
@@ -124,8 +130,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   listCollapsed: false,
   layout: defaultPreferences.layout,
   fontScale: defaultPreferences.fontScale,
+  scratchpadContent: "",
   setSelectedProjectId: (id) => set({ selectedProjectId: id }),
   setSelectedPromptId: (id) => set({ selectedPromptId: id }),
+  setActiveTab: (tab) => set({ activeTab: tab }),
   setSearchQuery: (q) => set({ searchQuery: q }),
   setFilterStatus: (status) => set({ filterStatus: status }),
   setEditorContent: (content) => set({ editorContent: content, editorDirty: true }),
@@ -183,5 +191,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
     });
   },
   setFocusMode: (focus) => set({ focusMode: focus }),
-  toggleFocusMode: () => set((state) => ({ focusMode: !state.focusMode }))
+  toggleFocusMode: () => set((state) => ({ focusMode: !state.focusMode })),
+  setScratchpadContent: (content) => set({ scratchpadContent: content })
 }));

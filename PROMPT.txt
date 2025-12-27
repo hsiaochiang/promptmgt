@@ -1,1 +1,5 @@
 /speckit.implement
+Please focus on Phase 2 tasks.
+Dependencies check: react-markdown, rehype-sanitize, remark-gfm are already in package.json.
+Please mark T005 as completed if verified, and proceed to implement T006 (MarkdownPreview component).
+Ensure to create app/(workspace)/components/markdown-preview.tsx.

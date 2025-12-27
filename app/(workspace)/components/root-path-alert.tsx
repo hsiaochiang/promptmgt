@@ -2,9 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import clsx from "clsx";
 import type { Settings } from "@/lib/types/schema";
 
-export default function RootPathAlert() {
+interface RootPathAlertProps {
+  className?: string;
+}
+
+export default function RootPathAlert({ className }: RootPathAlertProps) {
   const [rootPath, setRootPath] = useState<string | null>(null);
   const [pathExists, setPathExists] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(true);
@@ -51,7 +56,12 @@ export default function RootPathAlert() {
     : "根路徑已失效或無法存取，請重新定位或建立資料夾後再試。";
 
   return (
-    <div className="bg-amber-50 text-amber-800 border border-amber-200 px-3 py-2 text-xs rounded-md flex items-center justify-between gap-3">
+    <div
+      className={clsx(
+        "bg-amber-50 text-amber-800 border border-amber-200 px-3 py-2 text-xs rounded-md flex items-center justify-between gap-3",
+        className
+      )}
+    >
       <div className="flex flex-col gap-0.5">
         <span>{message}</span>
         {rootPath ? <span className="text-[11px] text-amber-700">目前設定：{rootPath}</span> : null}

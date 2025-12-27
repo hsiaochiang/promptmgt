@@ -29,8 +29,8 @@
 
 **Purpose**: 所有 User Story 共用且會阻塞實作的基礎元件/依賴
 
-- [ ] T005 [P] 安裝 Markdown 預覽相依並更新 lockfile：package.json
-- [ ] T006 [P] 新增可重用的 Markdown 預覽元件（含基本樣式與 XSS 防護策略）：app/(workspace)/components/markdown-preview.tsx
+- [X] T005 [P] 安裝 Markdown 預覽相依並更新 lockfile：package.json
+- [X] T006 [P] 新增可重用的 Markdown 預覽元件（含基本樣式與 XSS 防護策略）：app/(workspace)/components/markdown-preview.tsx
 - [ ] T007 [P] 新增可重用的「編輯/預覽」Tabs 元件（供 Prompt Detail 使用）：app/(workspace)/components/editor-tabs.tsx
 - [ ] T008 [P] 新增可重用的 Snackbar Undo 元件（5 秒倒數、可注入 undo callback）：app/(workspace)/components/snackbar-undo.tsx
 - [ ] T009 [P] 擴充 workspace 狀態以支援 activeTab 與 scratchpad 內容：app/(workspace)/store/useWorkspaceStore.ts
