@@ -339,6 +339,16 @@ function addProjectFile(projectId, file) {
   renderProjectDetail();
 }
 
+function deleteProjectFile(projectId, name) {
+  const project = getProject(projectId);
+  if (!project) return;
+  if (!window.confirm("確定要刪除這筆檔案嗎？")) return;
+  project.files = (project.files || []).filter((file) => file.name !== name);
+  if (state.editingFileName === name) state.editingFileName = null;
+  showToast("已刪除檔案");
+  renderProjectDetail();
+}
+
 function addProgressEntry(projectId) {
   const project = getProject(projectId);
   if (!project) return;
@@ -352,6 +362,19 @@ function addProgressEntry(projectId) {
   };
   project.progress = [entry, ...(project.progress || [])];
   startEditProgress(id, entry);
+  renderProjectDetail();
+}
+
+function deleteProgressEntry(projectId, progressId) {
+  const project = getProject(projectId);
+  if (!project) return;
+  if (!window.confirm("確定要刪除這筆進度紀錄嗎？")) return;
+  project.progress = (project.progress || []).filter((item) => item.id !== progressId);
+  if (state.editingProgressId === progressId) {
+    state.editingProgressId = null;
+    state.progressDraft = null;
+  }
+  showToast("已刪除進度紀錄");
   renderProjectDetail();
 }
 
@@ -515,7 +538,8 @@ function renderProjectDetail() {
                 <input class="input" data-progress-field="link" value="${state.progressDraft.link || ""}" placeholder="對話連結（ChatGPT/Gemini）" />
               </div>
               <textarea class="textarea" style="min-height: 140px; margin-top: 12px" data-progress-field="note" placeholder="更新內容">${state.progressDraft.note}</textarea>
-              <div class="editor-actions" style="margin-top: 12px; justify-content: flex-end">
+              <div class="editor-actions" style="margin-top: 12px; justify-content: space-between">
+                <button class="btn btn-danger" data-action="delete-progress" data-id="${item.id}">刪除</button>
                 <button class="btn btn-primary" data-action="save-progress" data-id="${item.id}">儲存</button>
               </div>
             </div>
@@ -602,7 +626,13 @@ function renderProjectDetail() {
                     <div class="row row-files">
                       <div>${file.name}</div>
                       <div>${file.date || "-"}</div>
-                      <div><input class="input input-inline" data-file-desc="${file.name}" value="${file.desc || ""}" placeholder="補充描述" /></div>
+                      <div class="file-edit">
+                        <input class="input input-inline" data-file-desc="${file.name}" value="${file.desc || ""}" placeholder="補充描述" />
+                        <div class="inline-actions">
+                          <button class="btn btn-ghost btn-small" data-action="edit-file" data-id="${file.name}">完成</button>
+                          <button class="btn btn-danger btn-small" data-action="delete-file" data-id="${file.name}">刪除</button>
+                        </div>
+                      </div>
                     </div>
                   `;
                 }
@@ -747,10 +777,11 @@ function renderPrompts() {
           .map((item) => `<option value="${item.code}" ${item.code === state.promptFilters.tag ? "selected" : ""}>${item.name}</option>`)
           .join("")}
       </select>
-      <div class="card" style="padding: 12px">
-        <div class="section-sub">篩選結果</div>
-        <strong>${filteredPrompts.length} 筆</strong>
-      </div>
+      <div></div>
+    </div>
+    <div class="table-meta">
+      <span class="section-sub">篩選結果</span>
+      <strong>${filteredPrompts.length} 筆</strong>
     </div>
     <div class="table-head" style="margin-top: 20px">
       <div>標題</div>
@@ -766,13 +797,19 @@ function renderPrompts() {
   sideEl.innerHTML = `
     <div class="section-title">提示詞概覽</div>
     <div class="section-sub" style="margin-top: 6px">快速掌握狀態與標籤分佈。</div>
-    <div class="card" style="margin-top: 16px">
-      <div class="section-sub">使用中</div>
-      <strong>${data.prompts.filter((p) => p.status === "使用中").length}</strong>
-      <div class="section-sub" style="margin-top: 12px">草稿</div>
-      <strong>${data.prompts.filter((p) => p.status === "草稿").length}</strong>
-      <div class="section-sub" style="margin-top: 12px">封存</div>
-      <strong>${data.prompts.filter((p) => p.status === "封存").length}</strong>
+    <div class="kpi-grid" style="margin-top: 16px">
+      <div class="kpi">
+        <div class="section-sub">使用中</div>
+        <strong>${data.prompts.filter((p) => p.status === "使用中").length}</strong>
+      </div>
+      <div class="kpi">
+        <div class="section-sub">草稿</div>
+        <strong>${data.prompts.filter((p) => p.status === "草稿").length}</strong>
+      </div>
+      <div class="kpi">
+        <div class="section-sub">封存</div>
+        <strong>${data.prompts.filter((p) => p.status === "封存").length}</strong>
+      </div>
     </div>
     <div class="card" style="margin-top: 16px">
       <div class="section-title">友善提醒</div>
@@ -800,6 +837,7 @@ function renderPromptDetail() {
         </span>
         <button class="btn btn-ghost" data-action="back-to-prompts">回到列表</button>
         <button class="btn btn-accent" data-action="copy-prompt">複製</button>
+        <button class="btn btn-danger" data-action="delete-prompt">刪除</button>
         <button class="btn btn-primary" data-action="save-prompt">儲存並回列表</button>
       </div>
     </div>
@@ -888,10 +926,10 @@ function renderScratchpad() {
           </div>
           <div class="inline-actions">
             <button class="btn btn-ghost" data-action="copy-scratch" data-id="${item.id}">複製</button>
-            <button class="btn btn-primary" data-action="scratch-to-prompt" data-id="${item.id}">轉成提示詞</button>
+            <button class="btn btn-danger btn-small" data-action="delete-scratch" data-id="${item.id}">刪除</button>
           </div>
         </div>
-        <div class="section-sub" style="margin-top: 10px">${item.content}</div>
+        <div class="section-sub scratch-preview">${item.content}</div>
       </div>
     `
     )
@@ -901,25 +939,24 @@ function renderScratchpad() {
     <div class="header-row">
       <div>
         <h1 class="section-title">剪貼簿</h1>
-        <div class="section-sub">快速取用內容，複製後即可離開。</div>
+        <div class="section-sub">快速取用內容，點擊複製即可離開。</div>
       </div>
       <div class="editor-actions">
         <button class="btn btn-ghost" data-action="clear-scratchpad">清空輸入</button>
-        <button class="btn btn-accent" data-action="scratchpad-to-prompt">存成提示詞</button>
         <button class="btn btn-primary" data-action="add-scratch-item">加入列表</button>
       </div>
     </div>
-    <div class="card" style="margin-top: 20px">
+    <div style="margin-top: 24px">
+      <div class="section-title">剪貼簿列表</div>
+      <div class="section-sub">一鍵複製後即可離開。</div>
+      <div class="list list-compact" style="margin-top: 12px">
+        ${items || `<div class="card">目前沒有紀錄，先加入一筆內容。</div>`}
+      </div>
+    </div>
+    <div class="card" style="margin-top: 24px">
       <div class="section-title">快速新增</div>
       <div class="section-sub">貼上內容後加入剪貼簿列表。</div>
       <textarea class="textarea" id="scratchpad-input">${state.scratchpad}</textarea>
-    </div>
-    <div style="margin-top: 24px">
-      <div class="section-title">剪貼簿列表</div>
-      <div class="section-sub">一鍵複製或直接轉成提示詞。</div>
-      <div class="list" style="margin-top: 12px">
-        ${items || `<div class="card">目前沒有紀錄，先加入一筆內容。</div>`}
-      </div>
     </div>
   `;
 
@@ -929,7 +966,6 @@ function renderScratchpad() {
       <div class="section-sub">常用動作</div>
       <div class="chip-row" style="margin-top: 10px">
         <span class="chip chip-neutral">複製內容</span>
-        <span class="chip chip-neutral">轉成提示詞</span>
         <span class="chip chip-neutral">快速新增</span>
       </div>
     </div>
@@ -1061,6 +1097,15 @@ function archivePrompt() {
   renderPromptDetail();
 }
 
+function deletePrompt(id) {
+  if (!window.confirm("確定要刪除這筆提示詞嗎？")) return;
+  data.prompts = data.prompts.filter((prompt) => prompt.id !== id);
+  state.editor = null;
+  state.page = "prompts";
+  showToast("已刪除提示詞");
+  render();
+}
+
 function duplicatePrompt() {
   const editor = state.editor || getPrompt(state.selectedPromptId);
   if (!editor) return;
@@ -1072,14 +1117,6 @@ function duplicatePrompt() {
   };
   data.prompts.unshift(copy);
   showToast("已建立副本，請在列表查看");
-}
-
-function scratchpadToPrompt() {
-  createNewPrompt(state.selectedProjectId);
-  state.editor.content = state.scratchpad;
-  state.editor.title = "剪貼簿整理";
-  state.dirty = true;
-  render();
 }
 
 function clearScratchpad() {
@@ -1115,14 +1152,11 @@ function copyScratchItem(id) {
   }
 }
 
-function scratchToPrompt(id) {
-  const item = data.scratchpadItems.find((entry) => entry.id === id);
-  if (!item) return;
-  createNewPrompt(state.selectedProjectId);
-  state.editor.content = item.content;
-  state.editor.title = item.title;
-  state.dirty = true;
-  render();
+function deleteScratchItem(id) {
+  if (!window.confirm("確定要刪除這筆剪貼簿內容嗎？")) return;
+  data.scratchpadItems = data.scratchpadItems.filter((entry) => entry.id !== id);
+  showToast("已刪除剪貼簿內容");
+  renderScratchpad();
 }
 
 function handleClick(event) {
@@ -1165,6 +1199,8 @@ function handleClick(event) {
       return cancelProgressEdit();
     case "add-progress":
       return addProgressEntry(state.selectedProjectId);
+    case "delete-progress":
+      return deleteProgressEntry(state.selectedProjectId, id);
     case "edit-file": {
       if (state.editingFileName === id) {
         state.editingFileName = null;
@@ -1173,6 +1209,8 @@ function handleClick(event) {
       }
       return renderProjectDetail();
     }
+    case "delete-file":
+      return deleteProjectFile(state.selectedProjectId, id);
     case "new-prompt":
       return createNewPrompt(projectId);
     case "save-prompt":
@@ -1183,6 +1221,8 @@ function handleClick(event) {
       return render();
     case "copy-prompt":
       return copyPrompt();
+    case "delete-prompt":
+      return deletePrompt(state.selectedPromptId);
     case "duplicate-prompt":
       return duplicatePrompt();
     case "archive-prompt":
@@ -1191,8 +1231,8 @@ function handleClick(event) {
       return addScratchItem();
     case "copy-scratch":
       return copyScratchItem(id);
-    case "scratch-to-prompt":
-      return scratchToPrompt(id);
+    case "delete-scratch":
+      return deleteScratchItem(id);
     case "toggle-tag": {
       const editor = state.editor || getPrompt(state.selectedPromptId);
       if (!editor) return null;
@@ -1218,8 +1258,6 @@ function handleClick(event) {
       project[field] = Array.from(selected);
       return renderProjectDetail();
     }
-    case "scratchpad-to-prompt":
-      return scratchpadToPrompt();
     case "clear-scratchpad":
       return clearScratchpad();
     case "open-help":
@@ -1285,3 +1323,5 @@ document.addEventListener("input", handleInput);
 document.addEventListener("change", handleChange);
 
 render();
+
+
