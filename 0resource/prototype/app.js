@@ -221,6 +221,7 @@ const state = {
   scratchpad: "把零碎想法放在這裡，稍後整理成提示詞。",
   editingProgressId: null,
   progressDraft: null,
+  editingFileName: null,
   projectFilters: { status: "ALL", type: "ALL", tag: "ALL" },
   promptFilters: { category: "ALL", stage: "ALL", tag: "ALL", platform: "ALL" },
 };
@@ -335,6 +336,22 @@ function addProjectFile(projectId, file) {
     desc: "待補充",
   });
   showToast("已加入檔案（原型示意）");
+  renderProjectDetail();
+}
+
+function addProgressEntry(projectId) {
+  const project = getProject(projectId);
+  if (!project) return;
+  const id = `pg${Math.floor(Math.random() * 10000)}`;
+  const entry = {
+    id,
+    date: formatDate(new Date()),
+    note: "新增進度摘要",
+    link: "",
+    stage: "進行中",
+  };
+  project.progress = [entry, ...(project.progress || [])];
+  startEditProgress(id, entry);
   renderProjectDetail();
 }
 
@@ -479,13 +496,16 @@ function renderProjectDetail() {
           <div class="card">
             <div class="header-row">
               <div>
-                <div class="section-sub">${state.progressDraft.date}</div>
+                <div class="progress-meta">
+                  <span class="section-sub">${state.progressDraft.date}</span>
+                  <span class="chip chip-soft">${state.progressDraft.stage || "進行中"}</span>
+                </div>
                 <div>${state.progressDraft.note}</div>
               </div>
               <button class="btn btn-ghost" data-action="cancel-progress">收合</button>
             </div>
             <div class="expand-panel">
-              <div class="grid-3">
+              <div class="progress-grid">
                 <input class="input input-short" data-progress-field="date" value="${state.progressDraft.date}" placeholder="YYYY-MM-DD" />
                 <select class="select select-short" data-progress-field="stage">
                   ${["一般", "關鍵", "進行中"]
@@ -504,18 +524,17 @@ function renderProjectDetail() {
       }
       const linkEl = item.link ? `<a class="btn btn-link" href="${item.link}" target="_blank">連結</a>` : "";
       return `
-        <div class="card">
+        <div class="card card-click" data-action="edit-progress" data-id="${item.id}">
           <div class="header-row">
             <div>
               <div class="progress-meta">
                 <span class="section-sub">${item.date}</span>
-                <span class="chip chip-soft">${item.stage || "一般"}</span>
+                <span class="chip chip-soft">${item.stage || "進行中"}</span>
               </div>
               <div>${item.note}</div>
             </div>
             <div class="inline-actions">
               ${linkEl}
-              <button class="btn btn-ghost" data-action="edit-progress" data-id="${item.id}">編輯</button>
             </div>
           </div>
         </div>
@@ -576,15 +595,25 @@ function renderProjectDetail() {
       <div class="list" style="margin-top: 10px">
         ${(project.files || []).length
           ? project.files
-              .map(
-                (file) => `
-              <div class="row row-files">
-                <div>${file.name}</div>
-                <div>${file.date || "-"}</div>
-                <div><input class="input input-inline" data-file-desc="${file.name}" value="${file.desc || ""}" placeholder="補充描述" /></div>
-              </div>
-            `
-              )
+              .map((file) => {
+                const isEditing = state.editingFileName === file.name;
+                if (isEditing) {
+                  return `
+                    <div class="row row-files">
+                      <div>${file.name}</div>
+                      <div>${file.date || "-"}</div>
+                      <div><input class="input input-inline" data-file-desc="${file.name}" value="${file.desc || ""}" placeholder="補充描述" /></div>
+                    </div>
+                  `;
+                }
+                return `
+                  <div class="row row-files card-click" data-action="edit-file" data-id="${file.name}">
+                    <div>${file.name}</div>
+                    <div>${file.date || "-"}</div>
+                    <div class="section-sub">${file.desc || "點擊輸入描述"}</div>
+                  </div>
+                `;
+              })
               .join("")
           : `<div class="card">目前沒有檔案，點上方按鈕新增。</div>`}
       </div>
@@ -592,7 +621,10 @@ function renderProjectDetail() {
 
     <div style="margin-top: 24px">
       <div class="section-title">進度紀錄</div>
-      <div class="section-sub">點擊「編輯」展開內容，連結只顯示為「連結」。</div>
+      <div class="section-sub">點擊卡片展開編輯，連結只顯示為「連結」。</div>
+      <div class="editor-actions" style="margin-top: 10px; justify-content: flex-end">
+        <button class="btn btn-primary" data-action="add-progress">新增進度</button>
+      </div>
       <div class="list" style="margin-top: 12px">${progressItems}</div>
     </div>
   `;
@@ -600,10 +632,16 @@ function renderProjectDetail() {
   sideEl.innerHTML = `
     <div class="section-title">專案資訊</div>
     <div class="card" style="margin-top: 16px">
-      <div class="section-sub">狀態</div>
-      <strong>${getTaxName(taxonomy.projectStatuses, project.status)}</strong>
-      <div class="section-sub" style="margin-top: 12px">更新時間</div>
-      <strong>${project.updatedAt}</strong>
+      <div class="info-grid">
+        <div>
+          <div class="section-sub">狀態</div>
+          <strong>${getTaxName(taxonomy.projectStatuses, project.status)}</strong>
+        </div>
+        <div>
+          <div class="section-sub">更新時間</div>
+          <strong>${project.updatedAt}</strong>
+        </div>
+      </div>
     </div>
     <div class="card" style="margin-top: 16px">
       <div class="header-row">
@@ -616,23 +654,19 @@ function renderProjectDetail() {
       <div class="chip-grid" style="margin-top: 14px">
         <div class="chip-block">
           <div class="chip-title">平台</div>
-          <div class="chip-row chip-summary">${renderTagChips(taxonomy.platformTags, project.platformTags, "brand")}</div>
-          <div class="chip-row" style="margin-top: 10px">${renderProjectTagChecklist(taxonomy.platformTags, "platformTags", project.platformTags, "brand")}</div>
+          <div class="chip-row">${renderProjectTagChecklist(taxonomy.platformTags, "platformTags", project.platformTags, "brand")}</div>
         </div>
         <div class="chip-block">
           <div class="chip-title">受眾</div>
-          <div class="chip-row chip-summary">${renderTagChips(taxonomy.audienceTags, project.audienceTags, "accent")}</div>
-          <div class="chip-row" style="margin-top: 10px">${renderProjectTagChecklist(taxonomy.audienceTags, "audienceTags", project.audienceTags, "accent")}</div>
+          <div class="chip-row">${renderProjectTagChecklist(taxonomy.audienceTags, "audienceTags", project.audienceTags, "accent")}</div>
         </div>
         <div class="chip-block">
           <div class="chip-title">交付物</div>
-          <div class="chip-row chip-summary">${renderTagChips(taxonomy.deliverableTags, project.deliverableTags, "soft")}</div>
-          <div class="chip-row" style="margin-top: 10px">${renderProjectTagChecklist(taxonomy.deliverableTags, "deliverableTags", project.deliverableTags, "soft")}</div>
+          <div class="chip-row">${renderProjectTagChecklist(taxonomy.deliverableTags, "deliverableTags", project.deliverableTags, "soft")}</div>
         </div>
         <div class="chip-block">
           <div class="chip-title">共通標籤</div>
-          <div class="chip-row chip-summary">${renderTagChips(taxonomy.commonTags, project.tags, "neutral")}</div>
-          <div class="chip-row" style="margin-top: 10px">${renderProjectTagChecklist(taxonomy.commonTags, "tags", project.tags, "neutral")}</div>
+          <div class="chip-row">${renderProjectTagChecklist(taxonomy.commonTags, "tags", project.tags, "neutral")}</div>
         </div>
       </div>
     </div>
@@ -810,28 +844,24 @@ function renderPromptDetail() {
     </div>
     <div class="card" style="margin-top: 16px">
       <div class="section-title">平台標籤</div>
-      <div class="chip-row chip-summary">${renderTagChips(taxonomy.platformTags, editor.platformTags, "brand")}</div>
       <div class="chip-row" style="margin-top: 10px">
         ${renderTagChecklist(taxonomy.platformTags, "platformTags", editor.platformTags, "brand")}
       </div>
     </div>
     <div class="card" style="margin-top: 16px">
       <div class="section-title">交付物標籤</div>
-      <div class="chip-row chip-summary">${renderTagChips(taxonomy.deliverableTags, editor.deliverableTags, "soft")}</div>
       <div class="chip-row" style="margin-top: 10px">
         ${renderTagChecklist(taxonomy.deliverableTags, "deliverableTags", editor.deliverableTags, "soft")}
       </div>
     </div>
     <div class="card" style="margin-top: 16px">
       <div class="section-title">受眾標籤</div>
-      <div class="chip-row chip-summary">${renderTagChips(taxonomy.audienceTags, editor.audienceTags, "accent")}</div>
       <div class="chip-row" style="margin-top: 10px">
         ${renderTagChecklist(taxonomy.audienceTags, "audienceTags", editor.audienceTags, "accent")}
       </div>
     </div>
     <div class="card" style="margin-top: 16px">
       <div class="section-title">共通標籤</div>
-      <div class="chip-row chip-summary">${renderTagChips(taxonomy.commonTags, editor.tags, "neutral")}</div>
       <div class="chip-row" style="margin-top: 10px">
         ${renderTagChecklist(taxonomy.commonTags, "tags", editor.tags, "neutral")}
       </div>
@@ -871,15 +901,17 @@ function renderScratchpad() {
     <div class="header-row">
       <div>
         <h1 class="section-title">剪貼簿</h1>
-        <div class="section-sub">暫存靈感，再整理成提示詞。</div>
+        <div class="section-sub">快速取用內容，複製後即可離開。</div>
       </div>
       <div class="editor-actions">
-        <button class="btn btn-ghost" data-action="clear-scratchpad">清空</button>
+        <button class="btn btn-ghost" data-action="clear-scratchpad">清空輸入</button>
         <button class="btn btn-accent" data-action="scratchpad-to-prompt">存成提示詞</button>
         <button class="btn btn-primary" data-action="add-scratch-item">加入列表</button>
       </div>
     </div>
     <div class="card" style="margin-top: 20px">
+      <div class="section-title">快速新增</div>
+      <div class="section-sub">貼上內容後加入剪貼簿列表。</div>
       <textarea class="textarea" id="scratchpad-input">${state.scratchpad}</textarea>
     </div>
     <div style="margin-top: 24px">
@@ -892,14 +924,18 @@ function renderScratchpad() {
   `;
 
   sideEl.innerHTML = `
-    <div class="section-title">整理建議</div>
+    <div class="section-title">剪貼簿操作</div>
     <div class="card" style="margin-top: 16px">
-      <div class="section-sub">建議先完成以下步驟：</div>
-      <ol style="margin-top: 10px; padding-left: 20px; color: var(--muted)">
-        <li>整理成 3-5 個重點句</li>
-        <li>加入角色與輸出格式</li>
-        <li>轉為正式提示詞</li>
-      </ol>
+      <div class="section-sub">常用動作</div>
+      <div class="chip-row" style="margin-top: 10px">
+        <span class="chip chip-neutral">複製內容</span>
+        <span class="chip chip-neutral">轉成提示詞</span>
+        <span class="chip chip-neutral">快速新增</span>
+      </div>
+    </div>
+    <div class="card" style="margin-top: 16px">
+      <div class="section-sub">列表數量</div>
+      <strong>${data.scratchpadItems.length}</strong>
     </div>
   `;
 
@@ -1090,6 +1126,7 @@ function scratchToPrompt(id) {
 }
 
 function handleClick(event) {
+  if (event.target.matches("input, textarea, select")) return;
   const target = event.target.closest("[data-action]");
   if (!target) return;
   const action = target.getAttribute("data-action");
@@ -1126,6 +1163,16 @@ function handleClick(event) {
       return saveProgress(state.selectedProjectId);
     case "cancel-progress":
       return cancelProgressEdit();
+    case "add-progress":
+      return addProgressEntry(state.selectedProjectId);
+    case "edit-file": {
+      if (state.editingFileName === id) {
+        state.editingFileName = null;
+      } else {
+        state.editingFileName = id;
+      }
+      return renderProjectDetail();
+    }
     case "new-prompt":
       return createNewPrompt(projectId);
     case "save-prompt":
