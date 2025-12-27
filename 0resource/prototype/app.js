@@ -222,6 +222,8 @@ const state = {
   editingProgressId: null,
   progressDraft: null,
   editingFileName: null,
+  editingScratchId: null,
+  scratchDraft: null,
   projectFilters: { status: "ALL", type: "ALL", tag: "ALL" },
   promptFilters: { category: "ALL", stage: "ALL", tag: "ALL", platform: "ALL" },
 };
@@ -230,12 +232,99 @@ const mainEl = document.getElementById("main");
 const sideEl = document.getElementById("side");
 const toastEl = document.getElementById("toast");
 const modalEl = document.getElementById("modal");
+const snackbarEl = document.getElementById("snackbar");
+const snackbarTextEl = document.getElementById("snackbar-text");
+const snackbarUndoEl = document.getElementById("snackbar-undo");
+const snackbarCloseEl = document.getElementById("snackbar-close");
+const snackbarProgressEl = document.querySelector(".snackbar-progress");
+const confirmModalEl = document.getElementById("confirm-modal");
+const confirmTextEl = document.getElementById("confirm-text");
+const confirmOkEl = document.getElementById("confirm-ok");
+
+let confirmAction = null;
+let snackbarTimer = null;
+let snackbarUndo = null;
+let snackbarCountdown = null;
 
 function showToast(message) {
   toastEl.textContent = message;
   toastEl.classList.add("show");
   window.setTimeout(() => toastEl.classList.remove("show"), 2400);
 }
+
+function openConfirm(message, onConfirm) {
+  confirmTextEl.textContent = message;
+  confirmAction = onConfirm;
+  confirmModalEl.classList.remove("hidden");
+}
+
+function closeConfirm() {
+  confirmModalEl.classList.add("hidden");
+  confirmAction = null;
+}
+
+function showUndo(message, undoFn) {
+  if (snackbarTimer) window.clearTimeout(snackbarTimer);
+  if (snackbarCountdown) window.clearInterval(snackbarCountdown);
+  snackbarUndo = undoFn || null;
+  snackbarTextEl.textContent = message;
+  snackbarEl.classList.add("show");
+  let remaining = 5;
+  const total = 5;
+  if (snackbarProgressEl) snackbarProgressEl.style.setProperty("--progress", "100%");
+  const updateText = () => {
+    snackbarTextEl.textContent = message;
+    const percent = Math.max(0, Math.round((remaining / total) * 100));
+    if (snackbarProgressEl) snackbarProgressEl.style.setProperty("--progress", `${percent}%`);
+    if (snackbarUndoEl) snackbarUndoEl.textContent = `復原（${remaining}s）`;
+  };
+  updateText();
+  snackbarCountdown = window.setInterval(() => {
+    remaining -= 1;
+    if (remaining <= 0) {
+      window.clearInterval(snackbarCountdown);
+      snackbarCountdown = null;
+    } else {
+      updateText();
+    }
+  }, 1000);
+  snackbarTimer = window.setTimeout(() => {
+    snackbarEl.classList.remove("show");
+    snackbarUndo = null;
+    if (snackbarCountdown) {
+      window.clearInterval(snackbarCountdown);
+      snackbarCountdown = null;
+    }
+    if (snackbarProgressEl) snackbarProgressEl.style.setProperty("--progress", "0%");
+    if (snackbarUndoEl) snackbarUndoEl.textContent = "復原";
+  }, 5000);
+}
+
+confirmOkEl.addEventListener("click", () => {
+  if (confirmAction) confirmAction();
+  closeConfirm();
+});
+
+snackbarUndoEl.addEventListener("click", () => {
+  if (snackbarUndo) snackbarUndo();
+  snackbarEl.classList.remove("show");
+  snackbarUndo = null;
+  if (snackbarUndoEl) snackbarUndoEl.textContent = "復原";
+  if (snackbarCountdown) {
+    window.clearInterval(snackbarCountdown);
+    snackbarCountdown = null;
+  }
+});
+
+snackbarCloseEl.addEventListener("click", () => {
+  snackbarEl.classList.remove("show");
+  snackbarUndo = null;
+  if (snackbarUndoEl) snackbarUndoEl.textContent = "復原";
+  if (snackbarCountdown) {
+    window.clearInterval(snackbarCountdown);
+    snackbarCountdown = null;
+  }
+});
 
 function formatDate(value) {
   if (!value) return "";
@@ -342,11 +431,16 @@ function addProjectFile(projectId, file) {
 function deleteProjectFile(projectId, name) {
   const project = getProject(projectId);
   if (!project) return;
-  if (!window.confirm("確定要刪除這筆檔案嗎？")) return;
-  project.files = (project.files || []).filter((file) => file.name !== name);
-  if (state.editingFileName === name) state.editingFileName = null;
-  showToast("已刪除檔案");
-  renderProjectDetail();
+  openConfirm("確定要刪除這筆檔案嗎？", () => {
+    const removed = (project.files || []).find((file) => file.name === name);
+    project.files = (project.files || []).filter((file) => file.name !== name);
+    if (state.editingFileName === name) state.editingFileName = null;
+    showUndo("已刪除檔案", () => {
+      if (removed) project.files.unshift(removed);
+      renderProjectDetail();
+    });
+    renderProjectDetail();
+  });
 }
 
 function addProgressEntry(projectId) {
@@ -368,14 +462,19 @@ function addProgressEntry(projectId) {
 function deleteProgressEntry(projectId, progressId) {
   const project = getProject(projectId);
   if (!project) return;
-  if (!window.confirm("確定要刪除這筆進度紀錄嗎？")) return;
-  project.progress = (project.progress || []).filter((item) => item.id !== progressId);
-  if (state.editingProgressId === progressId) {
-    state.editingProgressId = null;
-    state.progressDraft = null;
-  }
-  showToast("已刪除進度紀錄");
-  renderProjectDetail();
+  openConfirm("確定要刪除這筆進度紀錄嗎？", () => {
+    const removed = (project.progress || []).find((item) => item.id === progressId);
+    project.progress = (project.progress || []).filter((item) => item.id !== progressId);
+    if (state.editingProgressId === progressId) {
+      state.editingProgressId = null;
+      state.progressDraft = null;
+    }
+    showUndo("已刪除進度紀錄", () => {
+      if (removed) project.progress.unshift(removed);
+      renderProjectDetail();
+    });
+    renderProjectDetail();
+  });
 }
 
 function setActiveTab() {
@@ -498,7 +597,7 @@ function renderProjectDetail() {
   const promptRows = prompts
     .map(
       (prompt, index) => `
-        <div class="row fade-stagger" style="--delay: ${index * 60}ms" data-action="open-prompt" data-id="${prompt.id}">
+        <div class="row card-click fade-stagger" style="--delay: ${index * 60}ms" data-action="open-prompt" data-id="${prompt.id}">
           <div>
             <div>${prompt.title}</div>
             <div class="prompt-tags">${renderTagChips(taxonomy.commonTags, prompt.tags, "neutral")}</div>
@@ -516,7 +615,7 @@ function renderProjectDetail() {
       const isEditing = state.editingProgressId === item.id;
       if (isEditing && state.progressDraft) {
         return `
-          <div class="card">
+          <div class="card card-active">
             <div class="header-row">
               <div>
                 <div class="progress-meta">
@@ -538,7 +637,7 @@ function renderProjectDetail() {
                 <input class="input" data-progress-field="link" value="${state.progressDraft.link || ""}" placeholder="對話連結（ChatGPT/Gemini）" />
               </div>
               <textarea class="textarea" style="min-height: 140px; margin-top: 12px" data-progress-field="note" placeholder="更新內容">${state.progressDraft.note}</textarea>
-              <div class="editor-actions" style="margin-top: 12px; justify-content: space-between">
+              <div class="editor-actions" style="margin-top: 12px; justify-content: flex-end">
                 <button class="btn btn-danger" data-action="delete-progress" data-id="${item.id}">刪除</button>
                 <button class="btn btn-primary" data-action="save-progress" data-id="${item.id}">儲存</button>
               </div>
@@ -623,7 +722,7 @@ function renderProjectDetail() {
                 const isEditing = state.editingFileName === file.name;
                 if (isEditing) {
                   return `
-                    <div class="row row-files">
+                    <div class="row row-files card-active">
                       <div>${file.name}</div>
                       <div>${file.date || "-"}</div>
                       <div class="file-edit">
@@ -650,9 +749,11 @@ function renderProjectDetail() {
     </div>
 
     <div style="margin-top: 24px">
-      <div class="section-title">進度紀錄</div>
-      <div class="section-sub">點擊卡片展開編輯，連結只顯示為「連結」。</div>
-      <div class="editor-actions" style="margin-top: 10px; justify-content: flex-end">
+      <div class="header-row">
+        <div>
+          <div class="section-title">進度紀錄</div>
+          <div class="section-sub">點擊卡片展開編輯，連結只顯示為「連結」。</div>
+        </div>
         <button class="btn btn-primary" data-action="add-progress">新增進度</button>
       </div>
       <div class="list" style="margin-top: 12px">${progressItems}</div>
@@ -705,6 +806,11 @@ function renderProjectDetail() {
       <button class="btn btn-primary" style="margin-top: 12px" data-action="new-prompt" data-project="${project.id}">新增提示詞</button>
       <button class="btn btn-ghost" style="margin-top: 8px" data-action="nav-prompts">切換到提示詞列表</button>
     </div>
+    <div class="card danger-zone">
+      <div class="section-title">危險操作</div>
+      <div class="section-sub">刪除後可於短時間內復原。</div>
+      <button class="btn btn-danger" style="margin-top: 12px" data-action="delete-project">刪除專案</button>
+    </div>
   `;
 }
 
@@ -722,7 +828,7 @@ function renderPrompts() {
       (prompt, index) => {
         const project = getProject(prompt.projectId);
         return `
-          <div class="row fade-stagger" style="--delay: ${index * 60}ms" data-action="open-prompt" data-id="${prompt.id}">
+          <div class="row card-click fade-stagger" style="--delay: ${index * 60}ms" data-action="open-prompt" data-id="${prompt.id}">
             <div>
               <div>${prompt.title}</div>
               <div class="section-sub">${project?.name ?? "未分類"} · ${getTaxName(taxonomy.conversationCategories, prompt.category)} · ${getTaxName(taxonomy.promptStages, prompt.promptStage)}</div>
@@ -916,23 +1022,43 @@ function renderPromptDetail() {
 
 function renderScratchpad() {
   const items = data.scratchpadItems
-    .map(
-      (item) => `
-      <div class="card">
-        <div class="header-row">
-          <div>
-            <div class="section-title">${item.title}</div>
-            <div class="section-sub">${item.updatedAt}</div>
+    .map((item) => {
+      const isEditing = state.editingScratchId === item.id;
+      if (isEditing && state.scratchDraft) {
+        return `
+          <div class="card card-active">
+            <div class="header-row">
+              <div class="section-title">編輯剪貼簿</div>
+              <div class="inline-actions">
+                <button class="btn btn-ghost btn-small" data-action="cancel-scratch">收合</button>
+              </div>
+            </div>
+            <div class="scratch-edit">
+              <input class="input" data-scratch-field="title" value="${state.scratchDraft.title}" placeholder="標題" />
+              <textarea class="textarea" data-scratch-field="content" placeholder="內容">${state.scratchDraft.content}</textarea>
+            </div>
+            <div class="editor-actions" style="margin-top: 12px; justify-content: flex-end">
+              <button class="btn btn-danger btn-small" data-action="delete-scratch" data-id="${item.id}">刪除</button>
+              <button class="btn btn-primary" data-action="save-scratch" data-id="${item.id}">儲存</button>
+            </div>
           </div>
-          <div class="inline-actions">
-            <button class="btn btn-ghost" data-action="copy-scratch" data-id="${item.id}">複製</button>
-            <button class="btn btn-danger btn-small" data-action="delete-scratch" data-id="${item.id}">刪除</button>
+        `;
+      }
+      return `
+        <div class="card card-click" data-action="edit-scratch" data-id="${item.id}">
+          <div class="header-row">
+            <div>
+              <div class="section-title">${item.title}</div>
+              <div class="section-sub">${item.updatedAt}</div>
+            </div>
+            <div class="inline-actions">
+              <button class="btn btn-ghost btn-small" data-action="copy-scratch" data-id="${item.id}">複製</button>
+            </div>
           </div>
+          <div class="section-sub scratch-preview">${item.content}</div>
         </div>
-        <div class="section-sub scratch-preview">${item.content}</div>
-      </div>
-    `
-    )
+      `;
+    })
     .join("");
 
   mainEl.innerHTML = `
@@ -1098,12 +1224,17 @@ function archivePrompt() {
 }
 
 function deletePrompt(id) {
-  if (!window.confirm("確定要刪除這筆提示詞嗎？")) return;
-  data.prompts = data.prompts.filter((prompt) => prompt.id !== id);
-  state.editor = null;
-  state.page = "prompts";
-  showToast("已刪除提示詞");
-  render();
+  openConfirm("確定要刪除這筆提示詞嗎？", () => {
+    const removed = data.prompts.find((prompt) => prompt.id === id);
+    data.prompts = data.prompts.filter((prompt) => prompt.id !== id);
+    state.editor = null;
+    state.page = "prompts";
+    showUndo("已刪除提示詞", () => {
+      if (removed) data.prompts.unshift(removed);
+      render();
+    });
+    render();
+  });
 }
 
 function duplicatePrompt() {
@@ -1152,11 +1283,59 @@ function copyScratchItem(id) {
   }
 }
 
-function deleteScratchItem(id) {
-  if (!window.confirm("確定要刪除這筆剪貼簿內容嗎？")) return;
-  data.scratchpadItems = data.scratchpadItems.filter((entry) => entry.id !== id);
-  showToast("已刪除剪貼簿內容");
+function startEditScratch(item) {
+  state.editingScratchId = item.id;
+  state.scratchDraft = { ...item };
+}
+
+function saveScratchItem(id) {
+  const target = data.scratchpadItems.find((entry) => entry.id === id);
+  if (!target || !state.scratchDraft) return;
+  Object.assign(target, state.scratchDraft, { updatedAt: new Date().toISOString().slice(0, 16).replace("T", " ") });
+  state.editingScratchId = null;
+  state.scratchDraft = null;
+  showToast("已更新剪貼簿內容");
   renderScratchpad();
+}
+
+function cancelScratchEdit() {
+  state.editingScratchId = null;
+  state.scratchDraft = null;
+  renderScratchpad();
+}
+
+function deleteScratchItem(id) {
+  openConfirm("確定要刪除這筆剪貼簿內容嗎？", () => {
+    const removed = data.scratchpadItems.find((entry) => entry.id === id);
+    data.scratchpadItems = data.scratchpadItems.filter((entry) => entry.id !== id);
+    showUndo("已刪除剪貼簿內容", () => {
+      if (removed) data.scratchpadItems.unshift(removed);
+      renderScratchpad();
+    });
+    renderScratchpad();
+  });
+}
+
+function deleteProject(id) {
+  openConfirm("確定要刪除此專案嗎？此操作將移除所有提示詞與檔案。", () => {
+    const removed = data.projects.find((project) => project.id === id);
+    const removedPrompts = data.prompts.filter((prompt) => prompt.projectId === id);
+    data.projects = data.projects.filter((project) => project.id !== id);
+    data.prompts = data.prompts.filter((prompt) => prompt.projectId !== id);
+    if (data.projects.length) {
+      state.selectedProjectId = data.projects[0].id;
+      state.page = "projects";
+    } else {
+      state.selectedProjectId = "";
+      state.page = "projects";
+    }
+    showUndo("已刪除專案", () => {
+      if (removed) data.projects.unshift(removed);
+      if (removedPrompts.length) data.prompts.unshift(...removedPrompts);
+      render();
+    });
+    render();
+  });
 }
 
 function handleClick(event) {
@@ -1231,8 +1410,20 @@ function handleClick(event) {
       return addScratchItem();
     case "copy-scratch":
       return copyScratchItem(id);
+    case "edit-scratch": {
+      const item = data.scratchpadItems.find((entry) => entry.id === id);
+      if (!item) return null;
+      startEditScratch(item);
+      return renderScratchpad();
+    }
+    case "save-scratch":
+      return saveScratchItem(id);
+    case "cancel-scratch":
+      return cancelScratchEdit();
     case "delete-scratch":
       return deleteScratchItem(id);
+    case "delete-project":
+      return deleteProject(state.selectedProjectId);
     case "toggle-tag": {
       const editor = state.editor || getPrompt(state.selectedPromptId);
       if (!editor) return null;
@@ -1264,6 +1455,8 @@ function handleClick(event) {
       return openHelp();
     case "close-help":
       return closeHelp();
+    case "confirm-cancel":
+      return closeConfirm();
     default:
       return null;
   }
@@ -1284,6 +1477,11 @@ function handleInput(event) {
     const field = target.getAttribute("data-progress-field");
     if (!state.progressDraft) return;
     state.progressDraft = { ...state.progressDraft, [field]: target.value };
+  }
+  if (target && target.hasAttribute("data-scratch-field")) {
+    const field = target.getAttribute("data-scratch-field");
+    if (!state.scratchDraft) return;
+    state.scratchDraft = { ...state.scratchDraft, [field]: target.value };
   }
 }
 

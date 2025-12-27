@@ -33,6 +33,14 @@
       </main>
 
       <div id="toast" class="toast" aria-live="polite"></div>
+      <div id="snackbar" class="snackbar" aria-live="polite">
+        <div id="snackbar-text" class="snackbar-text"></div>
+        <div class="snackbar-progress" role="presentation"></div>
+        <div class="snackbar-actions">
+          <button id="snackbar-undo" class="btn btn-ghost btn-small">復原</button>
+          <button id="snackbar-close" class="btn btn-ghost btn-small">關閉</button>
+        </div>
+      </div>
 
       <div id="modal" class="modal hidden">
         <div class="modal-backdrop" data-action="close-help"></div>
@@ -60,6 +68,22 @@
                 <div class="help-text">主要操作皆有明確文案與提示，避免不確定行為。</div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="confirm-modal" class="modal hidden">
+        <div class="modal-backdrop" data-action="confirm-cancel"></div>
+        <div class="modal-card confirm-card">
+          <div class="modal-head">
+            <div class="modal-title">確認刪除</div>
+          </div>
+          <div class="modal-body">
+            <div id="confirm-text" class="confirm-text"></div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-ghost" data-action="confirm-cancel">取消</button>
+            <button id="confirm-ok" class="btn btn-danger">刪除</button>
           </div>
         </div>
       </div>
