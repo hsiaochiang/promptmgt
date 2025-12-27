@@ -1,5 +1,5 @@
 /speckit.implement
-Proceed to Phase 3: User Story 1 - Workspace Shell + Topbar Tabs.
-- Start by implementing T012 (Topbar Tabs) and T013 (Workspace shell routing).
-- Ensure activeTab from useWorkspaceStore is used for switching views.
-- Create placeholder views for Projects/Prompts/Scratchpad if needed.
+Continue Phase 3:
+- Complete T015 (placeholder views routing in main/side) and T016 (Snackbar Undo mounting).
+- Proceed to implement Settings API/UI updates (T045, T046, T047).
+- Finally, verify US1 with tests.

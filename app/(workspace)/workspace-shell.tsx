@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import TopBar from "./components/top-bar";
 import ProjectList from "./components/project-list";
 import InboxList from "./components/inbox-list";
@@ -10,6 +11,7 @@ import ChangeReportModal, { ChangeReportItem } from "./components/change-report-
 import SnippetPanel from "./components/snippet-panel";
 import DraftEditor from "./components/draft-editor";
 import TabPlaceholders from "./components/tab-placeholders";
+import SnackbarUndo from "./components/snackbar-undo";
 import { AsyncBoundary, ErrorBoundary } from "./components/error-boundary";
 import ProjectReadme from "./components/project-readme";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -46,6 +48,9 @@ export default function WorkspaceShell() {
   const [promptParseErrorCode, setPromptParseErrorCode] = useState<string | null>(null);
   const [promptParseErrorMessage, setPromptParseErrorMessage] = useState<string | null>(null);
   const [pendingInsert, setPendingInsert] = useState<string | null>(null);
+  const [undoOpen, setUndoOpen] = useState(false);
+  const [undoMessage, setUndoMessage] = useState("已排程刪除，可在 5 秒內撤銷");
+  const undoRef = useRef<() => void>(() => {});
   const { insertSnippet } = useSnippetInsert((content) => setPendingInsert(content));
   const inboxCount = useWorkspaceStore((s) => s.inboxCount);
   const focusMode = useWorkspaceStore((s) => s.focusMode);
@@ -506,6 +511,16 @@ export default function WorkspaceShell() {
         onClose={() => setShowChangeLog(false)}
         onSelect={handleChangeReportSelect}
         onQuickAdd={handleQuickAddPrompt}
+      />
+      <SnackbarUndo
+        open={undoOpen}
+        message={undoMessage}
+        onUndo={() => {
+          undoRef.current();
+          setUndoOpen(false);
+        }}
+        onTimeout={() => setUndoOpen(false)}
+        onClose={() => setUndoOpen(false)}
       />
     </div>
   );

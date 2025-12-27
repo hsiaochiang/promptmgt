@@ -61,6 +61,7 @@ export default function RootPathAlert({ className }: RootPathAlertProps) {
         "bg-amber-50 text-amber-800 border border-amber-200 px-3 py-2 text-xs rounded-md flex items-center justify-between gap-3",
         className
       )}
+      data-testid="rootpath-alert"
     >
       <div className="flex flex-col gap-0.5">
         <span>{message}</span>

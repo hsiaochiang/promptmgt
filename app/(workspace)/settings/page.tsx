@@ -60,7 +60,11 @@ export default function SettingsPage() {
     setError(null);
     try {
       const res = await fetch("/api/settings");
-      const data = (await res.json()) as Settings;
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((body as any)?.message ?? "讀取設定失敗");
+      }
+      const data = body as Settings;
       setSettings(data);
       setRootPathInput(data.rootPath ?? "");
       setLogPathInput((data as any).logPath ?? "");
@@ -87,7 +91,11 @@ export default function SettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...settings, ...partial })
       });
-      const data = (await res.json()) as Settings;
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(body?.message ?? "更新設定失敗");
+      }
+      const data = body as Settings;
       setSettings(data);
       setRootPathInput(data.rootPath ?? "");
       setLogPathInput((data as any).logPath ?? "");
