@@ -1,16 +1,18 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { Project, ProjectStatus } from "@/lib/types/schema";
 import { formatForUI_MMDD_HHmm } from "@/lib/utils/date";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
+import ConfirmModal from "./confirm-modal";
 
 interface Props {
   refreshKey?: number;
   onProjectsChange?: (projects: Project[]) => void;
+  onScheduleUndo?: (message: string, commit: () => Promise<void>, onUndo?: () => void) => void;
 }
 
-export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props) {
+export default function ProjectList({ refreshKey = 0, onProjectsChange, onScheduleUndo }: Props) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -22,8 +24,7 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
     description: "",
     status: statusOptions[0]
   });
-  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
-  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<Project | null>(null);
   const selectedProjectId = useWorkspaceStore((s) => s.selectedProjectId);
   const setSelectedProjectId = useWorkspaceStore((s) => s.setSelectedProjectId);
   const [filterStatus, setFilterStatus] = useState<ProjectStatus | "全部">("全部");
@@ -46,10 +47,6 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
     fetchProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
-
-  useEffect(() => () => {
-    if (undoTimer.current) clearTimeout(undoTimer.current);
-  }, []);
 
   const handleAdd = async (event?: React.FormEvent, override?: Partial<typeof newProject>) => {
     event?.preventDefault();
@@ -126,25 +123,39 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
     }
   };
 
-  const handleDelete = async (project: Project) => {
-    setBusy(true);
-    setNotice(null);
-    try {
-      const res = await fetch("/api/projects", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: project.id })
-      });
-      if (!res.ok) throw new Error("刪除專案失敗");
-      await fetchProjects();
-      if (selectedProjectId === project.name) {
-        setSelectedProjectId(null);
-      }
-    } catch (err) {
-      window.alert(err instanceof Error ? err.message : "刪除專案失敗");
-    } finally {
-      setBusy(false);
+  const handleDeleteDeferred = (project: Project) => {
+    const backup = project;
+    setProjects((list) => list.filter((p) => p.id !== project.id));
+    if (selectedProjectId === project.name) {
+      setSelectedProjectId(null);
     }
+    const commit = async () => {
+      setBusy(true);
+      setNotice(null);
+      try {
+        const res = await fetch("/api/projects", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: project.id })
+        });
+        if (!res.ok) throw new Error("刪除專案失敗");
+        await fetchProjects();
+      } catch (err) {
+        window.alert(err instanceof Error ? err.message : "刪除專案失敗");
+        await fetchProjects();
+      } finally {
+        setBusy(false);
+      }
+    };
+    const undo = () => {
+      setProjects((list) => {
+        if (list.find((p) => p.id === backup.id)) return list;
+        return [backup, ...list];
+      });
+      setSelectedProjectId((id) => id ?? backup.name);
+    };
+    const schedule = onScheduleUndo ?? ((_, c, u) => { u?.(); c(); });
+    schedule(`已排程刪除「${project.name}」，5 秒內可撤銷`, commit, undo);
   };
 
   return (
@@ -259,20 +270,6 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
         </form>
       )}
       {notice ? <div className="text-[11px] text-amber-700 mb-1">{notice}</div> : null}
-      {pendingDelete && (
-        <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 px-3 py-2 rounded mb-1 flex items-center justify-between">
-          <span>專案刪除待確認，5 秒內可復原。</span>
-          <button
-            className="px-2 py-1 rounded-full border border-amber-300 bg-white hover:bg-amber-100"
-            onClick={() => {
-              if (undoTimer.current) clearTimeout(undoTimer.current);
-              setPendingDelete(null);
-            }}
-          >
-            Undo
-          </button>
-        </div>
-      )}
       {loading && <div className="text-[11px] text-slate-400">載入中…</div>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {projects
@@ -325,20 +322,29 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleDelete(p);
-                  setPendingDelete(p.id);
-                  if (undoTimer.current) clearTimeout(undoTimer.current);
-                  undoTimer.current = setTimeout(() => setPendingDelete(null), 5000);
-                }}
-                className="px-2 py-0.5 rounded-full border border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100"
-                disabled={busy}
-              >
-                刪除
+                   setConfirmTarget(p);
+                 }}
+                 className="px-2 py-0.5 rounded-full border border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100"
+                 disabled={busy}
+               >
+                 刪除
               </button>
             </div>
           </div>
         ))}
       </div>
+      <ConfirmModal
+        open={!!confirmTarget}
+        title="確認刪除專案"
+        description={confirmTarget ? `將刪除專案「${confirmTarget.name}」，5 秒內可 Undo。` : ""}
+        confirmText="刪除"
+        cancelText="取消"
+        onCancel={() => setConfirmTarget(null)}
+        onConfirm={() => {
+          if (confirmTarget) handleDeleteDeferred(confirmTarget);
+          setConfirmTarget(null);
+        }}
+      />
     </div>
   );
 }

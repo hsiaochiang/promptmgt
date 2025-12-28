@@ -153,13 +153,13 @@
 
 ### Tests（必須先寫且先失敗）
 
-- [ ] T059 [P] [US6] 整合測試：Project/Prompt/Scratchpad deferred delete + Undo 5 秒：tests/integration/us6-deferred-delete-undo.test.tsx
+- [X] T059 [P] [US6] 整合測試：Project/Prompt/Scratchpad deferred delete + Undo 5 秒：tests/integration/us6-deferred-delete-undo.test.tsx
 
-- [ ] T034 [US6] 確保 Confirm Modal 元件可重用且文案對齊原型（取消/刪除）：app/(workspace)/components/confirm-modal.tsx
-- [ ] T035 [US6] 將 ProjectList 刪除流程統一改為 deferred delete（5 秒後才呼叫 DELETE）：app/(workspace)/components/project-list.tsx
-- [ ] T036 [US6] 將 PromptList 刪除流程統一改為 deferred delete（5 秒後才呼叫 DELETE）：app/(workspace)/components/prompt-list.tsx
-- [ ] T037 [US6] 將 Prompt Detail 的刪除入口改走共用 deferred delete（避免立即永久刪除）：app/(workspace)/workspace-shell.tsx
-- [ ] T038 [US6] Scratchpad 的刪除/清空動作改為 Confirm + Snackbar Undo（5 秒）：app/(workspace)/components/scratchpad.tsx
+- [X] T034 [US6] 確保 Confirm Modal 元件可重用且文案對齊原型（取消/刪除）：app/(workspace)/components/confirm-modal.tsx
+- [X] T035 [US6] 將 ProjectList 刪除流程統一改為 deferred delete（5 秒後才呼叫 DELETE）：app/(workspace)/components/project-list.tsx
+- [X] T036 [US6] 將 PromptList 刪除流程統一改為 deferred delete（5 秒後才呼叫 DELETE）：app/(workspace)/components/prompt-list.tsx
+- [X] T037 [US6] 將 Prompt Detail 的刪除入口改走共用 deferred delete（避免立即永久刪除）：app/(workspace)/workspace-shell.tsx
+- [X] T038 [US6] Scratchpad 的刪除/清空動作改為 Confirm + Snackbar Undo（5 秒）：app/(workspace)/components/scratchpad.tsx
 
 ---
 

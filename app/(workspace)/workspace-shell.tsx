@@ -52,6 +52,7 @@ export default function WorkspaceShell() {
   const [undoOpen, setUndoOpen] = useState(false);
   const [undoMessage, setUndoMessage] = useState("已排程刪除，可在 5 秒內撤銷");
   const undoRef = useRef<() => void>(() => {});
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { insertSnippet } = useSnippetInsert((content) => setPendingInsert(content));
   const inboxCount = useWorkspaceStore((s) => s.inboxCount);
   const focusMode = useWorkspaceStore((s) => s.focusMode);
@@ -176,23 +177,62 @@ export default function WorkspaceShell() {
     setEditorDirty(true);
   };
 
-  const handleDeletePrompt = async (promptId: string) => {
+  const scheduleUndo = (message: string, commit: () => Promise<void>, onUndo?: () => void) => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    setUndoMessage(message);
+    setUndoOpen(true);
+    undoRef.current = () => {
+      if (undoTimerRef.current) {
+        clearTimeout(undoTimerRef.current);
+        undoTimerRef.current = null;
+      }
+      onUndo?.();
+    };
+    undoTimerRef.current = setTimeout(async () => {
+      undoTimerRef.current = null;
+      setUndoOpen(false);
+      await commit();
+    }, 5000);
+  };
+
+  const handleDeletePrompt = (promptId: string) => {
     if (!promptId) return;
-    try {
-      const res = await fetch(`/api/prompts/${promptId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("刪除提示詞失敗");
-      setSelectedPromptId(null);
-      setPromptFrontmatter(null);
-      setPromptBody("");
-      setPromptHash(null);
-      setPromptDamaged(false);
-      setPromptParseErrorCode(null);
-      setPromptParseErrorMessage(null);
-      setPromptRefreshKey((k) => k + 1);
-      setProjectRefreshKey((k) => k + 1);
-    } catch (err) {
-      window.alert(err instanceof Error ? err.message : "刪除提示詞失敗");
-    }
+    const backup = {
+      frontmatter: promptFrontmatter,
+      body: promptBody,
+      hash: promptHash,
+      damaged: promptDamaged,
+      parseErrorCode: promptParseErrorCode,
+      parseErrorMessage: promptParseErrorMessage,
+      selectedId: promptId
+    };
+    setSelectedPromptId(null);
+    setPromptFrontmatter(null);
+    setPromptBody("");
+    setPromptHash(null);
+    setPromptDamaged(false);
+    setPromptParseErrorCode(null);
+    setPromptParseErrorMessage(null);
+    const commit = async () => {
+      try {
+        const res = await fetch(`/api/prompts/${promptId}`, { method: "DELETE" });
+        if (!res.ok) throw new Error("刪除提示詞失敗");
+        setPromptRefreshKey((k) => k + 1);
+        setProjectRefreshKey((k) => k + 1);
+      } catch (err) {
+        window.alert(err instanceof Error ? err.message : "刪除提示詞失敗");
+      }
+    };
+    const undo = () => {
+      setPromptFrontmatter(backup.frontmatter);
+      setPromptBody(backup.body);
+      setPromptHash(backup.hash);
+      setPromptDamaged(backup.damaged);
+      setPromptParseErrorCode(backup.parseErrorCode);
+      setPromptParseErrorMessage(backup.parseErrorMessage);
+      setSelectedPromptId(backup.selectedId);
+    };
+    scheduleUndo("已排程刪除提示詞，5 秒內可撤銷", commit, undo);
   };
 
   const handleArchiveSuccess = (result: { promptId?: string; projectName?: string }) => {
@@ -374,6 +414,7 @@ export default function WorkspaceShell() {
             <div className="flex-1 overflow-auto px-3 py-3 space-y-3">
               <ProjectList
                 refreshKey={projectRefreshKey}
+                onScheduleUndo={scheduleUndo}
                 onProjectsChange={(list) => {
                   setProjects(list);
                   if (!selectedProjectId && list.length > 0) {
@@ -423,6 +464,7 @@ export default function WorkspaceShell() {
               <PromptList
                 refreshKey={promptRefreshKey}
                 onDeletePrompt={handleDeletePrompt}
+                onScheduleUndo={scheduleUndo}
                 onSelectedWhileUnpinned={() => setListCollapsed(true)}
                 searchInputRef={searchInputRef}
                 pinned={pinned}
@@ -523,7 +565,7 @@ export default function WorkspaceShell() {
         </div>
       ) : activeTab === "scratchpad" ? (
         <div className="flex flex-1 overflow-hidden">
-          <Scratchpad projects={projects} />
+          <Scratchpad projects={projects} onScheduleUndo={scheduleUndo} />
         </div>
       ) : (
         <div className="flex flex-1 overflow-hidden">

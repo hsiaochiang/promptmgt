@@ -1,7 +1,8 @@
 /speckit.implement
-Proceed to Phase 7: User Story 5 - Scratchpad (剪貼簿).
-- Implement T058 (Integration tests for Scratchpad: Add/Edit/Copy/KPI).
-- Implement T032 (Scratchpad page component: Main editor, Side KPI/actions).
-- Implement T033 (Integrate Scratchpad into useWorkspaceStore).
-- Ensure the Scratchpad is accessible via the "Scratchpad" tab in TopBar.
+Proceed to Phase 8: User Story 6 - Deletion + Undo (5s deferred delete).
+- Implement T059 (Integration tests for deferred delete + Undo 5s).
+- Implement T034 (Reusable Confirm Modal).
+- Implement T035, T036, T037, T038 (Deferred delete for Projects, Prompts, and Scratchpad).
+- Use SnackbarUndo (already implemented in Phase 2/3) to provide the 5s window.
+- Ensure actual DELETE API calls only happen after the 5s timeout if not undone.
 - Update tasks.md as progress is made.

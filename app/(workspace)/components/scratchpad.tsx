@@ -3,12 +3,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import type { Project } from "@/lib/types/schema";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
+import ConfirmModal from "./confirm-modal";
 
 interface Props {
   projects: Project[];
+  onScheduleUndo?: (message: string, commit: () => Promise<void>, onUndo?: () => void) => void;
 }
 
-export default function Scratchpad({ projects }: Props) {
+export default function Scratchpad({ projects, onScheduleUndo }: Props) {
   const scratchpadContent = useWorkspaceStore((s) => s.scratchpadContent);
   const setScratchpadContent = useWorkspaceStore((s) => s.setScratchpadContent);
   const selectedProjectId = useWorkspaceStore((s) => s.selectedProjectId);
@@ -17,6 +19,7 @@ export default function Scratchpad({ projects }: Props) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const projectOptions = projects ?? [];
 
@@ -37,8 +40,15 @@ export default function Scratchpad({ projects }: Props) {
     setMessage("已複製到剪貼簿");
   };
 
+  const schedule = onScheduleUndo ?? ((_, c, u) => {
+    u?.();
+    return c();
+  });
+
   const handleClear = () => {
+    const backup = scratchpadContent;
     setScratchpadContent("");
+    schedule("已清空剪貼簿，5 秒內可撤銷", async () => {}, () => setScratchpadContent(backup ?? ""));
   };
 
   const buildTitle = () => {
@@ -127,7 +137,7 @@ export default function Scratchpad({ projects }: Props) {
         <div className="flex items-center gap-2 text-xs">
           <button
             type="button"
-            onClick={handleClear}
+            onClick={() => setConfirmClear(true)}
             className="h-9 px-3 rounded-lg border border-slate-300 bg-white"
             data-testid="scratchpad-clear"
           >
@@ -163,6 +173,18 @@ export default function Scratchpad({ projects }: Props) {
           選擇專案後可直接將草稿另存為提示詞；空白時可先清空或複製後再整理。
         </div>
       </aside>
+      <ConfirmModal
+        open={confirmClear}
+        title="確認清空剪貼簿"
+        description="清空後 5 秒內可 Undo。"
+        confirmText="清空"
+        cancelText="取消"
+        onCancel={() => setConfirmClear(false)}
+        onConfirm={() => {
+          setConfirmClear(false);
+          handleClear();
+        }}
+      />
     </div>
   );
 }

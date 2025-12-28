@@ -5,6 +5,7 @@ import type { PromptListItem } from "@/lib/types/schema";
 import { formatForUI_MMDD_HHmm } from "@/lib/utils/date";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 import { AsyncBoundary } from "./error-boundary";
+import ConfirmModal from "./confirm-modal";
 
 interface Props {
   refreshKey?: number;
@@ -13,15 +14,23 @@ interface Props {
   searchInputRef?: React.RefObject<HTMLInputElement>;
   pinned?: boolean;
   onTogglePinned?: () => void;
+  onScheduleUndo?: (message: string, commit: () => Promise<void>, onUndo?: () => void) => void;
 }
 
-export default function PromptList({ refreshKey = 0, onDeletePrompt, onSelectedWhileUnpinned, searchInputRef, pinned = true, onTogglePinned }: Props) {
+export default function PromptList({
+  refreshKey = 0,
+  onDeletePrompt,
+  onSelectedWhileUnpinned,
+  searchInputRef,
+  pinned = true,
+  onTogglePinned,
+  onScheduleUndo
+}: Props) {
   const [prompts, setPrompts] = useState<PromptListItem[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [batchMessage, setBatchMessage] = useState<string | null>(null);
   const [restoreQueue, setRestoreQueue] = useState<Array<{ frontmatter: any; body: string }>>([]);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -147,6 +156,37 @@ export default function PromptList({ refreshKey = 0, onDeletePrompt, onSelectedW
       setRestoreQueue([]);
     }, 5000);
     await fetchPrompts();
+  };
+
+  const [confirmPromptId, setConfirmPromptId] = useState<PromptListItem | null>(null);
+
+  const schedule = onScheduleUndo ?? ((_, c, u) => { u?.(); return c(); });
+
+  const handleDeleteSingle = (prompt: PromptListItem) => {
+    const backup = prompt;
+    setPrompts((list) => list.filter((p) => p.id !== prompt.id));
+    if (selectedPromptId === prompt.id) {
+      setSelectedPromptId(null);
+    }
+    const commit = async () => {
+      setBusy(true);
+      try {
+        await onDeletePrompt?.(prompt.id);
+        await fetchPrompts();
+      } catch (err) {
+        await fetchPrompts();
+      } finally {
+        setBusy(false);
+      }
+    };
+    const undo = () => {
+      setPrompts((list) => {
+        if (list.find((p) => p.id === backup.id)) return list;
+        return [backup, ...list];
+      });
+      setSelectedPromptId((id) => id ?? backup.id);
+    };
+    schedule(`已排程刪除「${prompt.title}」，5 秒內可撤銷`, commit, undo);
   };
 
   const handleBatchArchive = async () => {
@@ -384,20 +424,6 @@ export default function PromptList({ refreshKey = 0, onDeletePrompt, onSelectedW
       )}
 
       {error ? <div className="mb-2 text-[11px] text-amber-700">{error}</div> : null}
-      {pendingDelete && (
-        <div className="mb-2 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 px-3 py-2 rounded flex items-center justify-between">
-          <span>即將刪除，5 秒內可復原。</span>
-          <button
-            className="px-2 py-1 rounded-full border border-amber-300 bg-white hover:bg-amber-100"
-            onClick={() => {
-              if (undoTimer.current) clearTimeout(undoTimer.current);
-              setPendingDelete(null);
-            }}
-          >
-            Undo
-          </button>
-        </div>
-      )}
       <AsyncBoundary loading={loading} error={error} onRetry={fetchPrompts} label="提示詞列表">
         <div className="space-y-2">
           {prompts.map((prompt) => (
@@ -465,10 +491,7 @@ export default function PromptList({ refreshKey = 0, onDeletePrompt, onSelectedW
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDeletePrompt?.(prompt.id);
-                      setPendingDelete(prompt.id);
-                      if (undoTimer.current) clearTimeout(undoTimer.current);
-                      undoTimer.current = setTimeout(() => setPendingDelete(null), 5000);
+                      setConfirmPromptId(prompt);
                     }}
                     className="px-2 py-0.5 rounded-full border border-rose-200 text-rose-700 text-[10px] hover:bg-rose-50"
                   >
@@ -490,6 +513,18 @@ export default function PromptList({ refreshKey = 0, onDeletePrompt, onSelectedW
           )}
         </div>
       </AsyncBoundary>
+      <ConfirmModal
+        open={!!confirmPromptId}
+        title="確認刪除提示詞"
+        description={confirmPromptId ? `將刪除「${confirmPromptId.title}」，5 秒內可 Undo。` : ""}
+        confirmText="刪除"
+        cancelText="取消"
+        onCancel={() => setConfirmPromptId(null)}
+        onConfirm={() => {
+          if (confirmPromptId) handleDeleteSingle(confirmPromptId);
+          setConfirmPromptId(null);
+        }}
+      />
     </div>
   );
 }
