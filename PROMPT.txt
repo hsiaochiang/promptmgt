@@ -1,5 +1,6 @@
 /speckit.implement
-Continue Phase 3:
-- Complete T015 (placeholder views routing in main/side) and T016 (Snackbar Undo mounting).
-- Proceed to implement Settings API/UI updates (T045, T046, T047).
-- Finally, verify US1 with tests.
+Proceed to Phase 4: User Story 2 - Projects + Project Detail + README.
+- Implement T048 (Contract tests for README API) and T049 (Integration tests for Project Detail).
+- Align T017 (Project List UI) with prototype, including cards and filter.
+- Implement T018 (README editor in Project Detail) and T019 (UI update after save).
+- Ensure 409 conflict handling is considered for README saving.

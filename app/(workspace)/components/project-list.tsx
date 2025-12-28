@@ -26,6 +26,8 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedProjectId = useWorkspaceStore((s) => s.selectedProjectId);
   const setSelectedProjectId = useWorkspaceStore((s) => s.setSelectedProjectId);
+  const [filterStatus, setFilterStatus] = useState<ProjectStatus | "全部">("全部");
+  const [search, setSearch] = useState("");
 
   const fetchProjects = async () => {
     setLoading(true);
@@ -147,8 +149,28 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-[11px] font-semibold text-slate-500">專案列表</span>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-semibold text-slate-500">專案列表</span>
+          <select
+            className="text-[11px] rounded-full border border-slate-300 bg-white px-2 py-1"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as ProjectStatus | "全部")}
+          >
+            <option value="全部">全部</option>
+            {statusOptions.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="搜尋名稱"
+            className="text-[11px] rounded-full border border-slate-300 bg-white px-2 py-1"
+          />
+        </div>
         <div className="flex items-center gap-1">
           <button
             onClick={(e) => {
@@ -252,8 +274,11 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
         </div>
       )}
       {loading && <div className="text-[11px] text-slate-400">載入中…</div>}
-      <div className="space-y-1.5">
-        {projects.map((p) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {projects
+          .filter((p) => (filterStatus === "全部" ? true : p.status === filterStatus))
+          .filter((p) => (search.trim() ? p.name.toLowerCase().includes(search.toLowerCase()) : true))
+          .map((p) => (
           <div
             role="button"
             tabIndex={0}
@@ -263,10 +288,10 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
               if (e.key === "Enter" || e.key === " ") setSelectedProjectId(p.name);
             }}
             className={
-              "w-full text-left rounded-lg px-3 py-2 border text-xs flex flex-col gap-0.5 outline-none " +
+              "w-full text-left rounded-lg px-3 py-3 border text-xs flex flex-col gap-1 outline-none shadow-sm transition-colors " +
               (p.name === selectedProjectId
                 ? "border-slate-900 bg-slate-900 text-white"
-                : "border-slate-200 bg-slate-50 hover:bg-slate-100")
+                : "border-slate-200 bg-white hover:border-slate-300")
             }
           >
             <div className="flex items-center justify-between">
@@ -274,7 +299,14 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange }: Props)
               <span className="text-[10px] opacity-70">{p.promptCount} 篇</span>
             </div>
             <div className="flex items-center justify-between text-[10px] opacity-70">
-              <span className="px-2 py-0.5 rounded-full bg-white/70 border border-slate-200">{p.status}</span>
+              <span
+                className={
+                  "px-2 py-0.5 rounded-full border " +
+                  (p.name === selectedProjectId ? "border-white/40 bg-white/10" : "border-slate-200 bg-slate-50")
+                }
+              >
+                {p.status}
+              </span>
               <span>更新：{formatForUI_MMDD_HHmm(p.updatedAt ?? "")}</span>
             </div>
             <div className="flex justify-end gap-1 text-[10px] mt-1">

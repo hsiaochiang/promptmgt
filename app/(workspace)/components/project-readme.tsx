@@ -14,15 +14,18 @@ interface ReadmePayload {
   path: string;
   hash: string;
   mtimeMs: number;
+  updatedAt?: string;
 }
 
 export default function ProjectReadme({ project, onSaved }: Props) {
   const [content, setContent] = useState("");
   const [hash, setHash] = useState<string | null>(null);
   const [mtimeMs, setMtimeMs] = useState<number | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [conflictDetails, setConflictDetails] = useState<{ currentHash?: string; currentMtime?: number } | null>(null);
 
   const canEdit = Boolean(project?.id);
 
@@ -31,20 +34,24 @@ export default function ProjectReadme({ project, onSaved }: Props) {
       setContent("");
       setHash(null);
       setMtimeMs(null);
+      setUpdatedAt(null);
       setError(null);
+      setConflictDetails(null);
       return;
     }
 
     const load = async () => {
       setLoading(true);
       setError(null);
+      setConflictDetails(null);
       try {
         const res = await fetch(`/api/projects/${project.id}/readme`);
-        if (!res.ok) throw new Error("無法讀取專案說明");
         const data = (await res.json()) as ReadmePayload;
+        if (!res.ok) throw new Error(data?.message ?? "無法讀取專案說明");
         setContent(data.content ?? "");
         setHash(data.hash ?? null);
         setMtimeMs(data.mtimeMs ?? null);
+        setUpdatedAt(data.updatedAt ?? null);
       } catch (err) {
         setError(err instanceof Error ? err.message : "讀取失敗");
       } finally {
@@ -59,20 +66,23 @@ export default function ProjectReadme({ project, onSaved }: Props) {
     if (!project?.id) return;
     setSaving(true);
     setError(null);
+    setConflictDetails(null);
     try {
       const res = await fetch(`/api/projects/${project.id}/readme`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content, expectedHash: hash, expectedMtime: mtimeMs })
       });
+      const payload = await res.json().catch(() => ({} as any));
       if (!res.ok) {
-        const payload = await res.json().catch(() => ({} as any));
+        setConflictDetails(payload?.details ?? null);
         const message = (payload as any)?.message ?? "儲存專案說明失敗";
         throw new Error(message);
       }
-      const data = (await res.json()) as { hash: string; mtimeMs: number };
+      const data = payload as { hash: string; mtimeMs: number; updatedAt?: string };
       setHash(data.hash);
       setMtimeMs(data.mtimeMs);
+      setUpdatedAt(data.updatedAt ?? null);
       onSaved?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "儲存失敗");
@@ -99,7 +109,30 @@ export default function ProjectReadme({ project, onSaved }: Props) {
           </button>
         </div>
       </div>
-      {error ? <div className="text-[11px] text-amber-700">{error}</div> : null}
+      {error ? (
+        <div className="text-[11px] text-amber-700">
+          {error}
+          {conflictDetails?.currentMtime ? (
+            <span className="ml-1 text-amber-600">
+              （伺服端版本時間：{formatForUI_MMDD_HHmm(new Date(conflictDetails.currentMtime).toISOString())}）
+            </span>
+          ) : null}
+          {conflictDetails?.currentHash ? <span className="ml-1 text-amber-600">（hash：{conflictDetails.currentHash}）</span> : null}
+          {conflictDetails ? (
+            <button
+              type="button"
+              className="ml-2 underline text-amber-800"
+              onClick={() => {
+                setConflictDetails(null);
+                setHash(conflictDetails.currentHash ?? hash);
+                setMtimeMs(conflictDetails.currentMtime ?? mtimeMs);
+              }}
+            >
+              接受伺服端版本
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
@@ -109,7 +142,11 @@ export default function ProjectReadme({ project, onSaved }: Props) {
       />
       <div className="text-[11px] text-slate-500 flex items-center justify-between">
         <span>{loading ? "載入中…" : "已載入"}</span>
-        {mtimeMs ? <span>更新：{formatForUI_MMDD_HHmm(new Date(mtimeMs).toISOString())}</span> : <span>尚未儲存</span>}
+        {updatedAt
+          ? <span>更新：{formatForUI_MMDD_HHmm(updatedAt)}</span>
+          : mtimeMs
+            ? <span>更新：{formatForUI_MMDD_HHmm(new Date(mtimeMs).toISOString())}</span>
+            : <span>尚未儲存</span>}
       </div>
     </div>
   );

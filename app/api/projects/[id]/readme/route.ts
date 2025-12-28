@@ -65,7 +65,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     });
   } catch (error: any) {
     if (error?.code === "E_CONFLICT") {
-      return conflict("Conflict detected", { currentHash: error.hash });
+      return conflict("Conflict detected", { currentHash: error.hash, currentMtime: error.mtimeMs });
     }
     throw error;
   }

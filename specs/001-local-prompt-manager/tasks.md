@@ -72,12 +72,12 @@
 
 ### Tests（必須先寫且先失敗）
 
-- [ ] T048 [P] [US2] 契約測試：Project README GET/PUT（含 409 details 與錯誤格式）（新增或擴充測試檔）：tests/contract/
-- [ ] T049 [P] [US2] 整合測試：Project Detail README 編輯/儲存/錯誤提示：tests/integration/us2-project-readme.test.tsx
+- [X] T048 [P] [US2] 契約測試：Project README GET/PUT（含 409 details 與錯誤格式）（新增或擴充測試檔）：tests/contract/
+- [X] T049 [P] [US2] 整合測試：Project Detail README 編輯/儲存/錯誤提示：tests/integration/us2-project-readme.test.tsx
 
-- [ ] T017 [US2] 對齊 Projects 列表（卡片/篩選/點擊進入詳情）與 Side KPI：app/(workspace)/components/project-list.tsx
-- [ ] T018 [US2] 在 Project Detail 中整合 README 編輯器（載入/儲存/錯誤提示）：app/(workspace)/components/project-readme.tsx
-- [ ] T019 [US2] README 儲存成功後更新 UI 顯示（使用 updatedAt 或 mtimeMs 顯示最後更新時間）：app/(workspace)/components/project-readme.tsx
+- [X] T017 [US2] 對齊 Projects 列表（卡片/篩選/點擊進入詳情）與 Side KPI：app/(workspace)/components/project-list.tsx
+- [X] T018 [US2] 在 Project Detail 中整合 README 編輯器（載入/儲存/錯誤提示）：app/(workspace)/components/project-readme.tsx
+- [X] T019 [US2] README 儲存成功後更新 UI 顯示（使用 updatedAt 或 mtimeMs 顯示最後更新時間）：app/(workspace)/components/project-readme.tsx
 
 ---
 

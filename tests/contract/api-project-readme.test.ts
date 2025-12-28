@@ -99,6 +99,7 @@ describe("/api/projects/:id/readme contract", () => {
     const err = await conflictRes.json();
     expect(err.code).toBe("conflict");
     expect(err.details?.currentHash).toBeTruthy();
+    expect(typeof err.details?.currentMtime).toBe("number");
   });
 
   it("rejects invalid payload and returns standard error format", async () => {

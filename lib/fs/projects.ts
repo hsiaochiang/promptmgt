@@ -97,7 +97,11 @@ export async function writeProjectReadme(options: WriteProjectReadmeOptions) {
         externalHash: existingHash
       })
     ) {
-      throw Object.assign(new Error("Conflict detected"), { code: "E_CONFLICT", hash: existingHash });
+      throw Object.assign(new Error("Conflict detected"), {
+        code: "E_CONFLICT",
+        hash: existingHash,
+        mtimeMs: existingStat.mtimeMs
+      });
     }
 
     const content = options.content ?? "";
