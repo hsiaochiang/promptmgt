@@ -46,7 +46,14 @@ describe("PromptList 行為", () => {
 
     const onDelete = vi.fn().mockResolvedValue(undefined);
     useWorkspaceStore.setState({ selectedProjectId: "proj-1" });
-    render(<PromptList onDeletePrompt={onDelete} />);
+    render(
+      <PromptList
+        onDeletePrompt={onDelete}
+        onScheduleUndo={(_, commit) => {
+          return commit();
+        }}
+      />
+    );
 
     await screen.findByText("提示 1");
     fireEvent.click(screen.getByText("提示 2"));
@@ -54,7 +61,8 @@ describe("PromptList 行為", () => {
 
     const deleteButtons = await screen.findAllByRole("button", { name: "刪除" });
     fireEvent.click(deleteButtons[0]);
-    expect(onDelete).toHaveBeenCalledWith("p-1");
+    fireEvent.click(await screen.findByTestId("confirm-accept"));
+    await waitFor(() => expect(onDelete).toHaveBeenCalledWith("p-1"));
   });
 
   it("刪除選取提示詞後刷新列表並選取下一筆", async () => {
@@ -77,6 +85,7 @@ describe("PromptList 行為", () => {
             useWorkspaceStore.setState({ selectedPromptId: null });
             setRefreshKey((k) => k + 1);
           }}
+          onScheduleUndo={(_, commit) => commit()}
         />
       );
     }
@@ -88,6 +97,7 @@ describe("PromptList 行為", () => {
 
     const deleteButtons = await screen.findAllByRole("button", { name: "刪除" });
     fireEvent.click(deleteButtons[0]);
+    fireEvent.click(await screen.findByTestId("confirm-accept"));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     await screen.findByText("提示 2");

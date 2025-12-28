@@ -14,6 +14,7 @@
 
 ## 核心操作
 - **專案（Projects / Project Detail）**：檢視專案列表 → 進入專案詳情 → 編輯/查看 README（專案資料夾內 `README.md`）。  
+- **工作區 Tabs**：TopBar Tabs（Projects / Prompts / Scratchpad）切換 Main/Side 區塊；Scratchpad 可即時編輯、複製或另存為提示詞。  
 - **提示詞（Prompts / Prompt Detail）**：點擊提示詞進入詳情，在 Main 區塊以「編輯 / 預覽」Tabs 切換；停止輸入 2 秒自動儲存（無輸入暫停）。  
 - **複製模式**：
 	- 精簡複製：只複製內容本體（去除 YAML frontmatter）
@@ -31,7 +32,7 @@
 
 ## 偏好與儲存
 - Pin/寬度/字級等偏好儲存在 localStorage 單一 key（節流寫入），載入失敗回退預設並記錄日誌。  
-- 檔案與 LowDB 寫入由 API 層處理；衝突以 409 回應，UI 需提供「重新載入 / 另存副本 / 強制覆寫」。  
+- 檔案與 LowDB 寫入由 API 層處理；衝突以 409 回應，UI 需提供「重新載入 / 另存副本 / 強制覆寫」並顯示伺服端 hash/updatedAt。  
 - 資料存放於使用者目錄隱藏資料夾，沿用 OS 權限，預設無應用層加密；必要時可手動加密目錄或放置在加密磁碟區。
 
 ## 遙測與診斷

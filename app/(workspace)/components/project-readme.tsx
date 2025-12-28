@@ -47,7 +47,7 @@ export default function ProjectReadme({ project, onSaved }: Props) {
     try {
       const res = await fetch(`/api/projects/${project.id}/readme`);
       const data = (await res.json()) as ReadmePayload;
-      if (!res.ok) throw new Error(data?.message ?? "無法讀取專案說明");
+      if (!res.ok) throw new Error((data as any)?.message ?? "無法讀取專案說明");
       setContent(data.content ?? "");
       setHash(data.hash ?? null);
       setMtimeMs(data.mtimeMs ?? null);

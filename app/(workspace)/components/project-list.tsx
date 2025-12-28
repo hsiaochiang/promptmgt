@@ -152,7 +152,7 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
         if (list.find((p) => p.id === backup.id)) return list;
         return [backup, ...list];
       });
-      setSelectedProjectId((id) => id ?? backup.name);
+      setSelectedProjectId(backup.name);
     };
     const schedule = onScheduleUndo ?? ((_, c, u) => { u?.(); c(); });
     schedule(`已排程刪除「${project.name}」，5 秒內可撤銷`, commit, undo);

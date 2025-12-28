@@ -43,7 +43,7 @@ describe("ProjectList CRUD UI", () => {
     );
     vi.spyOn(window, "prompt").mockReturnValue("新專案");
 
-    render(<ProjectList />);
+    render(<ProjectList onScheduleUndo={(_, commit) => commit()} />);
 
     await screen.findByText("A");
     fireEvent.click(screen.getByText("新增專案"));
@@ -70,14 +70,14 @@ describe("ProjectList CRUD UI", () => {
     vi.spyOn(window, "prompt").mockImplementationOnce(() => "A-renamed").mockImplementationOnce(() => "進行中");
 
     useWorkspaceStore.setState({ selectedProjectId: "A" });
-    render(<ProjectList />);
+    render(<ProjectList onScheduleUndo={(_, commit) => commit()} />);
 
     await screen.findByText("A");
     fireEvent.click(screen.getByText("編輯"));
 
     await waitFor(() => expect(screen.getByText(/A-renamed/)).toBeInTheDocument());
     expect(useWorkspaceStore.getState().selectedProjectId).toBe("A-renamed");
-    expect(screen.getByText("進行中")).toBeInTheDocument();
+    expect(screen.getAllByText("進行中").length).toBeGreaterThan(0);
   });
 
   it("刪除選取專案後清空選取並刷新列表", async () => {
@@ -87,22 +87,20 @@ describe("ProjectList CRUD UI", () => {
       [makeProject("proj-2", "B", "進行中", 0)]
     ];
 
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (_input: RequestInfo, init?: RequestInit) => {
-        const payload = responses.shift();
-        const status = init?.method === "DELETE" ? 200 : 200;
-        return new Response(JSON.stringify(payload), { status });
-      })
-    );
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-
+    const fetchMock = vi.fn(async (_input: RequestInfo, init?: RequestInit) => {
+      const payload = responses.shift();
+      const status = init?.method === "DELETE" ? 200 : 200;
+      return new Response(JSON.stringify(payload), { status });
+    });
+    vi.stubGlobal("fetch", fetchMock);
     useWorkspaceStore.setState({ selectedProjectId: "A" });
-    render(<ProjectList />);
+    render(<ProjectList onScheduleUndo={(_, commit) => commit()} />);
 
     await screen.findByText("A");
     fireEvent.click(screen.getAllByText("刪除")[0]);
+    fireEvent.click(await screen.findByTestId("confirm-accept"));
 
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
     await waitFor(() => expect(useWorkspaceStore.getState().selectedProjectId).toBeNull());
     expect(screen.queryByText("A")).not.toBeInTheDocument();
     expect(screen.getByText("B")).toBeInTheDocument();

@@ -66,6 +66,6 @@ describe("US2 - Project Detail README", () => {
 
     await screen.findByText(/Conflict/);
     expect(screen.getByText(/hash：server/)).toBeInTheDocument();
-    fireEvent.click(screen.getByText("接受伺服端版本"));
+    fireEvent.click(screen.getByText("重新載入外部版本"));
   });
 });

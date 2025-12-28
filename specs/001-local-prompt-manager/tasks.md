@@ -165,14 +165,14 @@
 
 ## Phase 9: Polish & Cross-Cutting Concerns
 
-- [ ] T039 [P] 驗證並（如需要）修正 createdAt/updatedAt 與 ISO+08:00 自動補值（涵蓋所有實體 schema）：lib/types/schema.ts
-- [ ] T040 [P] 同步 quickstart 與規格的用語（編輯/預覽 Tabs、Undo 5 秒、409 三選一）：specs/001-local-prompt-manager/quickstart.md
-- [ ] T041 [P] 更新 research 的 gap closure 註記（server 主導 updatedAt 已落實）：specs/001-local-prompt-manager/research.md
-- [ ] T042 [P] 執行並確認基本檢核通過（typecheck/test）：package.json
+- [X] T039 [P] 驗證並（如需要）修正 createdAt/updatedAt 與 ISO+08:00 自動補值（涵蓋所有實體 schema）：lib/types/schema.ts
+- [X] T040 [P] 同步 quickstart 與規格的用語（編輯/預覽 Tabs、Undo 5 秒、409 三選一）：specs/001-local-prompt-manager/quickstart.md
+- [X] T041 [P] 更新 research 的 gap closure 註記（server 主導 updatedAt 已落實）：specs/001-local-prompt-manager/research.md
+- [X] T042 [P] 執行並確認基本檢核通過（typecheck/test）：package.json
 
-- [ ] T060 [P] 效能量測：列表載入、Prompt Detail 讀寫、autosave 的 p95 測量與記錄：docs/perf-checks.md
-- [ ] T061 [P] 覆蓋率門檻檢核：單元 ≥80%，關鍵路徑 100%（記錄落差與修正清單）：docs/perf-checks.md
-- [ ] T062 [P] FR-035 落地檢核：Project/Prompt/Inbox/Snippet/Settings 的 createdAt/updatedAt 自動補值與更新規則逐一驗證：lib/types/schema.ts
+- [X] T060 [P] 效能量測：列表載入、Prompt Detail 讀寫、autosave 的 p95 測量與記錄：docs/perf-checks.md
+- [X] T061 [P] 覆蓋率門檢核：單元 ≥80%，關鍵路徑 100%（記錄落差與修正清單）：docs/perf-checks.md
+- [X] T062 [P] FR-035 落地檢核：Project/Prompt/Inbox/Snippet/Settings 的 createdAt/updatedAt 自動補值與更新規則逐一驗證：lib/types/schema.ts
 
 ---
 

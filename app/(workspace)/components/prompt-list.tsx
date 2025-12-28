@@ -184,7 +184,7 @@ export default function PromptList({
         if (list.find((p) => p.id === backup.id)) return list;
         return [backup, ...list];
       });
-      setSelectedPromptId((id) => id ?? backup.id);
+      setSelectedPromptId(backup.id);
     };
     schedule(`已排程刪除「${prompt.title}」，5 秒內可撤銷`, commit, undo);
   };

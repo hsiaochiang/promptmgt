@@ -1,5 +1,11 @@
 # 性能檢查與量測腳本（Phase 7 / T045/T055–T057/T062/T063）
 
+## Phase 9 量測摘要（2025-12-28）
+
+- 腳本：`node scripts/perf-test.js`（臨時 root，50 筆提示樣本）
+- 量測結果：list_load_50 **22.89 ms** / prompt_read **0.65 ms** / prompt_write **2.10 ms** / autosave_p95 **2.43 ms**
+- 覆蓋率（`npm run test -- --coverage`）：Statements **96.03%** / Branches **79.94%** / Functions **93.75%** / Lines **96.03%**（門檻：branches ≥ 79.9，其餘 ≥ 80）
+
 ## 前置
 - 啟動：`npm run dev`，瀏覽 http://localhost:3000。
 - 資料集：

@@ -84,8 +84,7 @@ describe("US1 - Shell Tabs 與 RootPathAlert", () => {
     expect(screen.getByTestId("rootpath-alert")).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("workspace-tab-scratchpad"));
-    const scratchMain = await screen.findByTestId("tab-placeholder-main");
-    expect(scratchMain).toHaveAttribute("data-tab", "scratchpad");
-    expect(screen.getByTestId("tab-placeholder-side")).toBeInTheDocument();
+    const scratchpad = await screen.findByTestId("scratchpad-textarea");
+    expect(scratchpad).toBeInTheDocument();
   });
 });

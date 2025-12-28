@@ -12,7 +12,7 @@ import { toIsoWithOffset } from "@/lib/utils/date";
 
 export async function GET(request: Request) {
   const db = await getDb();
-  const rootPath = db.data!.settings.rootPath;
+  const rootPath = db.data!.settings.rootPath ?? process.env.DEFAULT_ROOT ?? "";
   if (!rootPath) {
     setPromptMetaFromPrompts([]);
     return NextResponse.json([], { status: 200 });
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
       model: frontmatter?.model ?? "",
       tags: Array.isArray(frontmatter?.tags) ? frontmatter.tags : [],
       note: frontmatter?.note,
-      updatedAt: frontmatter?.updatedAt ?? now,
+      updatedAt: now,
       createdAt: frontmatter?.createdAt ?? now
     };
     try {

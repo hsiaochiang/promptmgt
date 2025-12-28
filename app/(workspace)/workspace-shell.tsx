@@ -195,7 +195,7 @@ export default function WorkspaceShell() {
     }, 5000);
   };
 
-  const handleDeletePrompt = (promptId: string) => {
+  const handleDeletePrompt = async (promptId: string) => {
     if (!promptId) return;
     const backup = {
       frontmatter: promptFrontmatter,
@@ -233,6 +233,7 @@ export default function WorkspaceShell() {
       setSelectedPromptId(backup.selectedId);
     };
     scheduleUndo("已排程刪除提示詞，5 秒內可撤銷", commit, undo);
+    return Promise.resolve();
   };
 
   const handleArchiveSuccess = (result: { promptId?: string; projectName?: string }) => {

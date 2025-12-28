@@ -33,7 +33,8 @@
 ### timestamps（UTC+08:00 ISO 8601）更新規則
 - **Decision**：createdAt 僅首次建立；每次成功儲存（含 autosave）都更新 updatedAt。
 - **Rationale**：符合稽核/排序需求；驗收與使用者直覺一致。
-- **Gap（現況差距）**：提示詞更新 API 目前會接受 client 端的 `frontmatter.updatedAt`；需在 Phase 2 規劃中將「updatedAt 由伺服端主導」落地，避免用戶端漏傳導致不更新。
+- **Gap（現況差距）**：提示詞更新 API 目前會接受 client 端的 `frontmatter.updatedAt`；需在 Phase 2 規劃中將「updatedAt 由伺服端主導」落地，避免用戶端漏傳導致不更新。  
+- **Closure（Phase 9）**：prompts POST/PUT 改由伺服端生成 `updatedAt`（忽略 client 的 updatedAt），並預設 `createdAt` 缺值時補入 `toIsoWithOffset()`，409 分支仍提供伺服端 hash/mtime。
 
 ### 儲存策略（既有系統）
 - **Decision**：沿用 LowDB（`db.json`）保存 projects/inbox/snippets/settings；提示詞與 README 以 `rootPath` 下的 Markdown 檔保存（YAML frontmatter + body）。

@@ -29,6 +29,8 @@ export interface PromptReadResult {
   frontmatter: PromptFrontmatter | null;
   body: string;
   damaged: boolean;
+  errorCode?: string;
+  errorMessage?: string;
   hash: string;
   mtimeMs: number;
   path: string;
@@ -93,6 +95,8 @@ export async function readPrompt(filePath: string): Promise<PromptReadResult> {
   const stat = await fs.stat(filePath);
   return {
     ...parsed,
+    errorCode: parsed.errorCode ?? undefined,
+    errorMessage: parsed.errorMessage ?? undefined,
     hash: computeHash(raw),
     mtimeMs: stat.mtimeMs,
     path: filePath

@@ -55,7 +55,7 @@ export async function POST(request: Request) {
 
   let targetLogPath = resolveLogPath(targetRoot, nextLogPath ?? currentSettings.logPath);
   if (!targetLogPath && targetRoot) {
-    targetLogPath = resolveLogPath(targetRoot, null);
+    targetLogPath = resolveLogPath(targetRoot, undefined);
   }
   const shouldValidateLogPath = nextLogPath !== undefined;
   if (shouldValidateLogPath) {
