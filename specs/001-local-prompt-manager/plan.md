@@ -1,6 +1,6 @@
 # 原型對齊 Implementation Plan：提示詞工作台（UI/UX 以 prototype 為準）
 
-**分支**：`001-local-prompt-manager` | **日期**：2025-12-27 | **規格**：`specs/001-local-prompt-manager/spec.md`
+**分支**：`001-local-prompt-manager` | **日期**：2025-12-28 | **規格**：`specs/001-local-prompt-manager/spec.md`
 
 **輸入**：來自 `specs/001-local-prompt-manager/spec.md`（以 `0resource/prototype/` 的畫面與互動為 UI/UX 權威來源；資料層沿用現有系統實作）
 
@@ -15,6 +15,10 @@
 - 衝突處理：偵測 409/外部修改時，提供「重新載入 / 另存副本 / 強制覆寫」
 - Settings：rootPath/logPath 與可操作的錯誤回饋；logPath 允許位於 userDir 或 rootPath 下
 - Change report：提供最近 24 小時變更檢視（Topbar 入口）
+
+文件同步（本次新增）：
+
+- 在 `spec.md` 明確標註「與 `0resource/prototype/` 的差異（已落地）」與規則：prototype 作為 IA/視覺基線，但已交付且有測試覆蓋的擴充功能也納入 spec，避免規格與實作互相打架。
 
 ## Technical Context
 

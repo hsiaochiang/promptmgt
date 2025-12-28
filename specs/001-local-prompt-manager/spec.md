@@ -4,6 +4,21 @@
 **日期**：2025-12-28  
 **原型來源**：`0resource/prototype/`（`index.html` + `app.js` + `styles.css`）  
 
+## 原型版本與差異說明（避免規格與實作打架）
+
+本 repo 內的 `0resource/prototype/` 可視為「視覺語言 + IA 基線 + 互動手感」的權威來源；但現行實作（Workspace UI）已擴充部分 Topbar actions 與產品能力（例如設定、今日變更報告、片語顯示切換、Markdown 編輯/預覽等）。
+
+為避免出現兩套互相矛盾的規格，本文件採以下規則：
+
+- **Layout / 信息架構 / 命名語氣**：盡量以 `0resource/prototype/` 為準。
+- **現行實作已交付且有測試覆蓋的功能**：即使 prototype 未呈現，也在本 spec 明確列為「實作擴充」，後續以此 spec 為準。
+
+### 與 `0resource/prototype/` 的關鍵差異（已落地）
+
+- **Topbar actions**：prototype 的 top-actions 只顯示「操作指引 / 新增提示詞」；現行 Workspace 另外提供「開啟/隱藏片語、設定、今日變更報告」。
+- **片語庫**：prototype 未包含片語庫；現行 Workspace 右側提供片語面板並可插入內容，且可由 Topbar 及側欄切換顯示。
+- **Prompt Detail 能力**：prototype 以簡化 textarea 為主；現行 Workspace 支援 Markdown 編輯/預覽、autosave、衝突處理與複製模式等（見下方 Prompt Detail）。
+
 ## 核心原則（很重要）
 
 - **前端操作/資訊架構/互動回饋**：以 `0resource/prototype/` 的實際畫面與互動為準。
@@ -39,7 +54,7 @@
 原型採固定 Shell：`Main Panel`（主要內容）+ `Side Panel`（輔助資訊/標籤/快速操作）。頂部含：
 
 - Tabs：專案（Projects）/ 提示詞（Prompts）/ 剪貼簿（Scratchpad）
-- Top actions：操作指引（Help）/ 隱藏片語（Toggle，影響右側片語庫區塊）/ 設定 / 今日變更報告 / 新增提示詞
+- Top actions（實作擴充，prototype 僅有部分）：操作指引（Help）/ 開啟/隱藏片語（Toggle，影響右側片語庫區塊）/ 設定 / 今日變更報告 / 新增提示詞
 
 ## User Stories（對照頁面 / 方便拆 tasks）
 
