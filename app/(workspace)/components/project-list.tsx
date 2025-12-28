@@ -162,9 +162,11 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
     <div>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-semibold text-slate-500">專案列表</span>
+          <span className="text-[11px] font-semibold" style={{ color: "var(--pm-muted)" }}>
+            專案列表
+          </span>
           <select
-            className="text-[11px] rounded-full border border-slate-300 bg-white px-2 py-1"
+            className="h-8 pm-select !text-[11px] !px-3 !py-1 !rounded-full"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as ProjectStatus | "全部")}
           >
@@ -179,7 +181,7 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="搜尋名稱"
-            className="text-[11px] rounded-full border border-slate-300 bg-white px-2 py-1"
+            className="h-8 pm-input !text-[11px] !px-3 !py-1 !rounded-full"
           />
         </div>
         <div className="flex items-center gap-1">
@@ -192,16 +194,20 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
               void handleQuickCreate();
             }}
             disabled={busy}
-            className="text-[10px] px-2 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-60"
+            className="pm-btn h-8 px-3 text-[11px] disabled:opacity-60"
           >
             新增專案
           </button>
         </div>
       </div>
       {showCreateForm && (
-        <form onSubmit={handleAdd} className="mb-2 rounded-lg border border-slate-200 bg-white p-3 text-xs space-y-2">
+        <form
+          onSubmit={handleAdd}
+          className="mb-2 rounded-[16px] p-4 text-xs space-y-3"
+          style={{ border: "1px solid var(--pm-border)", background: "var(--pm-panel)" }}
+        >
           <div className="flex flex-col gap-1">
-            <label className="text-[11px] text-slate-600 font-semibold" htmlFor="project-name">
+            <label className="text-[11px] font-semibold" style={{ color: "var(--pm-muted)" }} htmlFor="project-name">
               專案名稱
             </label>
             <input
@@ -209,13 +215,13 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
               value={newProject.name}
               onChange={(e) => setNewProject((p) => ({ ...p, name: e.target.value }))}
               disabled={busy}
-              className="rounded border border-slate-300 px-2 py-1 text-xs focus:outline-none focus:border-slate-400"
+              className="pm-input !text-xs"
               placeholder="例如：行銷活動 A"
               required
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[11px] text-slate-600 font-semibold" htmlFor="project-desc">
+            <label className="text-[11px] font-semibold" style={{ color: "var(--pm-muted)" }} htmlFor="project-desc">
               簡述（選填）
             </label>
             <textarea
@@ -224,12 +230,12 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
               onChange={(e) => setNewProject((p) => ({ ...p, description: e.target.value }))}
               disabled={busy}
               rows={3}
-              className="rounded border border-slate-300 px-2 py-1 text-xs focus:outline-none focus:border-slate-400 resize-none"
+              className="pm-textarea !min-h-[96px] !text-xs resize-none"
               placeholder="專案目標、範圍或備註"
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[11px] text-slate-600 font-semibold" htmlFor="project-status">
+            <label className="text-[11px] font-semibold" style={{ color: "var(--pm-muted)" }} htmlFor="project-status">
               狀態
             </label>
             <select
@@ -237,7 +243,7 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
               value={newProject.status}
               onChange={(e) => setNewProject((p) => ({ ...p, status: e.target.value as ProjectStatus }))}
               disabled={busy}
-              className="rounded border border-slate-300 px-2 py-1 text-xs bg-white focus:outline-none focus:border-slate-400"
+              className="pm-select !text-xs"
             >
               {statusOptions.map((option) => (
                 <option key={option} value={option}>
@@ -250,7 +256,7 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
             <button
               type="submit"
               disabled={busy}
-              className="px-3 py-1 rounded-full bg-slate-900 text-white text-[11px] hover:bg-slate-800 disabled:opacity-60"
+              className="pm-btn pm-btn-primary h-9 px-4 text-[11px] disabled:opacity-60"
             >
               建立專案
             </button>
@@ -262,15 +268,23 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
                 setNewProject({ name: "", description: "", status: statusOptions[0] });
                 setNotice(null);
               }}
-              className="px-3 py-1 rounded-full border border-slate-300 bg-white text-[11px] hover:bg-slate-50 disabled:opacity-60"
+              className="pm-btn h-9 px-4 text-[11px] disabled:opacity-60"
             >
               取消
             </button>
           </div>
         </form>
       )}
-      {notice ? <div className="text-[11px] text-amber-700 mb-1">{notice}</div> : null}
-      {loading && <div className="text-[11px] text-slate-400">載入中…</div>}
+      {notice ? (
+        <div className="text-[11px] mb-1" style={{ color: "#8a5a2a" }}>
+          {notice}
+        </div>
+      ) : null}
+      {loading && (
+        <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
+          載入中…
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {projects
           .filter((p) => (filterStatus === "全部" ? true : p.status === filterStatus))
@@ -285,22 +299,26 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
               if (e.key === "Enter" || e.key === " ") setSelectedProjectId(p.name);
             }}
             className={
-              "w-full text-left rounded-lg px-3 py-3 border text-xs flex flex-col gap-1 outline-none shadow-sm transition-colors " +
-              (p.name === selectedProjectId
-                ? "border-slate-900 bg-slate-900 text-white"
-                : "border-slate-200 bg-white hover:border-slate-300")
+              "w-full text-left rounded-[16px] px-4 py-3 border text-xs flex flex-col gap-2 outline-none transition-all " +
+              (p.name === selectedProjectId ? "bg-white" : "bg-[color:var(--pm-panel-ink)]")
             }
+            style={{
+              borderColor: p.name === selectedProjectId ? "rgba(47, 111, 111, 0.45)" : "var(--pm-border)",
+              boxShadow: p.name === selectedProjectId ? "0 12px 26px rgba(47, 111, 111, 0.1)" : "none"
+            }}
           >
             <div className="flex items-center justify-between">
               <span className="font-semibold truncate">{p.name}</span>
-              <span className="text-[10px] opacity-70">{p.promptCount} 篇</span>
+              <span className="text-[10px]" style={{ color: "var(--pm-muted)" }}>
+                {p.promptCount} 篇
+              </span>
             </div>
-            <div className="flex items-center justify-between text-[10px] opacity-70">
+            <div className="flex items-center justify-between text-[10px]" style={{ color: "var(--pm-muted)" }}>
               <span
                 className={
-                  "px-2 py-0.5 rounded-full border " +
-                  (p.name === selectedProjectId ? "border-white/40 bg-white/10" : "border-slate-200 bg-slate-50")
+                  "pm-badge text-[10px] "
                 }
+                style={{ background: "rgba(47, 111, 111, 0.08)", borderColor: "rgba(47, 111, 111, 0.25)", color: "var(--pm-brand-strong)" }}
               >
                 {p.status}
               </span>
@@ -313,7 +331,7 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
                   e.stopPropagation();
                   handleEdit(p);
                 }}
-                className="px-2 py-0.5 rounded-full border border-slate-300 bg-white hover:bg-slate-50"
+                className="pm-btn h-7 px-3 text-[10px]"
                 disabled={busy}
               >
                 編輯
@@ -324,7 +342,8 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
                   e.stopPropagation();
                    setConfirmTarget(p);
                  }}
-                 className="px-2 py-0.5 rounded-full border border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100"
+                   className="pm-btn h-7 px-3 text-[10px]"
+                   style={{ border: "1px solid rgba(217, 95, 95, 0.35)", background: "rgba(217, 95, 95, 0.08)", color: "var(--pm-danger)" }}
                  disabled={busy}
                >
                  刪除

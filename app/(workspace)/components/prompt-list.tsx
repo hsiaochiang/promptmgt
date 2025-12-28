@@ -11,6 +11,8 @@ interface Props {
   refreshKey?: number;
   onDeletePrompt?: (id: string) => Promise<void>;
   onSelectedWhileUnpinned?: () => void;
+  onOpenPrompt?: (id: string) => void;
+  onLoaded?: (prompts: PromptListItem[]) => void;
   searchInputRef?: React.RefObject<HTMLInputElement>;
   pinned?: boolean;
   onTogglePinned?: () => void;
@@ -21,6 +23,8 @@ export default function PromptList({
   refreshKey = 0,
   onDeletePrompt,
   onSelectedWhileUnpinned,
+  onOpenPrompt,
+  onLoaded,
   searchInputRef,
   pinned = true,
   onTogglePinned,
@@ -49,28 +53,25 @@ export default function PromptList({
   }, [selectedPromptId]);
 
   const fetchPrompts = useCallback(async () => {
-    if (!selectedProjectId) {
-      setPrompts([]);
-      setError(null);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ projectId: selectedProjectId });
+      const params = new URLSearchParams();
       if (filterStatus !== "全部") params.set("status", filterStatus);
       if (searchQuery.trim()) params.set("q", searchQuery.trim());
       const res = await fetch(`/api/prompts?${params.toString()}`);
       if (!res.ok) throw new Error("無法載入提示詞列表");
       const data = (await res.json()) as PromptListItem[];
       setPrompts(data);
+      onLoaded?.(data);
       setSelectedIds(new Set());
-      const hasSelected = data.some((p) => p.id === latestSelectedPromptId.current);
-      if (data.length === 0) {
-        setSelectedPromptId(null);
-      } else if (!latestSelectedPromptId.current || !hasSelected) {
-        setSelectedPromptId(data[0].id);
+      if (!onOpenPrompt) {
+        const hasSelected = data.some((p) => p.id === latestSelectedPromptId.current);
+        if (data.length === 0) {
+          setSelectedPromptId(null);
+        } else if (!latestSelectedPromptId.current || !hasSelected) {
+          setSelectedPromptId(data[0].id);
+        }
       }
     } catch (err) {
       setPrompts([]);
@@ -78,7 +79,7 @@ export default function PromptList({
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, searchQuery, selectedProjectId, setSelectedPromptId]);
+  }, [filterStatus, onLoaded, onOpenPrompt, searchQuery, setSelectedPromptId]);
 
   useEffect(() => {
     fetchPrompts();
@@ -296,7 +297,6 @@ export default function PromptList({
   };
 
   const handleCreate = async () => {
-    if (!selectedProjectId) return;
     setBusy(true);
     setError(null);
     try {
@@ -334,10 +334,10 @@ export default function PromptList({
 
   return (
     <div className="flex-1 overflow-auto p-4">
-      <div className="mb-3 flex flex-col gap-2 text-xs text-slate-500">
+      <div className="mb-3 flex flex-col gap-2 text-xs" style={{ color: "var(--pm-muted)" }}>
         <div className="flex items-center justify-between">
           <div>
-            專案：<span className="font-semibold text-slate-800">{selectedProjectId ?? "—"}</span>
+            專案：<span className="font-semibold" style={{ color: "var(--pm-text)" }}>{selectedProjectId ?? "—"}</span>
           </div>
           <div className="flex gap-2 items-center">
             <input
@@ -345,12 +345,12 @@ export default function PromptList({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="搜尋標題/模型/標籤"
-              className="h-7 rounded border border-slate-300 px-2 text-xs bg-white focus:border-slate-400 focus:outline-none"
+              className="h-9 pm-input !text-xs !px-3 !py-2"
             />
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as any)}
-              className="h-7 rounded border border-slate-300 bg-white px-2 text-xs"
+              className="h-9 pm-select !text-xs !px-3 !py-2"
             >
               <option value="全部">全部狀態</option>
               <option value="使用中">使用中</option>
@@ -361,21 +361,21 @@ export default function PromptList({
               type="button"
               onClick={handleCreate}
               disabled={busy || !selectedProjectId}
-              className="px-2 py-1 rounded-full border border-slate-300 bg-white text-[11px] hover:bg-slate-50 disabled:opacity-60"
+              className="pm-btn h-9 px-3 text-[11px] disabled:opacity-60"
             >
               新增提示詞
             </button>
             <button
               type="button"
               onClick={clearFilters}
-              className="px-2 py-1 rounded-full border border-slate-200 bg-white text-[11px] hover:bg-slate-50"
+              className="pm-btn h-9 px-3 text-[11px]"
             >
               清除篩選
             </button>
             <button
               type="button"
               onClick={() => onTogglePinned?.()}
-              className="px-2 py-1 rounded-full border border-slate-300 bg-white text-[11px] hover:bg-slate-50"
+              className="pm-btn h-9 px-3 text-[11px]"
             >
               {pinned ? "Pin 已開" : "Pin 關閉"}
             </button>
@@ -383,39 +383,44 @@ export default function PromptList({
         </div>
         <div className="flex items-center justify-between">
           <span>共 {prompts.length} 篇提示詞</span>
-          {loading && <span className="text-[11px] text-slate-400">載入中…</span>}
+          {loading && <span className="text-[11px]" style={{ color: "var(--pm-muted)" }}>載入中…</span>}
         </div>
       </div>
 
       {selectedIds.size > 0 && (
-        <div className="mb-3 flex flex-wrap gap-2 text-[11px] items-center bg-slate-50 border border-slate-200 px-3 py-2 rounded">
+        <div className="mb-3 flex flex-wrap gap-2 text-[11px] items-center px-3 py-2 rounded" style={{ background: "var(--pm-panel-ink)", border: "1px solid var(--pm-border)" }}>
           <span>已選 {selectedIds.size} 筆</span>
-          <button data-testid="batch-rename" onClick={handleBatchRename} className="px-2 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-100">
+          <button data-testid="batch-rename" onClick={handleBatchRename} className="pm-btn h-8 px-3 text-[11px]">
             批次重新命名
           </button>
-          <button data-testid="batch-duplicate" onClick={handleBatchDuplicate} className="px-2 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-100">
+          <button data-testid="batch-duplicate" onClick={handleBatchDuplicate} className="pm-btn h-8 px-3 text-[11px]">
             批次複製
           </button>
-          <button data-testid="batch-move" onClick={handleBatchMove} className="px-2 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-100">
+          <button data-testid="batch-move" onClick={handleBatchMove} className="pm-btn h-8 px-3 text-[11px]">
             批次移動
           </button>
-          <button data-testid="batch-archive" onClick={handleBatchArchive} className="px-2 py-1 rounded-full border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100">
+          <button data-testid="batch-archive" onClick={handleBatchArchive} className="pm-btn h-8 px-3 text-[11px] pm-btn-accent">
             批次歸檔
           </button>
-          <button data-testid="batch-delete" onClick={handleBatchDelete} className="px-2 py-1 rounded-full border border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100">
+          <button
+            data-testid="batch-delete"
+            onClick={handleBatchDelete}
+            className="pm-btn h-8 px-3 text-[11px]"
+            style={{ border: "none", background: "linear-gradient(135deg, #d96b6b 0%, #c94d4d 100%)", color: "#fff" }}
+          >
             批次刪除
           </button>
-          <button onClick={clearSelection} className="px-2 py-1 rounded-full border border-slate-200 bg-white hover:bg-slate-50">
+          <button onClick={clearSelection} className="pm-btn h-8 px-3 text-[11px]">
             取消選取
           </button>
         </div>
       )}
 
       {batchMessage && (
-        <div className="mb-2 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 px-3 py-2 rounded flex items-center justify-between">
+        <div className="mb-2 text-[11px] px-3 py-2 rounded flex items-center justify-between" style={{ background: "rgba(212, 163, 115, 0.14)", border: "1px solid rgba(212, 163, 115, 0.35)", color: "#8a5a2a" }}>
           <span>{batchMessage}</span>
           <button
-            className="px-2 py-1 rounded-full border border-amber-300 bg-white hover:bg-amber-100"
+            className="pm-btn h-8 px-3 text-[11px]"
             onClick={restoreDeleted}
           >
             Undo
@@ -423,7 +428,11 @@ export default function PromptList({
         </div>
       )}
 
-      {error ? <div className="mb-2 text-[11px] text-amber-700">{error}</div> : null}
+      {error ? (
+        <div className="mb-2 text-[11px]" style={{ color: "var(--pm-danger)" }}>
+          {error}
+        </div>
+      ) : null}
       <AsyncBoundary loading={loading} error={error} onRetry={fetchPrompts} label="提示詞列表">
         <div className="space-y-2">
           {prompts.map((prompt) => (
@@ -432,21 +441,28 @@ export default function PromptList({
               tabIndex={0}
               key={prompt.id}
               onClick={() => {
-                setSelectedPromptId(prompt.id);
-                if (!pinned) onSelectedWhileUnpinned?.();
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
+                if (onOpenPrompt) {
+                  onOpenPrompt(prompt.id);
+                } else {
                   setSelectedPromptId(prompt.id);
                   if (!pinned) onSelectedWhileUnpinned?.();
                 }
               }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  if (onOpenPrompt) {
+                    onOpenPrompt(prompt.id);
+                  } else {
+                    setSelectedPromptId(prompt.id);
+                    if (!pinned) onSelectedWhileUnpinned?.();
+                  }
+                }
+              }}
               className={
-                "w-full text-left rounded-lg border px-3 py-2 text-xs flex flex-col gap-1 hover:bg-slate-50 outline-none " +
-                (prompt.id === selectedPromptId
-                  ? "border-slate-900 bg-slate-900/5"
-                  : "border-slate-200")
+                "w-full text-left rounded-[16px] border px-4 py-3 text-xs flex flex-col gap-2 outline-none transition-all " +
+                (prompt.id === selectedPromptId ? "bg-white" : "bg-white")
               }
+              style={{ borderColor: prompt.id === selectedPromptId ? "rgba(47, 111, 111, 0.45)" : "var(--pm-border)", boxShadow: prompt.id === selectedPromptId ? "0 12px 26px rgba(47, 111, 111, 0.1)" : "none" }}
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -462,25 +478,25 @@ export default function PromptList({
                   />
                   <span className="font-semibold truncate">{prompt.title}</span>
                 </div>
-                <span className="text-[10px] text-slate-400">更新：{formatForUI_MMDD_HHmm(prompt.updatedAt ?? "")}</span>
+                <span className="text-[10px]" style={{ color: "var(--pm-muted)" }}>
+                  更新：{formatForUI_MMDD_HHmm(prompt.updatedAt ?? "")}
+                </span>
               </div>
               <div className="flex items-center justify-between text-[11px]">
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-full bg-slate-900 text-white text-[10px]">
-                    {prompt.type}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full border border-slate-300 text-[10px]">
+                  <span className="pm-badge pm-badge-brand text-[10px]">{prompt.type}</span>
+                  <span className="pm-badge text-[10px]" style={{ color: "var(--pm-muted)" }}>
                     狀態：{prompt.status}
                   </span>
-                  <span className="px-2 py-0.5 rounded-full border border-slate-300 text-[10px]">
-                    模型：{prompt.model}
+                  <span className="pm-badge text-[10px]" style={{ color: "var(--pm-muted)" }}>
+                    模型：{prompt.model || "—"}
                   </span>
                 </div>
                 <div className="flex gap-1">
                   {prompt.tags.map((t) => (
                     <span
                       key={t}
-                      className="px-1.5 py-0.5 rounded-full bg-slate-100 text-[10px] text-slate-600"
+                      className="pm-chip pm-chip-neutral"
                     >
                       #{t}
                     </span>
@@ -493,7 +509,8 @@ export default function PromptList({
                       e.stopPropagation();
                       setConfirmPromptId(prompt);
                     }}
-                    className="px-2 py-0.5 rounded-full border border-rose-200 text-rose-700 text-[10px] hover:bg-rose-50"
+                    className="pm-btn h-7 px-3 text-[10px]"
+                    style={{ border: "1px solid rgba(217, 95, 95, 0.35)", background: "rgba(217, 95, 95, 0.08)", color: "var(--pm-danger)" }}
                   >
                     刪除
                   </button>
@@ -501,14 +518,9 @@ export default function PromptList({
               </div>
             </div>
           ))}
-          {!loading && !selectedProjectId && (
-            <div className="rounded border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-xs text-slate-500">
-              尚未選擇專案，請先建立專案或將草稿轉正後再查看提示詞。
-            </div>
-          )}
-          {!loading && selectedProjectId && prompts.length === 0 && (
-            <div className="rounded border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-xs text-slate-500">
-              目前專案尚無提示詞，請先建立專案提示詞或將草稿轉正。
+          {!loading && prompts.length === 0 && (
+            <div className="rounded-[16px] px-4 py-3 text-xs" style={{ border: "1px dashed var(--pm-border)", background: "var(--pm-panel-ink)", color: "var(--pm-muted)" }}>
+              目前沒有提示詞，請先新增一筆或調整篩選條件。
             </div>
           )}
         </div>

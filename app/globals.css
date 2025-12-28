@@ -129,4 +129,104 @@ body {
     color: #fff;
     background: linear-gradient(135deg, var(--pm-accent) 0%, var(--pm-accent-strong) 100%);
   }
+
+  .pm-input,
+  .pm-select,
+  .pm-textarea {
+    width: 100%;
+    border-radius: 14px;
+    border: 1px solid var(--pm-border);
+    padding: 10px 12px;
+    font-size: 14px;
+    background: #fff;
+    color: var(--pm-text);
+  }
+
+  .pm-input:focus,
+  .pm-select:focus,
+  .pm-textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(47, 111, 111, 0.12);
+    border-color: rgba(47, 111, 111, 0.35);
+  }
+
+  .pm-textarea {
+    min-height: 280px;
+    resize: vertical;
+    line-height: 1.7;
+  }
+
+  .pm-card {
+    border: 1px solid var(--pm-border);
+    border-radius: 16px;
+    padding: 16px;
+    background: var(--pm-panel-ink);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .pm-card:hover {
+    background: #fff;
+    transform: translateY(-2px);
+    box-shadow: var(--pm-shadow-soft);
+  }
+
+  .pm-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid var(--pm-border);
+    border-radius: 16px;
+    background: #fff;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .pm-row:hover {
+    background: var(--pm-panel-ink);
+  }
+
+  .pm-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    border: 1px solid var(--pm-border);
+    background: #fff;
+  }
+
+  .pm-badge-brand {
+    color: var(--pm-brand-strong);
+    border-color: rgba(47, 111, 111, 0.4);
+    background: rgba(47, 111, 111, 0.08);
+  }
+
+  .pm-badge-accent {
+    color: #8a5a2a;
+    border-color: rgba(212, 163, 115, 0.5);
+    background: rgba(212, 163, 115, 0.18);
+  }
+
+  .pm-chip {
+    border: 1px solid var(--pm-border);
+    background: #fff;
+    color: var(--pm-text);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12px;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .pm-chip:hover {
+    background: var(--pm-panel-ink);
+  }
+
+  .pm-chip-neutral {
+    color: var(--pm-muted);
+    border-color: rgba(111, 106, 96, 0.18);
+    background: rgba(250, 249, 246, 0.9);
+  }
 }

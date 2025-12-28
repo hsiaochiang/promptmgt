@@ -39,6 +39,7 @@ export default function WorkspaceShell() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectRefreshKey, setProjectRefreshKey] = useState(0);
   const [promptRefreshKey, setPromptRefreshKey] = useState(0);
+  const [promptsKpi, setPromptsKpi] = useState({ total: 0, inUse: 0, draft: 0, archived: 0 });
 
   const [promptFrontmatter, setPromptFrontmatter] = useState<PromptFrontmatter | null>(null);
   const [promptBody, setPromptBody] = useState<string>("");
@@ -398,6 +399,10 @@ export default function WorkspaceShell() {
           onTabChange={(tab) => {
             setActiveTab(tab);
             setListCollapsed(false);
+            if (tab === "prompts") {
+              setSelectedInboxId(null);
+              setSelectedPromptId(null);
+            }
           }}
         />
         <div
@@ -415,193 +420,169 @@ export default function WorkspaceShell() {
         >
           <div className="pm-shell h-full min-h-0">
             <div className="pm-panel min-h-0 overflow-hidden">
-              <div className="relative flex min-h-0 h-full overflow-hidden">
-                <aside
-                  className="flex-shrink-0 flex flex-col overflow-hidden transition-all duration-200"
-                  style={{ width: leftWidth, borderRight: "1px solid var(--pm-border)" }}
-                >
-                  <div className="pm-panel-header px-4 py-3 flex items-center justify-between">
-                    <div className="font-semibold text-xs tracking-wide" style={{ color: "var(--pm-muted)" }}>
-                      專案與收件匣
-                    </div>
-                    <div className="text-[10px] rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 border border-amber-200">
-                      收件匣 {inboxCount}
-                    </div>
-                  </div>
-                  <div className="flex-1 overflow-auto px-3 py-3 space-y-3">
-                    <ProjectList
-                      refreshKey={projectRefreshKey}
-                      onScheduleUndo={scheduleUndo}
-                      onProjectsChange={(list) => {
-                        setProjects(list);
-                        if (!selectedProjectId && list.length > 0) {
-                          setSelectedProjectId(list[0].name);
-                        }
-                      }}
-                    />
-                    <div className="pt-2 mt-2" style={{ borderTop: "1px solid var(--pm-border)" }}>
-                      <InboxList
-                        selectedId={selectedInboxId}
-                        onSelect={(id) => {
-                          setSelectedInboxId(id);
-                          setSelectedPromptId(null);
-                        }}
-                        onLoaded={(list) => {
-                          setInboxItems(list);
-                          if (!selectedInboxId && list.length > 0) {
-                            setSelectedInboxId(list[0].id);
-                            setSelectedPromptId(null);
-                          }
-                        }}
-                        refreshKey={inboxRefreshKey}
-                      />
-                    </div>
-                  </div>
-                </aside>
-
-                <div
-                  className="w-[6px] cursor-col-resize bg-transparent hover:bg-[color:var(--pm-border)]"
-                  onMouseDown={startResize("left")}
-                  role="separator"
-                />
-
-                <main
-                  className={`flex flex-col overflow-hidden transition-all duration-200 ${focusMode ? "hidden" : ""} ${
-                    listCollapsed ? "hidden" : ""
-                  }`}
-                  style={{ width: middleWidth, borderRight: "1px solid var(--pm-border)" }}
-                  data-testid="prompt-list-panel"
-                >
-                  <div className="h-16 pm-panel-header px-4 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="text-xs" style={{ color: "var(--pm-muted)" }}>
-                        提示詞列表
+              {selectedPromptId ? (
+                <div className="h-full min-h-0 flex flex-col">
+                  <div className="pm-panel-header px-4 py-3 flex items-center justify-between" style={{ borderBottom: "1px solid var(--pm-border)" }}>
+                    <div className="flex items-center gap-3">
+                      <button className="pm-btn pm-btn-ghost h-8 px-3 text-[11px]" type="button" onClick={() => setSelectedPromptId(null)}>
+                        ← 返回列表
+                      </button>
+                      <div className="text-sm font-semibold" style={{ color: "var(--pm-text)" }}>
+                        {promptFrontmatter?.title ?? "Prompt 詳情"}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 text-[11px]">
-                      <button className="pm-btn pm-btn-primary h-7 px-3 text-[11px]">進行中</button>
-                      <button className="pm-btn h-7 px-3 text-[11px]">全部</button>
+                    <div className="flex items-center gap-2">
+                      <button className="pm-btn h-8 px-3 text-[11px]" type="button" onClick={() => setPromptRefreshKey((k) => k + 1)}>
+                        重新整理
+                      </button>
                     </div>
                   </div>
+                  <section className="flex-1 min-h-0 overflow-auto p-6" data-testid="editor-panel">
+                    <AsyncBoundary loading={promptLoading} error={promptError} onRetry={loadPrompt} label="提示詞內容">
+                      <div className="flex h-full gap-3">
+                        <div className="flex-1 flex flex-col gap-3">
+                          <ProjectReadme project={selectedProject} onSaved={() => setProjectRefreshKey((k) => k + 1)} />
+                          {promptFrontmatter && (
+                            <FrontmatterAccordion
+                              frontmatter={promptFrontmatter}
+                              onChange={handleFrontmatterChange}
+                              onDelete={() => selectedPromptId && handleDeletePrompt(selectedPromptId)}
+                            />
+                          )}
+                          <PromptHeader
+                            title={promptFrontmatter?.title ?? "尚未選擇提示詞"}
+                            frontmatter={promptFrontmatter}
+                            body={promptBody}
+                            onToggleFocus={toggleFocusMode}
+                          />
+                          <PromptEditor
+                            promptId={selectedPromptId}
+                            initialFrontmatter={promptFrontmatter}
+                            initialBody={promptBody}
+                            clientHash={promptHash}
+                            initialDamaged={promptDamaged}
+                            initialParseErrorCode={promptParseErrorCode}
+                            initialParseErrorMessage={promptParseErrorMessage}
+                            insertText={pendingInsert}
+                            onInserted={() => setPendingInsert(null)}
+                            onBodyChange={(body) => setPromptBody(body)}
+                            onFrontmatterChange={(fm) => setPromptFrontmatter(fm)}
+                            onDamagedChange={(flag) => setPromptDamaged(flag)}
+                          />
+                        </div>
+                      </div>
+                    </AsyncBoundary>
+                  </section>
+                </div>
+              ) : (
+                <main className="h-full min-h-0" data-testid="prompt-list-panel">
                   <ErrorBoundary label="提示詞列表">
                     <PromptList
                       refreshKey={promptRefreshKey}
                       onDeletePrompt={handleDeletePrompt}
                       onScheduleUndo={scheduleUndo}
-                      onSelectedWhileUnpinned={() => setListCollapsed(true)}
                       searchInputRef={searchInputRef}
-                      pinned={pinned}
-                      onTogglePinned={() => setPinned(!pinned)}
+                      pinned={true}
+                      onOpenPrompt={(id) => setSelectedPromptId(id)}
+                      onLoaded={(items) => {
+                        const kpi = items.reduce(
+                          (acc, p) => {
+                            acc.total += 1;
+                            if (p.status === "使用中") acc.inUse += 1;
+                            else if (p.status === "草稿") acc.draft += 1;
+                            else if (p.status === "已封存") acc.archived += 1;
+                            return acc;
+                          },
+                          { total: 0, inUse: 0, draft: 0, archived: 0 }
+                        );
+                        setPromptsKpi(kpi);
+                      }}
                     />
                   </ErrorBoundary>
                 </main>
-
-                {listCollapsed && !focusMode && (
-                  <button
-                    className="absolute left-2 top-2 z-30 pm-btn h-8 px-3 text-[11px]"
-                    onClick={() => setListCollapsed(false)}
-                    data-testid="list-recall"
-                  >
-                    顯示列表 (Alt+L)
-                  </button>
-                )}
-
-                <div
-                  className="w-[6px] cursor-col-resize bg-transparent hover:bg-[color:var(--pm-border)]"
-                  onMouseDown={startResize("middle")}
-                  role="separator"
-                />
-
-                <section
-                  className={`relative flex flex-col p-6 transition-all ${focusMode ? "flex-[1_1_100%]" : "flex-[1.8]"}`}
-                  data-testid="editor-panel"
-                >
-                  <div className="flex flex-col gap-3 h-full">
-                    {selectedInboxId ? (
-                      <>
-                        <div className="flex items-center gap-2 text-[11px]" style={{ color: "var(--pm-muted)" }}>
-                          <span className="px-2 py-1 rounded-full bg-amber-50 border border-amber-200 font-semibold text-amber-800">
-                            收件匣模式
-                          </span>
-                          <span>目前正在編輯收件匣草稿，完成後可歸檔到專案。</span>
-                        </div>
-                        <DraftEditor
-                          draft={inboxItems.find((i) => i.id === selectedInboxId) ?? null}
-                          projects={projects}
-                          onArchived={handleArchiveSuccess}
-                          onDeleted={handleDraftDeleted}
-                        />
-                      </>
-                    ) : (
-                      <AsyncBoundary loading={promptLoading} error={promptError} onRetry={loadPrompt} label="提示詞內容">
-                        <div className="flex h-full gap-3">
-                          <div className="flex-1 flex flex-col gap-3">
-                            <ProjectReadme project={selectedProject} onSaved={() => setProjectRefreshKey((k) => k + 1)} />
-                            {promptFrontmatter && (
-                              <FrontmatterAccordion
-                                frontmatter={promptFrontmatter}
-                                onChange={handleFrontmatterChange}
-                                onDelete={() => selectedPromptId && handleDeletePrompt(selectedPromptId)}
-                              />
-                            )}
-                            <PromptHeader
-                              title={promptFrontmatter?.title ?? "尚未選擇提示詞"}
-                              frontmatter={promptFrontmatter}
-                              body={promptBody}
-                              onToggleFocus={toggleFocusMode}
-                            />
-                            <PromptEditor
-                              promptId={selectedPromptId}
-                              initialFrontmatter={promptFrontmatter}
-                              initialBody={promptBody}
-                              clientHash={promptHash}
-                              initialDamaged={promptDamaged}
-                              initialParseErrorCode={promptParseErrorCode}
-                              initialParseErrorMessage={promptParseErrorMessage}
-                              insertText={pendingInsert}
-                              onInserted={() => setPendingInsert(null)}
-                              onBodyChange={(body) => setPromptBody(body)}
-                              onFrontmatterChange={(fm) => setPromptFrontmatter(fm)}
-                              onDamagedChange={(flag) => setPromptDamaged(flag)}
-                            />
-                          </div>
-                        </div>
-                      </AsyncBoundary>
-                    )}
-                  </div>
-                </section>
-              </div>
+              )}
             </div>
 
             <aside className="space-y-6">
               <div className="pm-panel p-6" style={{ position: "sticky", top: 24 }}>
-                <div className="text-xs uppercase tracking-wide" style={{ color: "var(--pm-muted)" }}>
-                  Side
-                </div>
-                <div className="mt-3 space-y-3 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span style={{ color: "var(--pm-muted)" }}>專案</span>
-                    <span className="font-semibold">{selectedProject?.name ?? "—"}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span style={{ color: "var(--pm-muted)" }}>選取提示詞</span>
-                    <span className="font-semibold">{promptFrontmatter?.title ?? "—"}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span style={{ color: "var(--pm-muted)" }}>字數</span>
-                    <span className="font-semibold">{(promptBody ?? "").length}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span style={{ color: "var(--pm-muted)" }}>行數</span>
-                    <span className="font-semibold">{(promptBody ?? "").length ? (promptBody ?? "").split(/\r?\n/).length : 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span style={{ color: "var(--pm-muted)" }}>片語</span>
-                    <button className="pm-btn h-8 px-3 text-[11px]" onClick={() => toggleSnippetPanel(!isSnippetPanelOpen)}>
-                      {isSnippetPanelOpen ? "收合" : "展開"}
-                    </button>
-                  </div>
-                </div>
+                {selectedPromptId ? (
+                  <>
+                    <div className="text-xs uppercase tracking-wide" style={{ color: "var(--pm-muted)" }}>
+                      Detail
+                    </div>
+                    <div className="mt-3 space-y-3 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span style={{ color: "var(--pm-muted)" }}>專案</span>
+                        <span className="font-semibold">{selectedProject?.name ?? "—"}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span style={{ color: "var(--pm-muted)" }}>標題</span>
+                        <span className="font-semibold truncate max-w-[220px]" title={promptFrontmatter?.title ?? ""}>
+                          {promptFrontmatter?.title ?? "—"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span style={{ color: "var(--pm-muted)" }}>字數</span>
+                        <span className="font-semibold">{(promptBody ?? "").length}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span style={{ color: "var(--pm-muted)" }}>行數</span>
+                        <span className="font-semibold">{(promptBody ?? "").length ? (promptBody ?? "").split(/\r?\n/).length : 0}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span style={{ color: "var(--pm-muted)" }}>片語</span>
+                        <button className="pm-btn h-8 px-3 text-[11px]" onClick={() => toggleSnippetPanel(!isSnippetPanelOpen)}>
+                          {isSnippetPanelOpen ? "收合" : "展開"}
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-xs uppercase tracking-wide" style={{ color: "var(--pm-muted)" }}>
+                      Prompts KPI
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                      <div className="pm-card">
+                        <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
+                          全部
+                        </div>
+                        <div className="text-lg font-semibold" style={{ color: "var(--pm-text)" }}>
+                          {promptsKpi.total}
+                        </div>
+                      </div>
+                      <div className="pm-card">
+                        <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
+                          使用中
+                        </div>
+                        <div className="text-lg font-semibold" style={{ color: "var(--pm-text)" }}>
+                          {promptsKpi.inUse}
+                        </div>
+                      </div>
+                      <div className="pm-card">
+                        <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
+                          草稿
+                        </div>
+                        <div className="text-lg font-semibold" style={{ color: "var(--pm-text)" }}>
+                          {promptsKpi.draft}
+                        </div>
+                      </div>
+                      <div className="pm-card">
+                        <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
+                          已封存
+                        </div>
+                        <div className="text-lg font-semibold" style={{ color: "var(--pm-text)" }}>
+                          {promptsKpi.archived}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex justify-end">
+                      <button className="pm-btn h-8 px-3 text-[11px]" type="button" onClick={() => setPromptRefreshKey((k) => k + 1)}>
+                        重新整理
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div
