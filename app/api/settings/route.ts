@@ -24,16 +24,32 @@ async function normalizeForUserDirCheck(target: string) {
   }
 }
 
-async function isUnderUserDir(target: string) {
-  const normalizedHome = resolve(homedir());
-  const home =
-    process.platform === "win32" ? await fs.realpath(normalizedHome).catch(() => normalizedHome) : normalizedHome;
+async function isUnderDir(target: string, baseDir: string) {
+  const normalizedBase = resolve(baseDir);
   const targetPath = await normalizeForUserDirCheck(target);
+  const targetResolved = resolve(target);
 
-  const rel = relative(home, targetPath);
-  if (!rel) return true;
-  if (isAbsolute(rel)) return false;
-  return !rel.startsWith("..") && !rel.startsWith("..\\") && !rel.startsWith("../");
+  const check = (base: string, candidate: string) => {
+    const rel = relative(base, candidate);
+    if (!rel) return true;
+    if (isAbsolute(rel)) return false;
+    return !rel.startsWith("..") && !rel.startsWith("..\\") && !rel.startsWith("../");
+  };
+
+  if (process.platform !== "win32") {
+    return check(normalizedBase, targetPath);
+  }
+
+  const baseReal = await fs.realpath(normalizedBase).catch(() => normalizedBase);
+
+  // Windows 上 realpath 可能回傳不同格式（例如 UNC/長路徑前綴）。
+  // 若 target 的 parent 尚不存在，normalizeForUserDirCheck 會退回 abs（非 realpath），
+  // 這時 baseReal vs targetPath 可能出現格式不一致，導致 relative() 誤判為跨磁碟。
+  return check(baseReal, targetPath) || check(normalizedBase, targetResolved);
+}
+
+async function isUnderUserDir(target: string) {
+  return isUnderDir(target, homedir());
 }
 
 function getDefaultRoot() {
@@ -82,12 +98,18 @@ export async function POST(request: Request) {
     if (!targetLogPath) {
       return badRequest("logPath is required", { field: "logPath" });
     }
-    if (!(await isUnderUserDir(targetLogPath))) {
+    const underUser = await isUnderUserDir(targetLogPath);
+    const underRoot = typeof targetRoot === "string" && targetRoot.trim() ? await isUnderDir(targetLogPath, targetRoot) : false;
+    if (!underUser && !underRoot) {
       const userDir = resolve(homedir());
-      return badRequest("logPath must stay under user directory", {
+      return badRequest("logPath must stay under user directory or rootPath", {
         field: "logPath",
         userDir,
-        example: join(userDir, ".promptmgt", "logs", "app.log")
+        rootPath: targetRoot,
+        examples: [
+          join(userDir, ".promptmgt", "logs", "app.log"),
+          typeof targetRoot === "string" && targetRoot.trim() ? join(targetRoot, "logs", "app.log") : null
+        ].filter(Boolean)
       });
     }
   }

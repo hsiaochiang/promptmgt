@@ -214,7 +214,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-semibold text-sm">日誌路徑</div>
-                  <div className="text-sm text-slate-500">結構化 JSON 日誌（5MB 旋轉、遮蔽敏感欄位）。僅允許使用者目錄下的路徑。</div>
+                  <div className="text-sm text-slate-500">結構化 JSON 日誌（5MB 旋轉、遮蔽敏感欄位）。僅允許使用者目錄或 rootPath 底下的路徑。</div>
                 </div>
                 <div className="flex items-center gap-2 text-[11px] text-slate-500">
                   <span className="text-[11px] text-slate-400">{saving ? "儲存中…" : null}</span>
@@ -234,6 +234,14 @@ export default function SettingsPage() {
                 >
                   使用預設
                 </button>
+                {rootPathInput ? (
+                  <button
+                    onClick={() => update({ logPath: `${rootPathInput}\\logs\\app.log` })}
+                    className="pm-btn px-4 py-2 text-sm"
+                  >
+                    使用 rootPath
+                  </button>
+                ) : null}
                 <button
                   onClick={() => update({ logPath: logPathInput })}
                   className="pm-btn pm-btn-primary px-4 py-2 text-sm disabled:opacity-60"

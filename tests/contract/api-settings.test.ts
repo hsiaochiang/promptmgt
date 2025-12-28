@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { join, resolve } from "path";
 import { homedir } from "os";
 import { setupIsolatedWorkspace } from "../utils/testEnv";
@@ -59,6 +59,47 @@ describe("Settings API", () => {
       code: "bad_request",
       details: { field: "logPath" }
     });
+  });
+
+  it("rootPath 已設定時，允許將 logPath 放在 rootPath 底下", async () => {
+    const { mkdir } = await import("fs/promises");
+
+    // 用 mock homedir 製造「rootPath 不在 userDir」但仍可存取的情境。
+    const fakeHome = join(process.env.DEFAULT_ROOT!, "fake-home");
+    const rootOutsideFakeHome = join(process.env.DEFAULT_ROOT!, "outside-home-root");
+    await mkdir(fakeHome, { recursive: true });
+
+    vi.resetModules();
+    vi.doMock("os", async () => {
+      const actual = await vi.importActual<any>("os");
+      return { ...actual, homedir: () => fakeHome };
+    });
+
+    const { POST } = await import("@/app/api/settings/route");
+
+    const res1 = await POST(
+      new Request("http://localhost/api/settings", {
+        method: "POST",
+        body: JSON.stringify({ rootPath: rootOutsideFakeHome })
+      })
+    );
+    expect(res1.status).toBe(200);
+
+    const logUnderRoot = join(rootOutsideFakeHome, "logs", "app.log");
+    const res2 = await POST(
+      new Request("http://localhost/api/settings", {
+        method: "POST",
+        body: JSON.stringify({ logPath: logUnderRoot })
+      })
+    );
+
+    expect(res2.status).toBe(200);
+    const data = await res2.json();
+    expect(data.rootPath).toBe(rootOutsideFakeHome);
+    expect(data.logPath).toBe(logUnderRoot);
+
+    vi.doUnmock("os");
+    vi.resetModules();
   });
 
   it("允許更新布林旗標且不更動 rootPath", async () => {
