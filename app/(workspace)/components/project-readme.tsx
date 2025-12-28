@@ -121,22 +121,26 @@ export default function ProjectReadme({ project, onSaved }: Props) {
   };
 
   return (
-    <div className="border border-slate-200 bg-white rounded-lg p-3 shadow-sm flex flex-col gap-2">
+    <div className="pm-panel p-3 flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-xs font-semibold text-slate-700">專案說明 README</div>
-          <div className="text-[11px] text-slate-500">{project?.name ?? "未選擇專案"}</div>
+          <div className="text-xs font-semibold" style={{ color: "var(--pm-text)" }}>
+            專案說明 README
+          </div>
+          <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
+            {project?.name ?? "未選擇專案"}
+          </div>
         </div>
         <div className="flex items-center gap-2 text-[11px]">
           <div className="flex items-center gap-1">
             <button
-              className={`px-2 py-1 rounded-full text-xs ${view === "edit" ? "bg-slate-900 text-white" : "bg-white border border-slate-300"}`}
+              className={`pm-btn h-7 px-3 text-xs ${view === "edit" ? "pm-btn-primary" : ""}`}
               onClick={() => setView("edit")}
             >
               編輯
             </button>
             <button
-              className={`px-2 py-1 rounded-full text-xs ${view === "preview" ? "bg-slate-900 text-white" : "bg-white border border-slate-300"}`}
+              className={`pm-btn h-7 px-3 text-xs ${view === "preview" ? "pm-btn-primary" : ""}`}
               onClick={() => setView("preview")}
             >
               預覽
@@ -146,43 +150,50 @@ export default function ProjectReadme({ project, onSaved }: Props) {
             type="button"
             onClick={handleSave}
             disabled={!canEdit || saving}
-            className="px-3 py-1 rounded-full bg-slate-900 text-white disabled:opacity-60"
+            className="pm-btn pm-btn-primary h-7 px-3 text-xs disabled:opacity-60"
           >
             {saving ? "儲存中…" : "儲存"}
           </button>
         </div>
       </div>
       {error ? (
-        <div className="text-[11px] text-amber-700">
+        <div className="text-[11px]" style={{ color: "#8a5a2a" }}>
           {error}
           {conflictDetails?.currentMtime ? (
-            <span className="ml-1 text-amber-600">
+            <span className="ml-1" style={{ color: "#8a5a2a" }}>
               （伺服端版本時間：{formatForUI_MMDD_HHmm(new Date(conflictDetails.currentMtime).toISOString())}）
             </span>
           ) : null}
-          {conflictDetails?.currentHash ? <span className="ml-1 text-amber-600">（hash：{conflictDetails.currentHash}）</span> : null}
+          {conflictDetails?.currentHash ? (
+            <span className="ml-1" style={{ color: "#8a5a2a" }}>
+              （hash：{conflictDetails.currentHash}）
+            </span>
+          ) : null}
         </div>
       ) : null}
       {conflictDetails ? (
-        <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2 flex flex-wrap gap-2 items-center">
+        <div
+          className="text-[11px] rounded px-3 py-2 flex flex-wrap gap-2 items-center"
+          style={{ color: "#5a3b1f", background: "rgba(212, 163, 115, 0.18)", border: "1px solid rgba(212, 163, 115, 0.35)" }}
+        >
           <span>偵測到 409 衝突，請選擇處理方式：</span>
           <button
             type="button"
-            className="px-2 py-1 rounded-full border border-amber-300 bg-white hover:bg-amber-100"
+            className="pm-btn h-7 px-3 text-[11px]"
             onClick={handleReload}
           >
             重新載入外部版本
           </button>
           <button
             type="button"
-            className="px-2 py-1 rounded-full border border-amber-300 bg-white hover:bg-amber-100"
+            className="pm-btn h-7 px-3 text-[11px]"
             onClick={handleSaveCopy}
           >
             另存副本 (.md)
           </button>
           <button
             type="button"
-            className="px-2 py-1 rounded-full bg-amber-600 text-white hover:bg-amber-700"
+            className="pm-btn pm-btn-accent h-7 px-3 text-[11px]"
             onClick={handleOverwrite}
           >
             強制覆寫
@@ -194,15 +205,23 @@ export default function ProjectReadme({ project, onSaved }: Props) {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           disabled={!canEdit || loading}
-          className="w-full min-h-[180px] rounded border border-slate-300 bg-white px-3 py-2 text-sm font-mono focus:outline-none focus:border-slate-400 disabled:bg-slate-50"
+          className="w-full min-h-[180px] rounded-[14px] px-3 py-2 text-sm font-mono focus:outline-none"
+          style={{
+            border: "1px solid var(--pm-border)",
+            background: "#fff",
+            color: "var(--pm-text)"
+          }}
           placeholder={canEdit ? "撰寫專案說明…" : "請先選擇專案"}
         />
       ) : (
-        <div className="border rounded border-slate-200 p-3 bg-slate-50">
+        <div
+          className="rounded-[14px] p-3"
+          style={{ border: "1px solid var(--pm-border)", background: "var(--pm-panel-ink)" }}
+        >
           <MarkdownPreview content={content} />
         </div>
       )}
-      <div className="text-[11px] text-slate-500 flex items-center justify-between">
+      <div className="text-[11px] flex items-center justify-between" style={{ color: "var(--pm-muted)" }}>
         <span>{loading ? "載入中…" : "已載入"}</span>
         {updatedAt
           ? <span>更新：{formatForUI_MMDD_HHmm(updatedAt)}</span>

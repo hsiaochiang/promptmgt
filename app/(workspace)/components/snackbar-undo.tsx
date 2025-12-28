@@ -56,10 +56,15 @@ export default function SnackbarUndo({
 
   return (
     <div className={clsx("fixed bottom-4 left-1/2 -translate-x-1/2 z-50", className)}>
-      <div className="flex items-center gap-3 rounded-md bg-slate-900 text-white px-4 py-3 shadow-lg min-w-[280px]">
+      <div
+        className="flex items-center gap-3 rounded-[16px] px-4 py-3 min-w-[280px]"
+        style={{ background: "var(--pm-brand-strong)", color: "#fff", boxShadow: "var(--pm-shadow)" }}
+      >
         <div className="flex-1 text-sm leading-tight">
           <div>{message}</div>
-          <div className="text-[11px] text-slate-300">將在 {seconds} 秒後自動執行</div>
+          <div className="text-[11px]" style={{ color: "rgba(255,255,255,0.75)" }}>
+            將在 {seconds} 秒後自動執行
+          </div>
         </div>
         <button
           type="button"
@@ -67,7 +72,8 @@ export default function SnackbarUndo({
             onUndo();
             onClose?.();
           }}
-          className="px-3 py-1.5 rounded-full bg-white text-slate-900 text-sm font-semibold hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-white/60"
+          className="pm-btn h-8 px-4 text-sm font-semibold"
+          style={{ background: "#fff", color: "var(--pm-brand-strong)" }}
         >
           {actionLabel}
         </button>
