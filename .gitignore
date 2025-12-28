@@ -26,3 +26,7 @@ pnpm-debug.log*
 .idea/
 .DS_Store
 Thumbs.db
+
+# Local data / TS build artifacts
+db.json
+*.tsbuildinfo
