@@ -16,7 +16,7 @@ describe("/api/projects/:id/readme contract", () => {
   it("GET returns default README content and file metadata", async () => {
     await mkdir(process.env.DEFAULT_ROOT!, { recursive: true });
 
-    const { POST: createProject } = await import("@/app/api/projects/route");
+    const { POST: createProject } = await import("../../app/api/projects/route");
     const createdRes = await createProject(
       new Request("http://localhost/api/projects", {
         method: "POST",
@@ -27,7 +27,7 @@ describe("/api/projects/:id/readme contract", () => {
     expect(createdRes.status).toBe(201);
     const project = await createdRes.json();
 
-    const { GET } = await import("@/app/api/projects/[id]/readme/route");
+    const { GET } = await import("../../app/api/projects/[id]/readme/route");
     const res = await GET(new Request(`http://localhost/api/projects/${project.id}/readme`), {
       params: { id: project.id }
     });
@@ -45,7 +45,7 @@ describe("/api/projects/:id/readme contract", () => {
   it("PUT updates README and enforces conflict on stale expectedHash", async () => {
     await mkdir(process.env.DEFAULT_ROOT!, { recursive: true });
 
-    const { POST: createProject } = await import("@/app/api/projects/route");
+    const { POST: createProject } = await import("../../app/api/projects/route");
     const createdRes = await createProject(
       new Request("http://localhost/api/projects", {
         method: "POST",
@@ -56,7 +56,7 @@ describe("/api/projects/:id/readme contract", () => {
     expect(createdRes.status).toBe(201);
     const project = await createdRes.json();
 
-    const { GET, PUT } = await import("@/app/api/projects/[id]/readme/route");
+    const { GET, PUT } = await import("../../app/api/projects/[id]/readme/route");
 
     const readRes = await GET(new Request(`http://localhost/api/projects/${project.id}/readme`), {
       params: { id: project.id }
@@ -103,7 +103,7 @@ describe("/api/projects/:id/readme contract", () => {
   });
 
   it("rejects invalid payload and returns standard error format", async () => {
-    const { PUT } = await import("@/app/api/projects/[id]/readme/route");
+    const { PUT } = await import("../../app/api/projects/[id]/readme/route");
 
     const res = await PUT(
       new Request("http://localhost/api/projects/does-not-matter/readme", {
@@ -120,7 +120,7 @@ describe("/api/projects/:id/readme contract", () => {
   });
 
   it("returns 404 for unknown project id", async () => {
-    const { GET } = await import("@/app/api/projects/[id]/readme/route");
+    const { GET } = await import("../../app/api/projects/[id]/readme/route");
 
     const res = await GET(new Request("http://localhost/api/projects/missing/readme"), {
       params: { id: "missing" }

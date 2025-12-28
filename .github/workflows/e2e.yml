@@ -1,6 +1,6 @@
 name: E2E
 
-on:
+'on':
   pull_request:
   workflow_dispatch:
 
