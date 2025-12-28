@@ -2,12 +2,16 @@ import { getDb } from "../db";
 import type { Settings } from "../types/schema";
 import { toIsoWithOffset } from "../utils/date";
 import { join } from "path";
+import { homedir } from "os";
+
+function getDefaultRoot() {
+  return process.env.DEFAULT_ROOT || join(homedir(), ".promptmgt");
+}
 
 function resolveLogPath(rootPath?: string | null, logPath?: string | null) {
   const candidate = typeof logPath === "string" && logPath.trim().length > 0 ? logPath.trim() : null;
   if (candidate) return candidate;
-  if (rootPath) return join(rootPath, "logs", "app.log");
-  return null;
+  return join(getDefaultRoot(), "logs", "app.log");
 }
 
 export async function getSettings(): Promise<Settings> {

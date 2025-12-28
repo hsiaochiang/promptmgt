@@ -214,7 +214,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-semibold text-sm">日誌路徑</div>
-                  <div className="text-sm text-slate-500">結構化 JSON 日誌（5MB 旋轉、遮蔽敏感欄位）。預設 rootPath/logs/app.log。</div>
+                  <div className="text-sm text-slate-500">結構化 JSON 日誌（5MB 旋轉、遮蔽敏感欄位）。僅允許使用者目錄下的路徑。</div>
                 </div>
                 <div className="flex items-center gap-2 text-[11px] text-slate-500">
                   <span className="text-[11px] text-slate-400">{saving ? "儲存中…" : null}</span>
@@ -237,7 +237,7 @@ export default function SettingsPage() {
                 </button>
               </div>
               <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
-                預設值：{settings?.rootPath ? `${settings.rootPath}\\logs\\app.log` : "rootPath/logs/app.log"}
+                目前值：{logPathInput || "（尚未設定）"}
               </div>
             </div>
             <ToggleRow

@@ -155,7 +155,7 @@ function normalizeData(raw?: Partial<DatabaseSchema>): DatabaseSchema {
   });
 
   const rootPath = (source.settings ?? {}).rootPath ?? seedData.settings.rootPath;
-  const logPath = (source.settings ?? {}).logPath ?? join(rootPath ?? DEFAULT_ROOT, "logs", "app.log");
+  const logPath = (source.settings ?? {}).logPath ?? DEFAULT_LOG_PATH;
   const settings = {
     ...seedData.settings,
     ...(source.settings ?? {}),

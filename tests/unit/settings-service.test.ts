@@ -31,4 +31,26 @@ describe("settings service", () => {
     expect((db.data!.settings as any).pathExists).toBeUndefined();
     expect(db.data!.settings.telemetryEnabled).toBe(false);
   });
+
+  it("keeps default logPath under DEFAULT_ROOT and supports clearing custom logPath", async () => {
+    const { getSettings, updateSettings } = await import("@/lib/services/settings");
+    const { join } = await import("path");
+
+    const defaultRoot = process.env.DEFAULT_ROOT!;
+    const customLogPath = join(defaultRoot, "logs", "custom.log");
+
+    const setCustom = await updateSettings({ logPath: customLogPath });
+    expect(setCustom.logPath).toBe(customLogPath);
+
+    const cleared = await updateSettings({ logPath: null as any });
+    expect(cleared.logPath).toBe(join(defaultRoot, "logs", "app.log"));
+
+    const nextRoot = join(defaultRoot, "new-root");
+    const rebased = await updateSettings({ rootPath: nextRoot });
+    expect(rebased.rootPath).toBe(nextRoot);
+    expect(rebased.logPath).toBe(join(defaultRoot, "logs", "app.log"));
+
+    const roundtrip = await getSettings();
+    expect(roundtrip.logPath).toBe(join(defaultRoot, "logs", "app.log"));
+  });
 });

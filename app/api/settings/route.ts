@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
-import { dirname, join, resolve } from "path";
+import { basename, dirname, join, relative, resolve, isAbsolute } from "path";
 import { homedir } from "os";
 import { getSettings, updateSettings } from "@/lib/services/settings";
 import { badRequest } from "@/app/api/_lib/responses";
@@ -10,20 +10,40 @@ function normalizePathInput(value: unknown) {
   return typeof value === "string" ? value.trim() : undefined;
 }
 
-function isUnderUserDir(target: string) {
-  const normalizedTarget = resolve(target);
-  const normalizedHome = resolve(homedir());
-  if (process.platform === "win32") {
-    return normalizedTarget.toLowerCase().startsWith(normalizedHome.toLowerCase());
+async function normalizeForUserDirCheck(target: string) {
+  const abs = resolve(target);
+  if (process.platform !== "win32") return abs;
+
+  const parent = dirname(abs);
+  try {
+    const realParent = await fs.realpath(parent);
+    const suffix = abs.substring(parent.length).replace(/^[/\\]/, "");
+    return join(realParent, suffix);
+  } catch {
+    return abs;
   }
-  return normalizedTarget.startsWith(normalizedHome);
 }
 
-function resolveLogPath(rootPath: string | null, logPath?: string) {
+async function isUnderUserDir(target: string) {
+  const normalizedHome = resolve(homedir());
+  const home =
+    process.platform === "win32" ? await fs.realpath(normalizedHome).catch(() => normalizedHome) : normalizedHome;
+  const targetPath = await normalizeForUserDirCheck(target);
+
+  const rel = relative(home, targetPath);
+  if (!rel) return true;
+  if (isAbsolute(rel)) return false;
+  return !rel.startsWith("..") && !rel.startsWith("..\\") && !rel.startsWith("../");
+}
+
+function getDefaultRoot() {
+  return process.env.DEFAULT_ROOT || join(homedir(), ".promptmgt");
+}
+
+function resolveLogPath(_rootPath: string | null, logPath?: string) {
   const trimmed = logPath?.trim();
   if (trimmed) return trimmed;
-  if (rootPath) return join(rootPath, "logs", "app.log");
-  return null;
+  return join(getDefaultRoot(), "logs", "app.log");
 }
 
 export async function GET(_request: Request) {
@@ -62,7 +82,7 @@ export async function POST(request: Request) {
     if (!targetLogPath) {
       return badRequest("logPath is required", { field: "logPath" });
     }
-    if (!isUnderUserDir(targetLogPath)) {
+    if (!(await isUnderUserDir(targetLogPath))) {
       return badRequest("logPath must stay under user directory", { field: "logPath" });
     }
   }
