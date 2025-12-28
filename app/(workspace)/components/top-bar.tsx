@@ -28,6 +28,28 @@ export default function TopBar({
   activeTab,
   onTabChange
 }: Props) {
+  const tabRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
+
+  const focusTab = (index: number) => {
+    tabRefs.current[index]?.focus();
+  };
+
+  const handleTabKeyDown = (index: number) => (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    const key = event.key;
+    if (key === "ArrowLeft" || key === "ArrowRight") {
+      event.preventDefault();
+      const delta = key === "ArrowRight" ? 1 : -1;
+      const nextIndex = (index + delta + tabs.length) % tabs.length;
+      focusTab(nextIndex);
+      return;
+    }
+
+    if (key === "Enter" || key === " ") {
+      event.preventDefault();
+      onTabChange(tabs[index].key);
+    }
+  };
+
   return (
     <header className="h-16 border-b border-slate-200 bg-white px-4 flex items-center justify-between">
       <div className="flex items-center gap-4">
@@ -41,14 +63,21 @@ export default function TopBar({
           </div>
         </div>
         <nav className="flex items-center gap-2" role="tablist" aria-label="Workspace Tabs">
-          {tabs.map((tab) => (
+          {tabs.map((tab, index) => (
             <button
               key={tab.key}
               type="button"
               role="tab"
+              id={`workspace-tab-${tab.key}`}
               aria-selected={activeTab === tab.key}
+              aria-controls={`workspace-tabpanel-${tab.key}`}
+              tabIndex={activeTab === tab.key ? 0 : -1}
               data-testid={`workspace-tab-${tab.key}`}
               onClick={() => onTabChange(tab.key)}
+              onKeyDown={handleTabKeyDown(index)}
+              ref={(node) => {
+                tabRefs.current[index] = node;
+              }}
               className={clsx(
                 "px-3 py-1 rounded-full text-xs font-semibold border transition-colors",
                 activeTab === tab.key

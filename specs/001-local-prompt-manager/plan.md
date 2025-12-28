@@ -59,7 +59,7 @@
 - **整合測試**：針對使用者旅程（Prompt Detail 的 autosave、409 三選一、刪除後 Undo）新增或更新 `tests/integration`，以確保 UX 行為一致。
 - **單元測試**：工具函式與關鍵邏輯（frontmatter、日期、deferred delete 計時/狀態）新增或更新 `tests/unit`。
 - **E2E（最小）**：提供至少一條 smoke flow（啟動 app → Tabs 切換 → RootPathAlert 不阻擋），用於驗證端到端啟動與核心導覽不回歸。
-- **a11y（最小檢核）**：Tabs/Modal/Snackbar/Alert 需可鍵盤操作、焦點管理正確、錯誤訊息可被輔助工具讀取（對齊 WCAG 2.1 AA 的最低要求）。
+- **a11y（最小檢核）**：Tabs/Modal/Snackbar/Alert 需可鍵盤操作、焦點管理正確、錯誤訊息可被輔助工具讀取（對齊 WCAG 2.1 AA 的最低要求；對應 tasks：T065/T066）。
 - **門檻**：單元測試 ≥80%；關鍵路徑（autosave、409 衝突三選一、deferred delete/undo）需 100%。
 
 ## Project Structure

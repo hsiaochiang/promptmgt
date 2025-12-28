@@ -401,7 +401,12 @@ export default function WorkspaceShell() {
       />
       <RootPathAlert className="fixed left-1/2 top-16 z-30 w-[min(960px,calc(100%-32px))] -translate-x-1/2 drop-shadow" />
       {activeTab === "prompts" ? (
-        <div className="flex flex-1 overflow-hidden">
+        <section
+          className="flex flex-1 overflow-hidden"
+          role="tabpanel"
+          id="workspace-tabpanel-prompts"
+          aria-labelledby="workspace-tab-prompts"
+        >
           <aside
             className="flex-shrink-0 border-r border-slate-200 bg-white flex flex-col transition-all duration-200"
             style={{ width: leftWidth }}
@@ -563,15 +568,25 @@ export default function WorkspaceShell() {
               )}
             </div>
           </section>
-        </div>
+        </section>
       ) : activeTab === "scratchpad" ? (
-        <div className="flex flex-1 overflow-hidden">
+        <section
+          className="flex flex-1 overflow-hidden"
+          role="tabpanel"
+          id="workspace-tabpanel-scratchpad"
+          aria-labelledby="workspace-tab-scratchpad"
+        >
           <Scratchpad projects={projects} onScheduleUndo={scheduleUndo} />
-        </div>
+        </section>
       ) : (
-        <div className="flex flex-1 overflow-hidden">
+        <section
+          className="flex flex-1 overflow-hidden"
+          role="tabpanel"
+          id="workspace-tabpanel-projects"
+          aria-labelledby="workspace-tab-projects"
+        >
           <TabPlaceholders tab={activeTab} />
-        </div>
+        </section>
       )}
       <ChangeReportModal
         open={showChangeLog}

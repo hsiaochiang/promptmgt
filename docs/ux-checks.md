@@ -10,6 +10,26 @@
 
 ## 檢查項目
 
+## 無障礙（a11y）最小檢核（T066）
+
+- **Tabs（Topbar）**：
+   - Tab 鍵可聚焦到 Tabs；僅當前啟用的 tab 需為 `tabIndex=0`，其餘為 `-1`。
+   - 左右方向鍵可在 Tabs 間移動焦點；Enter/Space 可啟用焦點所在 tab。
+   - `role=tablist/tab/tabpanel`、`aria-selected`、`aria-controls` / `aria-labelledby` 對應正確。
+
+- **Confirm Modal**：
+   - 開啟後焦點落在可操作元件且不會跑出 modal（focus trap）。
+   - Esc 可關閉；關閉後焦點回到觸發按鈕。
+
+- **Snackbar Undo**：
+   - Undo/Close 可被鍵盤聚焦並可操作；倒數期間不阻斷其他互動。
+
+- **RootPathAlert**：
+   - 導向設定頁的連結文字可理解（非僅圖示），可用鍵盤觸發。
+
+- **錯誤訊息**：
+   - 錯誤需可被輔助工具讀取（避免只用顏色區分）；文案具體可操作（告知如何修復）。
+
 - **SC-009 首次體驗成功率**：
    - 清空 `db.json` 與 `Prompts/`，或指向臨時 rootPath。
    - 任務：設定 rootPath → 新增草稿 → 轉正 → 編輯儲存 → 插入片語。
