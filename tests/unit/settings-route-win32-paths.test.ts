@@ -23,7 +23,7 @@ vi.mock("fs", async () => {
 
 describe("settings route - win32 path handling", () => {
   it("accepts logPath under home even when realpath(parent) fails", async () => {
-    const { POST } = await import("@/app/api/settings/route");
+    const { POST } = await import("../../app/api/settings/route");
 
     const target = join(homedir(), ".promptmgt-test", "pm-realpath-fail", "logs", "app.log");
     const res = await POST(
@@ -41,7 +41,7 @@ describe("settings route - win32 path handling", () => {
   });
 
   it("rejects logPath on a different drive (outside home)", async () => {
-    const { POST } = await import("@/app/api/settings/route");
+    const { POST } = await import("../../app/api/settings/route");
 
     // Windows relative() will return an absolute path if drive letters differ.
     const res = await POST(
@@ -55,7 +55,7 @@ describe("settings route - win32 path handling", () => {
   });
 
   it("creates log directory chain when logPath points to non-existing folders under home", async () => {
-    const { POST } = await import("@/app/api/settings/route");
+    const { POST } = await import("../../app/api/settings/route");
 
     const underHome = join(homedir(), ".promptmgt-test", "pm-settings", "logs", "created.log");
 

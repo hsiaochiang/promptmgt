@@ -18,7 +18,7 @@ describe("Settings API", () => {
     const targetRoot = process.env.DEFAULT_ROOT!;
     const { mkdir } = await import("fs/promises");
     await mkdir(targetRoot, { recursive: true });
-    const { GET } = await import("@/app/api/settings/route");
+    const { GET } = await import("../../app/api/settings/route");
     const res = await GET(new Request("http://localhost/api/settings"));
     expect(res.status).toBe(200);
     const data = await res.json();
@@ -28,7 +28,7 @@ describe("Settings API", () => {
   });
 
   it("空字串 rootPath 會以標準錯誤格式回傳", async () => {
-    const { POST } = await import("@/app/api/settings/route");
+    const { POST } = await import("../../app/api/settings/route");
     const res = await POST(
       new Request("http://localhost/api/settings", {
         method: "POST",
@@ -45,7 +45,7 @@ describe("Settings API", () => {
   });
 
   it("logPath 不在使用者目錄下會被拒絕並回傳 details", async () => {
-    const { POST } = await import("@/app/api/settings/route");
+    const { POST } = await import("../../app/api/settings/route");
     const outsideHome = resolve(homedir(), "..", "outside-app.log");
     const res = await POST(
       new Request("http://localhost/api/settings", {
@@ -75,7 +75,7 @@ describe("Settings API", () => {
       return { ...actual, homedir: () => fakeHome };
     });
 
-    const { POST } = await import("@/app/api/settings/route");
+    const { POST } = await import("../../app/api/settings/route");
 
     const res1 = await POST(
       new Request("http://localhost/api/settings", {
@@ -103,7 +103,7 @@ describe("Settings API", () => {
   });
 
   it("允許更新布林旗標且不更動 rootPath", async () => {
-    const { POST } = await import("@/app/api/settings/route");
+    const { POST } = await import("../../app/api/settings/route");
     const res = await POST(
       new Request("http://localhost/api/settings", {
         method: "POST",
@@ -118,7 +118,7 @@ describe("Settings API", () => {
   });
 
   it("保存提供的 rootPath 並確認可存取", async () => {
-    const { POST } = await import("@/app/api/settings/route");
+    const { POST } = await import("../../app/api/settings/route");
     const targetRoot = join(process.env.DEFAULT_ROOT!, "new-root");
     const res = await POST(
       new Request("http://localhost/api/settings", {
@@ -138,7 +138,7 @@ describe("Settings API", () => {
     await mkdir(process.env.DEFAULT_ROOT!, { recursive: true });
     await writeFile(targetRoot, "this is a file, not a directory", "utf8");
 
-    const { POST } = await import("@/app/api/settings/route");
+    const { POST } = await import("../../app/api/settings/route");
     const res = await POST(
       new Request("http://localhost/api/settings", {
         method: "POST",
@@ -156,8 +156,8 @@ describe("Settings API", () => {
   });
 
   it("rootPath 為 null 時 pathExists 為 false", async () => {
-    const { updateSettings } = await import("@/lib/services/settings");
-    const { GET } = await import("@/app/api/settings/route");
+    const { updateSettings } = await import("../../lib/services/settings");
+    const { GET } = await import("../../app/api/settings/route");
 
     await updateSettings({ rootPath: null });
     const res = await GET(new Request("http://localhost/api/settings"));

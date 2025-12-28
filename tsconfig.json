@@ -40,6 +40,8 @@
   ],
   "exclude": [
     "node_modules",
-    "tests"
+    "tests",
+    "coverage",
+    ".next"
   ]
 }
