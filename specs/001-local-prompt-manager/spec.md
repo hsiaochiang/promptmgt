@@ -64,7 +64,7 @@
 - **US2（P1）Projects + Project Detail + README**：使用者可瀏覽/切換專案並進入 Project Detail；可編輯與儲存專案 README.md（專案說明檔）。
 - **US3（P1）Prompts（列表）**：使用者可在 Prompts 列表瀏覽提示詞並進入 Prompt Detail。
 - **US4（P1）Prompt Detail（編輯/預覽 + autosave + 複製 + 409 三選一）**：使用者可在 Prompt Detail 編輯與預覽 Markdown；停止輸入 2 秒自動儲存；支援精簡/完整複製；遇到 409 衝突提供三選一（重新載入 / 另存副本 / 強制覆寫）。
-- **US5（P1）Scratchpad（剪貼簿）**：使用者可新增/編輯/複製/刪除剪貼簿項目；Side 顯示 KPI。
+- **US5（P1）Scratchpad（剪貼簿）**：使用者可快速新增內容並加入剪貼簿列表、複製內容；Side 顯示操作與列表數量（count）。
 - **US6（P1）刪除 + Undo（5 秒 deferred delete）**：刪除操作需 Confirm；刪除後 5 秒內可 Undo 並完整復原；逾時才永久刪除（套用到 Project/Prompt/Scratchpad）。
 
 ## 全域互動元件（跨頁一致）
@@ -122,9 +122,9 @@
 
 ### 5) Scratchpad（剪貼簿）
 
-- Main：新增/編輯/複製/刪除剪貼簿項目
-- Side：數量 KPI
-- 行為：刪除需 Confirm + Snackbar Undo；5 秒內可復原，逾時永久刪除
+- Main：剪貼簿列表 +「快速新增」輸入框（清空輸入 / 加入列表）+ 每筆可直接複製
+- Side：剪貼簿操作（複製內容 / 快速新增）+ 列表數量（count）
+- 持久化：以 client 端（localStorage）保存剪貼簿列表；不依賴 rootPath
 
 ### 6) Settings（設定）
 

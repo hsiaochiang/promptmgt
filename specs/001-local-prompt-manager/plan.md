@@ -15,6 +15,7 @@
 - 衝突處理：偵測 409/外部修改時，提供「重新載入 / 另存副本 / 強制覆寫」
 - Settings：rootPath/logPath 與可操作的錯誤回饋；logPath 允許位於 userDir 或 rootPath 下
 - Change report：提供最近 24 小時變更檢視（Topbar 入口）
+- 剪貼簿（Scratchpad）：對齊 prototype 的「列表 + 快速新增 + 右側操作/列表數量」，以 localStorage 保存
 
 文件同步（本次新增）：
 
