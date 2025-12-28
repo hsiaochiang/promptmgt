@@ -1,15 +1,25 @@
-# Implementation Plan: Prompt Management App GUI Fixes
+# Implementation Plan: Prompt Management App GUI Fixes（已完成）
 
-**Branch**: `001-prompt-management-app` | **Date**: 2025-12-20 | **Spec**: `/specs/001-prompt-management-app/spec.md`
-**Scope**: 補齊 GUI 缺口（收件匣編輯、專案新增、草稿轉正、提示詞列表刷新/空狀態、片語插入回饋）。
+> Status: Archived（歷史文件）
+> 
+> 最新規格/計畫請改看：`specs/001-local-prompt-manager/spec.md`、`specs/001-local-prompt-manager/plan.md`
+
+**Branch**: `001-prompt-management-app` | **Date**: 2025-12-28 | **Spec**: `/specs/_archive/001-prompt-management-app/spec.md`
+**Scope**: 本文件原先用於補齊早期 GUI 缺口；對應功能已在 `001-local-prompt-manager` 分支落地並通過測試門檻。
 
 ## Summary
 
-落地目前 spec 中未完成的 GUI：
-- 新增草稿後可直接在主畫面編輯（接入 DraftEditor）。
-- 專案可從 UI 新增並立即選取；提示詞列表能載入該專案內容。
-- 草稿可在 UI 內轉正到專案，寫入 frontmatter 並刷新列表。
-- 提示詞列表提供空狀態指引並在轉正/新增後自動聚焦；片語插入有明確回饋。
+已完成並驗收（以 prototype 與 contract/integration 測試為準）：
+
+- 主工作台可新增並編輯收件匣草稿（自動儲存）。
+- 可從 UI 新增專案並立即選取；提示詞列表可正確載入/刷新。
+- 草稿可在 UI 內轉正到專案（寫入 frontmatter），並自收件匣移除。
+- 提示詞列表空狀態指引完成；片語插入具備明確回饋（toast）。
+
+後續延伸（已成為產品基線，不再視為「GUI 缺口」）：
+
+- Topbar actions：隱藏片語（切換右側片語庫顯示）、設定、今日變更報告。
+- Settings：logPath 允許位於使用者目錄或 rootPath 下，並提供快捷按鈕。
 
 ## Technical Context
 
@@ -45,7 +55,7 @@ lib/...
 tests/{contract,integration,unit}/...
 ```
 
-## Plan / Steps
+## Plan / Steps（歷史記錄）
 
 1) **接入草稿編輯到主畫面**  
   - `workspace-shell.tsx`: 新增草稿後同步 `selectedPromptId`，並在右側切換至 `DraftEditor`（show 標題/提示/內容）。
@@ -67,12 +77,10 @@ tests/{contract,integration,unit}/...
   - `snippet-panel.tsx`: 點擊插入後顯示輕量提示（如 toast/inline 標籤），確保使用者知道插入成功。
 
 6) **文件同步**  
-  - 更新 `spec.md` 的 GUI 缺口狀態（已標注）。
-  - 更新 `tasks.md`（新增本階段任務）並在 PR 描述引用。
+  - 本計畫已完成；後續請以 `specs/001-local-prompt-manager/spec.md` 與同資料夾內文件作為最新來源。
 
 7) **測試與驗證**  
-  - 新增/更新 integration test：草稿轉正後出現在提示詞列表；專案新增後可被選取；草稿可於主畫面編輯並自動儲存。
-  - 單元/契約：若新增表單驗證或回饋元件，補基本渲染測試。
+  - 以 `npm test` 全套測試與 coverage gate 作為交付門檻。
 
 ## Risks / Mitigations
 
@@ -80,7 +88,7 @@ tests/{contract,integration,unit}/...
 - **轉正後列表未刷新**：確保 `fetchPrompts` 支援外部觸發（可用 refresh key state），並在 action 後觸發。
 - **表單驗證不足**：專案/轉正表單需最基本欄位必填與檔名合法性（沿用 `sanitizeFilename`）。
 
-## Deliverables
+## Deliverables（已交付）
 
 - 可在主畫面新增並編輯收件匣草稿。
 - 可從 UI 新增專案並立即選取，提示詞列表正常載入。

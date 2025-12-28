@@ -1,5 +1,9 @@
 # Feature Specification: 專案導向提示詞管理應用
 
+> Status: Archived（歷史文件）
+> 
+> 本文件已被現行規格取代，請以 `specs/001-local-prompt-manager/spec.md` 為準。
+
 **Feature Branch**: `001-prompt-management-app`  
 **Created**: 2025-12-19  
 **Status**: Draft  

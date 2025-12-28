@@ -1,5 +1,9 @@
 # 002 UI Refresh — 規格（Checkpoint 4）
 
+> Status: Archived（歷史文件）
+> 
+> 本文件為早期 IA/mock 驗收規格；現行產品規格請以 `specs/001-local-prompt-manager/spec.md` 為準。
+
 ## 0. What / Why
 - What：在 Next.js 14 App Router 下提供一組開發用 IA 頁面（/dashboard、/projects、/projects/[id]、/prompts、/prompts/[id]、/scratchpad），並以 mock 狀態呈現已驗收的 UI/互動規則；保留 `/` 既有工作區，不做替換。
 - Why：

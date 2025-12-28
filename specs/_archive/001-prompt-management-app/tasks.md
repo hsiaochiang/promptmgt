@@ -5,7 +5,11 @@ description: "Task list for 001-prompt-management-app GUI fixes"
 
 # Tasks: Prompt Management App（GUI 缺口補齊）
 
-**Input**: `/specs/001-prompt-management-app/spec.md`（已標註 GUI 缺口）
+> Status: Archived（歷史文件）
+> 
+> 本任務清單對應功能已完成；現行規格請以 `specs/001-local-prompt-manager/spec.md` 為準。
+
+**Input**: `specs/_archive/001-prompt-management-app/spec.md`（歷史） / `specs/001-local-prompt-manager/spec.md`（現行）
 **Prerequisites**: plan.md（本檔案同目錄），既有 APIs 已可用（projects/inbox/prompts/snippets/settings）。
 
 ## 格式: `[ID] [P?] Description`

@@ -27,6 +27,11 @@ npm run dev
 - 安裝 Playwright 瀏覽器（首次或 CI 本機排查用）：`npm run e2e:install`
 - 生產建置：`npm run build`（之後可 `npm start`）
 
+## 規格與計畫（單一真相來源）
+- 現行規格：`specs/001-local-prompt-manager/spec.md`
+- 現行計畫：`specs/001-local-prompt-manager/plan.md`
+- 歷史規格/計畫：`specs/_archive/`（避免與現行版本混淆）
+
 ## 設定與資料位置
 - 環境變數
   - `DB_FILE`: LowDB 檔案路徑，預設 `<repo>/db.json`
@@ -34,7 +39,7 @@ npm run dev
   - `INBOX_PAGE_SIZE`: 收件匣分頁大小，預設 50，搜尋會跨頁
 - 進入 Workspace 後可於 Settings 頁切換
   - 根路徑（Root Path）：缺路徑會出現 RootPathAlert 導引設定；失效時可重新定位或建立預設資料夾
-  - 日誌路徑（Log Path）：預設 `rootPath/logs/app.log`，僅允許使用者目錄下路徑；結構化 JSON、遮蔽敏感資訊、5MB 自動旋轉。
+  - 日誌路徑（Log Path）：預設 `rootPath/logs/app.log`，允許位於使用者目錄或 `rootPath` 之下；結構化 JSON、遮蔽敏感資訊、5MB 自動旋轉。
   - 遙測（Telemetry Enabled）：本機匿名紀錄，5MB 環迴、無外傳，可隨時停用
   - 遙測匯出（Export Telemetry）：於設定頁匯出診斷檔，預設寫入 `logPath`（或 `telemetry.exportPath` 覆寫），檔案大小應 ≤5MB
   - 更新檢查（Update Check Enabled）：預設開啟，可停用避免對外連線；可於設定頁「手動檢查更新」呼叫安全端點（`UPDATE_CHECK_ENDPOINT`）。

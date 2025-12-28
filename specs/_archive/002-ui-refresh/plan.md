@@ -1,5 +1,9 @@
 # 002 UI Refresh — 執行計畫（Checkpoint 4）
 
+> Status: Archived（歷史文件）
+> 
+> 本計畫為早期 UI refresh checkpoint；現行功能與文件請以 `specs/001-local-prompt-manager/` 為準。
+
 ## 1. 目標
 - 在 Next.js 14 App Router 內完成新 IA 頁面（/dashboard、/projects、/projects/[id]、/prompts、/prompts/[id]、/scratchpad），以 mock data 驗證 UI/互動與狀態切換。
 - 保持低風險：不動既有 `/` 工作區，所有新頁面集中於 `app/(app)`，可隨時回退。
