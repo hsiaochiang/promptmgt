@@ -9,7 +9,8 @@ import {
   DELIVERABLE_OPTIONS,
   PLATFORM_OPTIONS,
   STAGE_OPTIONS,
-  labelFromOptions
+  labelFromOptions,
+  type ProjectMetaTaxonomyOption
 } from "@/lib/ui/projectMetaTaxonomy";
 
 type ProjectMeta = {
@@ -40,15 +41,30 @@ function toggle(list: string[], item: string) {
   return uniq([...list, item]);
 }
 
+function removeFromList(list: string[], item: string) {
+  return list.filter((x) => x.toLowerCase() !== item.toLowerCase());
+}
+
+function resolveToOptionCodeOrRaw(input: string, options: ProjectMetaTaxonomyOption[]) {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  const lowered = trimmed.toLowerCase();
+  const byCode = options.find((o) => o.code.toLowerCase() === lowered);
+  if (byCode) return byCode.code;
+
+  const byName = options.find((o) => o.name.toLowerCase() === lowered);
+  if (byName) return byName.code;
+
+  return trimmed;
+}
+
 function Chip({ active, children, onClick }: { active: boolean; children: React.ReactNode; onClick?: () => void }) {
   return (
     <button
       type="button"
       className={
-        "pm-chip text-[11px] " +
-        (active
-          ? ""
-          : "pm-chip-neutral")
+        "pm-chip text-[11px] " + (active ? "" : "pm-chip-neutral")
       }
       style={
         active
@@ -72,6 +88,11 @@ export default function ProjectMeta({ project }: { project: Project | null }) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [platformDraft, setPlatformDraft] = useState("");
+  const [deliverableDraft, setDeliverableDraft] = useState("");
+  const [audienceDraft, setAudienceDraft] = useState("");
+  const [commonTagDraft, setCommonTagDraft] = useState("");
 
   const endpoint = useMemo(() => (project?.id ? `/api/projects/${project.id}/meta` : null), [project?.id]);
 
@@ -126,10 +147,38 @@ export default function ProjectMeta({ project }: { project: Project | null }) {
     setMeta((m) => ({ ...m, [key]: value }));
   };
 
+  const addCustomToList = (
+    key: "platforms" | "deliverables" | "audiences" | "commonTags",
+    raw: string,
+    options: ProjectMetaTaxonomyOption[],
+    reset: (next: string) => void
+  ) => {
+    const resolved = resolveToOptionCodeOrRaw(raw, options);
+    if (!resolved) return;
+    setMeta((m) => {
+      const current = (m[key] ?? []) as string[];
+      return { ...m, [key]: uniq([...current, resolved]) };
+    });
+    reset("");
+  };
+
   const platforms = meta.platforms ?? [];
   const deliverables = meta.deliverables ?? [];
   const audiences = meta.audiences ?? [];
   const commonTags = meta.commonTags ?? [];
+
+  const customPlatforms = platforms.filter(
+    (x) => !PLATFORM_OPTIONS.some((o) => o.code.toLowerCase() === x.toLowerCase())
+  );
+  const customDeliverables = deliverables.filter(
+    (x) => !DELIVERABLE_OPTIONS.some((o) => o.code.toLowerCase() === x.toLowerCase())
+  );
+  const customAudiences = audiences.filter(
+    (x) => !AUDIENCE_OPTIONS.some((o) => o.code.toLowerCase() === x.toLowerCase())
+  );
+  const customCommonTags = commonTags.filter(
+    (x) => !COMMON_TAG_OPTIONS.some((o) => o.code.toLowerCase() === x.toLowerCase())
+  );
 
   return (
     <div className="pm-panel p-6">
@@ -239,6 +288,58 @@ export default function ProjectMeta({ project }: { project: Project | null }) {
           <div className="text-[11px] font-semibold" style={{ color: "var(--pm-muted)" }}>
             平台標籤
           </div>
+
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              className="pm-input h-9 !text-sm !w-auto flex-1"
+              value={platformDraft}
+              disabled={!project?.id}
+              placeholder="新增自訂平台標籤（Enter 新增）"
+              onChange={(e) => setPlatformDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addCustomToList("platforms", platformDraft, PLATFORM_OPTIONS, setPlatformDraft);
+                }
+                if (e.key === "Escape") setPlatformDraft("");
+              }}
+            />
+            <button
+              type="button"
+              className="pm-btn h-9 px-4 text-sm disabled:opacity-60"
+              disabled={!project?.id}
+              onClick={() => addCustomToList("platforms", platformDraft, PLATFORM_OPTIONS, setPlatformDraft)}
+            >
+              新增
+            </button>
+            <button
+              type="button"
+              className="pm-btn h-9 px-3 text-sm disabled:opacity-60"
+              disabled={!project?.id || platforms.length === 0}
+              onClick={() => setList("platforms", [])}
+              title="清空平台標籤"
+            >
+              清空
+            </button>
+          </div>
+
+          {customPlatforms.length ? (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {customPlatforms.map((x) => (
+                <Chip
+                  key={`cp-${x}`}
+                  active={true}
+                  onClick={() => setList("platforms", removeFromList(platforms, x))}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    {x}
+                    <span aria-hidden>×</span>
+                  </span>
+                </Chip>
+              ))}
+            </div>
+          ) : null}
+
           <div className="mt-2 flex flex-wrap gap-2">
             {PLATFORM_OPTIONS.map((opt) => (
               <Chip
@@ -256,6 +357,60 @@ export default function ProjectMeta({ project }: { project: Project | null }) {
           <div className="text-[11px] font-semibold" style={{ color: "var(--pm-muted)" }}>
             交付物標籤
           </div>
+
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              className="pm-input h-9 !text-sm !w-auto flex-1"
+              value={deliverableDraft}
+              disabled={!project?.id}
+              placeholder="新增自訂交付物標籤（Enter 新增）"
+              onChange={(e) => setDeliverableDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addCustomToList("deliverables", deliverableDraft, DELIVERABLE_OPTIONS, setDeliverableDraft);
+                }
+                if (e.key === "Escape") setDeliverableDraft("");
+              }}
+            />
+            <button
+              type="button"
+              className="pm-btn h-9 px-4 text-sm disabled:opacity-60"
+              disabled={!project?.id}
+              onClick={() =>
+                addCustomToList("deliverables", deliverableDraft, DELIVERABLE_OPTIONS, setDeliverableDraft)
+              }
+            >
+              新增
+            </button>
+            <button
+              type="button"
+              className="pm-btn h-9 px-3 text-sm disabled:opacity-60"
+              disabled={!project?.id || deliverables.length === 0}
+              onClick={() => setList("deliverables", [])}
+              title="清空交付物標籤"
+            >
+              清空
+            </button>
+          </div>
+
+          {customDeliverables.length ? (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {customDeliverables.map((x) => (
+                <Chip
+                  key={`cd-${x}`}
+                  active={true}
+                  onClick={() => setList("deliverables", removeFromList(deliverables, x))}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    {x}
+                    <span aria-hidden>×</span>
+                  </span>
+                </Chip>
+              ))}
+            </div>
+          ) : null}
+
           <div className="mt-2 flex flex-wrap gap-2">
             {DELIVERABLE_OPTIONS.map((opt) => (
               <Chip
@@ -273,6 +428,58 @@ export default function ProjectMeta({ project }: { project: Project | null }) {
           <div className="text-[11px] font-semibold" style={{ color: "var(--pm-muted)" }}>
             受眾標籤
           </div>
+
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              className="pm-input h-9 !text-sm !w-auto flex-1"
+              value={audienceDraft}
+              disabled={!project?.id}
+              placeholder="新增自訂受眾標籤（Enter 新增）"
+              onChange={(e) => setAudienceDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addCustomToList("audiences", audienceDraft, AUDIENCE_OPTIONS, setAudienceDraft);
+                }
+                if (e.key === "Escape") setAudienceDraft("");
+              }}
+            />
+            <button
+              type="button"
+              className="pm-btn h-9 px-4 text-sm disabled:opacity-60"
+              disabled={!project?.id}
+              onClick={() => addCustomToList("audiences", audienceDraft, AUDIENCE_OPTIONS, setAudienceDraft)}
+            >
+              新增
+            </button>
+            <button
+              type="button"
+              className="pm-btn h-9 px-3 text-sm disabled:opacity-60"
+              disabled={!project?.id || audiences.length === 0}
+              onClick={() => setList("audiences", [])}
+              title="清空受眾標籤"
+            >
+              清空
+            </button>
+          </div>
+
+          {customAudiences.length ? (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {customAudiences.map((x) => (
+                <Chip
+                  key={`ca-${x}`}
+                  active={true}
+                  onClick={() => setList("audiences", removeFromList(audiences, x))}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    {x}
+                    <span aria-hidden>×</span>
+                  </span>
+                </Chip>
+              ))}
+            </div>
+          ) : null}
+
           <div className="mt-2 flex flex-wrap gap-2">
             {AUDIENCE_OPTIONS.map((opt) => (
               <Chip
@@ -290,6 +497,58 @@ export default function ProjectMeta({ project }: { project: Project | null }) {
           <div className="text-[11px] font-semibold" style={{ color: "var(--pm-muted)" }}>
             共通標籤
           </div>
+
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              className="pm-input h-9 !text-sm !w-auto flex-1"
+              value={commonTagDraft}
+              disabled={!project?.id}
+              placeholder="新增自訂共通標籤（Enter 新增）"
+              onChange={(e) => setCommonTagDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addCustomToList("commonTags", commonTagDraft, COMMON_TAG_OPTIONS, setCommonTagDraft);
+                }
+                if (e.key === "Escape") setCommonTagDraft("");
+              }}
+            />
+            <button
+              type="button"
+              className="pm-btn h-9 px-4 text-sm disabled:opacity-60"
+              disabled={!project?.id}
+              onClick={() => addCustomToList("commonTags", commonTagDraft, COMMON_TAG_OPTIONS, setCommonTagDraft)}
+            >
+              新增
+            </button>
+            <button
+              type="button"
+              className="pm-btn h-9 px-3 text-sm disabled:opacity-60"
+              disabled={!project?.id || commonTags.length === 0}
+              onClick={() => setList("commonTags", [])}
+              title="清空共通標籤"
+            >
+              清空
+            </button>
+          </div>
+
+          {customCommonTags.length ? (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {customCommonTags.map((x) => (
+                <Chip
+                  key={`ct-${x}`}
+                  active={true}
+                  onClick={() => setList("commonTags", removeFromList(commonTags, x))}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    {x}
+                    <span aria-hidden>×</span>
+                  </span>
+                </Chip>
+              ))}
+            </div>
+          ) : null}
+
           <div className="mt-2 flex flex-wrap gap-2">
             {COMMON_TAG_OPTIONS.map((opt) => (
               <Chip
