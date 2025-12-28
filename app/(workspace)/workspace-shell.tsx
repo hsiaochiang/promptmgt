@@ -386,7 +386,7 @@ export default function WorkspaceShell() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col">
+    <div className="min-h-screen theme-prototype flex flex-col">
       <TopBar
         onShowChangeReport={() => setShowChangeLog(true)}
         onCreatePrompt={handleCreatePrompt}

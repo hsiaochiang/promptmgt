@@ -51,18 +51,27 @@ export default function TopBar({
   };
 
   return (
-    <header className="h-16 border-b border-slate-200 bg-white px-4 flex items-center justify-between">
+    <header className="h-16 px-4 flex items-center justify-between bg-transparent">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center text-xs font-semibold text-white">
-            PM
-          </div>
+          <div
+            className="w-4 h-4 rounded-full bg-gradient-to-br from-[var(--pm-brand)] to-[var(--pm-accent)]"
+            style={{ boxShadow: "0 0 0 6px rgba(47, 111, 111, 0.15)" }}
+            aria-hidden="true"
+          />
           <div>
-            <div className="font-semibold text-sm">Prompt Management Workspace</div>
-            <div className="text-xs text-slate-500">專案導向的提示詞管理與整理工作台</div>
+            <div className="font-semibold text-sm tracking-wide">Prompt Management Workspace</div>
+            <div className="text-xs" style={{ color: "var(--pm-muted)" }}>
+              專案導向的提示詞管理與整理工作台
+            </div>
           </div>
         </div>
-        <nav className="flex items-center gap-2" role="tablist" aria-label="Workspace Tabs">
+        <nav
+          className="flex items-center gap-2 p-1.5 rounded-full border bg-[color:var(--pm-panel)] shadow-[var(--pm-shadow-soft)]"
+          style={{ borderColor: "var(--pm-border)" }}
+          role="tablist"
+          aria-label="Workspace Tabs"
+        >
           {tabs.map((tab, index) => (
             <button
               key={tab.key}
@@ -79,10 +88,10 @@ export default function TopBar({
                 tabRefs.current[index] = node;
               }}
               className={clsx(
-                "px-3 py-1 rounded-full text-xs font-semibold border transition-colors",
+                "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
                 activeTab === tab.key
-                  ? "bg-slate-900 text-white border-slate-900"
-                  : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"
+                  ? "bg-[var(--pm-brand-tint)] text-[var(--pm-brand-strong)]"
+                  : "text-[var(--pm-muted)] hover:bg-[color:var(--pm-panel-ink)]"
               )}
             >
               {tab.label}
@@ -93,26 +102,33 @@ export default function TopBar({
       <div className="flex items-center gap-3 text-xs">
         <button
           onClick={onToggleSnippetPanel}
-          className="px-3 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-50"
+          className="px-3 py-1 rounded-full border bg-[color:var(--pm-panel)] hover:bg-[color:var(--pm-panel-ink)]"
+          style={{ borderColor: "var(--pm-border)", color: "var(--pm-text)" }}
           data-testid="snippet-toggle"
         >
           {snippetOpen ? "隱藏片語" : "開啟片語"}
         </button>
-        <Link href="/settings" className="px-3 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-50">
+        <Link
+          href="/settings"
+          className="px-3 py-1 rounded-full border bg-[color:var(--pm-panel)] hover:bg-[color:var(--pm-panel-ink)]"
+          style={{ borderColor: "var(--pm-border)", color: "var(--pm-text)" }}
+        >
           設定
         </Link>
         <button
           onClick={() => {
             onShowChangeReport?.();
           }}
-          className="px-3 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-50"
+          className="px-3 py-1 rounded-full border bg-[color:var(--pm-panel)] hover:bg-[color:var(--pm-panel-ink)]"
+          style={{ borderColor: "var(--pm-border)", color: "var(--pm-text)" }}
         >
           今日變更報告
         </button>
         <button
           onClick={onCreatePrompt}
           disabled={creating}
-          className="px-3 py-1 rounded-full bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-60"
+          className="px-3 py-1 rounded-full text-white disabled:opacity-60"
+          style={{ background: "linear-gradient(135deg, var(--pm-brand) 0%, var(--pm-brand-strong) 100%)" }}
         >
           {creating ? "建立中…" : "新增提示詞"}
         </button>
