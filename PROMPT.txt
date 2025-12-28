@@ -1,5 +1,8 @@
 /speckit.implement
-Proceed to Phase 5: User Story 3 - Prompts (提示詞列表).
-- Implement T050 (Integration tests for Prompts navigation).
-- Align T020 (Prompt List UI) with prototype, including filter, search, and Side KPI.
-- Ensure clicking a prompt enters Prompt Detail view correctly.
+Proceed to Phase 6: User Story 4 - Prompt Detail (編輯/預覽 + autosave + 複製 + 409 三選一).
+- Implement T051-T054 (Contract, Integration, and Unit tests).
+- Implement T021-T023 (Editor/Preview tabs, Markdown preview, autosave lastSavedAt).
+- Implement T024, T055-T057 (Server-side updatedAt, frontmatter validation and default values).
+- Implement T025 (Full/Simple copy feedback).
+- Implement T026-T031 (409 Three-way choice: Reload / Save as Copy / Overwrite).
+- Update tasks.md as progress is made.

@@ -107,19 +107,19 @@
 
 ### Tests（必須先寫且先失敗）
 
-- [ ] T051 [P] [US4] 契約測試：Prompt detail 讀寫（updatedAt/createdAt 規則、409 details）：tests/contract/api-prompts-detail.test.ts
-- [ ] T052 [P] [US4] 整合測試：Prompt Detail（編輯→2 秒 autosave→預覽切換→複製）：tests/integration/us4-prompt-detail-core.test.tsx
+- [X] T051 [P] [US4] 契約測試：Prompt detail 讀寫（updatedAt/createdAt 規則、409 details）：tests/contract/api-prompts-detail.test.ts
+- [X] T052 [P] [US4] 整合測試：Prompt Detail（編輯→2 秒 autosave→預覽切換→複製）：tests/integration/us4-prompt-detail-core.test.tsx
 - [ ] T053 [P] [US4] 整合測試：409 三選一（重新載入/另存副本/強制覆寫）：tests/integration/us4-conflict-three-way.test.tsx
 - [ ] T054 [P] [US4] 單元測試：frontmatter 最小欄位與補值策略（含 createdAt/updatedAt）：tests/unit/frontmatter.test.ts
 
-- [ ] T021 [US4] 在 Prompt Detail 改為「編輯/預覽」Tabs（互斥切換，Main 區塊）：app/(workspace)/components/prompt-editor.tsx
-- [ ] T022 [US4] 以 MarkdownPreview 顯示預覽內容（需支援基本 Markdown、code block、列表）：app/(workspace)/components/prompt-editor.tsx
-- [ ] T023 [US4] autosave 成功後由 server 回傳值更新 lastSavedAt（避免 client 自行產生時間）：app/(workspace)/hooks/useAutosavePrompt.ts
-- [ ] T024 [US4] 修正後端：每次成功寫入強制更新 frontmatter.updatedAt（server 主導），createdAt 僅首次建立：app/api/prompts/[id]/route.ts
-- [ ] T025 [US4] 確保 PromptHeader 的「精簡/完整複製」符合 spec 並回饋 Toast/Snackbar：app/(workspace)/components/prompt-header.tsx
+- [X] T021 [US4] 在 Prompt Detail 改為「編輯/預覽」Tabs（互斥切換，Main 區塊）：app/(workspace)/components/prompt-editor.tsx
+- [X] T022 [US4] 以 MarkdownPreview 顯示預覽內容（需支援基本 Markdown、code block、列表）：app/(workspace)/components/prompt-editor.tsx
+- [X] T023 [US4] autosave 成功後由 server 回傳值更新 lastSavedAt（避免 client 自行產生時間）：app/(workspace)/hooks/useAutosavePrompt.ts
+- [X] T024 [US4] 修正後端：每次成功寫入強制更新 frontmatter.updatedAt（server 主導），createdAt 僅首次建立：app/api/prompts/[id]/route.ts
+- [X] T025 [US4] 確保 PromptHeader 的「精簡/完整複製」符合 spec 並回饋 Toast/Snackbar：app/(workspace)/components/prompt-header.tsx
 - [ ] T026 [US4] 調整衝突對話框文案與按鈕命名為三選一：app/(workspace)/components/conflict-dialog.tsx
-- [ ] T027 [US4] 在 PromptEditor 實作「另存副本」：以 POST /api/prompts 建立新提示詞（新 title），並切換選取到新 prompt：app/(workspace)/components/prompt-editor.tsx
-- [ ] T028 [US4] 讓 autosave 409 回傳包含 currentHash/currentMtime，UI 用於顯示與後續覆寫：app/api/prompts/[id]/route.ts
+- [X] T027 [US4] 在 PromptEditor 實作「另存副本」：以 POST /api/prompts 建立新提示詞（新 title），並切換選取到新 prompt：app/(workspace)/components/prompt-editor.tsx
+- [X] T028 [US4] 讓 autosave 409 回傳包含 currentHash/currentMtime，UI 用於顯示與後續覆寫：app/api/prompts/[id]/route.ts
 - [ ] T029 [US4] README 儲存遇到 409 時提供三選一（重新載入 / 另存副本（下載 .md） / 強制覆寫）：app/(workspace)/components/project-readme.tsx
 - [ ] T030 [US4] README 409 details 回傳補齊 currentHash/currentMtime：app/api/projects/[id]/readme/route.ts
 - [ ] T031 [US4] 更新合約文件反映 409 details 與三選一：specs/001-local-prompt-manager/contracts/{api.md,openapi.yaml}

@@ -9,6 +9,7 @@ import type { PromptFrontmatter } from "@/lib/types/schema";
 import { useAutosavePrompt } from "../hooks/useAutosavePrompt";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 import ConflictDialog from "./conflict-dialog";
+import MarkdownPreview from "./markdown-preview";
 
 const CodeMirror = dynamic(() => import("@uiw/react-codemirror"), { ssr: false });
 
@@ -26,6 +27,7 @@ interface Props {
   onBodyChange?: (body: string) => void;
   onFrontmatterChange?: (frontmatter: PromptFrontmatter | null) => void;
   onDamagedChange?: (damaged: boolean) => void;
+  autosaveDelay?: number;
 }
 
 export default function PromptEditor({
@@ -41,7 +43,8 @@ export default function PromptEditor({
   onInserted,
   onBodyChange,
   onFrontmatterChange,
-  onDamagedChange
+  onDamagedChange,
+  autosaveDelay
 }: Props) {
   const [body, setBody] = useState(initialBody);
   const [frontmatter, setFrontmatter] = useState<PromptFrontmatter | null>(initialFrontmatter);
@@ -57,6 +60,7 @@ export default function PromptEditor({
   const [damaged, setDamaged] = useState(initialDamaged);
   const [parseErrorCode, setParseErrorCode] = useState<string | null>(initialParseErrorCode);
   const [parseErrorMessage, setParseErrorMessage] = useState<string | null>(initialParseErrorMessage);
+  const [view, setView] = useState<"edit" | "preview">("edit");
 
   const recordTelemetry = async (event: string) => {
     try {
@@ -72,6 +76,7 @@ export default function PromptEditor({
 
   const setEditorDirty = useWorkspaceStore((s) => s.setEditorDirty);
   const lastSavedAt = useWorkspaceStore((s) => s.lastSavedAt);
+  const setSelectedPromptId = useWorkspaceStore((s) => s.setSelectedPromptId);
   const extensions = useMemo(() => [markdown()], []);
   const { isSaving, error } = useAutosavePrompt({
     promptId,
@@ -79,6 +84,7 @@ export default function PromptEditor({
     body,
     clientHash: hash,
     clientMtime: mtimeMs ?? undefined,
+    delay: autosaveDelay ?? 2000,
     disabled: damaged,
     onSaved: (nextHash, nextMtime) => {
       setHash(nextHash);
@@ -261,6 +267,37 @@ export default function PromptEditor({
     }
   };
 
+  const saveAsCopy = async () => {
+    if (!frontmatter) return;
+    setBusy(true);
+    try {
+      const now = toIsoWithOffset();
+      const res = await fetch("/api/prompts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          frontmatter: { ...frontmatter, title: `${frontmatter.title} 副本`, updatedAt: now, createdAt: frontmatter.createdAt ?? now },
+          body
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setHash(data.hash ?? null);
+        setMtimeMs(data.mtimeMs ?? null);
+        setFrontmatter(data.frontmatter ?? frontmatter);
+        onFrontmatterChange?.(data.frontmatter ?? frontmatter);
+        if (data.id) setSelectedPromptId(data.id);
+        setConflictHash(null);
+        setExternalPreview(null);
+        setEditorDirty(false);
+        setShowConflictDialog(false);
+        recordTelemetry("conflict_save_as_copy");
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const previewExternal = async () => {
     if (!promptId) return;
     setBusy(true);
@@ -346,6 +383,13 @@ export default function PromptEditor({
                 保留本地(覆寫)
               </button>
               <button
+                onClick={saveAsCopy}
+                disabled={busy}
+                className="px-3 py-1 bg-white border border-amber-300 text-amber-800 rounded text-xs hover:bg-amber-100 transition-colors disabled:opacity-60"
+              >
+                另存副本
+              </button>
+              <button
                 onClick={previewExternal}
                 disabled={busy}
                 className="px-3 py-1 text-amber-700 text-xs hover:underline disabled:opacity-60"
@@ -362,24 +406,43 @@ export default function PromptEditor({
         </div>
       )}
       <div className="h-10 px-3 flex items-center justify-between text-[12px] text-slate-500 border-b border-slate-200 bg-slate-50">
-        <span>提示詞內容（Markdown 編輯區）</span>
+        <div className="flex items-center gap-2">
+          <button
+            className={`px-2 py-1 rounded-full text-xs ${view === "edit" ? "bg-slate-900 text-white" : "bg-white border border-slate-300"}`}
+            onClick={() => setView("edit")}
+          >
+            編輯
+          </button>
+          <button
+            className={`px-2 py-1 rounded-full text-xs ${view === "preview" ? "bg-slate-900 text-white" : "bg-white border border-slate-300"}`}
+            onClick={() => setView("preview")}
+          >
+            預覽
+          </button>
+        </div>
         <span className="flex items-center gap-2">
           {error && !conflictHash && <span className="text-amber-600">{error}</span>}
           {isSaving ? "自動儲存中…" : lastSavedAt ? `已儲存：${lastSavedAt}` : "等待編輯"}
         </span>
       </div>
       <div className="flex-1 overflow-auto">
-        <CodeMirror
-          value={body}
-          height="100%"
-          extensions={extensions}
-          onChange={(val) => {
-            setBody(val);
-            onBodyChange?.(val);
-            setEditorDirty(true);
-          }}
-          theme="light"
-        />
+        {view === "edit" ? (
+          <CodeMirror
+            value={body}
+            height="100%"
+            extensions={extensions}
+            onChange={(val) => {
+              setBody(val);
+              onBodyChange?.(val);
+              setEditorDirty(true);
+            }}
+            theme="light"
+          />
+        ) : (
+          <div className="p-4">
+            <MarkdownPreview content={body} />
+          </div>
+        )}
       </div>
     </div>
   );

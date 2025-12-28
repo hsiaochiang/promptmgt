@@ -51,11 +51,12 @@ export async function POST(request: Request, { params }: { params: { id: string 
   }
 
   const baseFrontmatter: Partial<PromptFrontmatter> = current.frontmatter ?? {};
+  const serverNow = toIsoWithOffset();
   const updatedFrontmatter: PromptFrontmatter = {
     ...baseFrontmatter,
     ...frontmatter,
     createdAt: frontmatter?.createdAt ?? baseFrontmatter.createdAt ?? toIsoWithOffset(),
-    updatedAt: frontmatter?.updatedAt ?? baseFrontmatter.updatedAt ?? toIsoWithOffset()
+    updatedAt: serverNow
   } as PromptFrontmatter;
   const projectName = updatedFrontmatter.project ?? baseFrontmatter.project;
 

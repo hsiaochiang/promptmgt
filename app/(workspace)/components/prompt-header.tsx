@@ -13,15 +13,25 @@ interface Props {
 }
 
 export default function PromptHeader({ title, frontmatter, body, onToggleFocus }: Props) {
+  const [copyMessage, setCopyMessage] = React.useState<string | null>(null);
+
   const handleCopyFull = async () => {
     if (!frontmatter || !body) return;
     await navigator.clipboard.writeText(buildFullContent(frontmatter, body));
+    setCopyMessage("已複製完整提示詞");
   };
 
   const handleCopySlim = async () => {
     if (!body || !frontmatter) return;
     await navigator.clipboard.writeText(buildSlimContent(buildFullContent(frontmatter, body)));
+    setCopyMessage("已複製精簡版本");
   };
+
+  useEffect(() => {
+    if (!copyMessage) return;
+    const timer = window.setTimeout(() => setCopyMessage(null), 1500);
+    return () => window.clearTimeout(timer);
+  }, [copyMessage]);
 
   useEffect(() => {
     const handler = async (e: KeyboardEvent) => {
@@ -89,6 +99,7 @@ export default function PromptHeader({ title, frontmatter, body, onToggleFocus }
           </span>
         </div>
       )}
+      {copyMessage ? <div className="text-[10px] text-emerald-600">{copyMessage}</div> : null}
     </div>
   );
 }
