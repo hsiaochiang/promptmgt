@@ -1,7 +1,7 @@
 # 原型對齊規格：提示詞工作台（UI/UX 以 prototype 為準）
 
 **分支**：`001-local-prompt-manager`  
-**日期**：2025-12-27  
+**日期**：2025-12-28  
 **原型來源**：`0resource/prototype/`（`index.html` + `app.js` + `styles.css`）  
 
 ## 核心原則（很重要）
@@ -29,7 +29,8 @@
 - 已對齊原型：以 Topbar Tabs 導覽為主（專案/提示詞/剪貼簿），固定兩欄 Shell（Main + Side）。
 - 已對齊原型：刪除型操作採兩段式：Confirm Modal → Snackbar Undo（5 秒倒數）。
 - 已對齊原型：Projects / Project Detail / Prompts / Prompt Detail / Scratchpad 五個頁面規格，以原型互動為準。
-- 已對齊原型：移除原型未呈現的 UI 假設（例如片語 Drawer、三欄拖曳寬度、Pin/列表收合、專注模式、全域快捷鍵、全域搜尋等）。
+- 已對齊原型：片語庫以 Side Panel 常駐區塊呈現，並可由 Topbar「隱藏片語」切換顯示/隱藏（不使用 Drawer）。
+- 已對齊原型：不新增原型未定義的 UI 模式（例如三欄拖曳寬度、全域搜尋等）。
 - 已對齊原型：不以原型決定資料持久化方式；檔案系統/rootPath/frontmatter 仍以現有系統為準。
 - 已對齊原型：在 Prompt Detail 的版面/互動保持原型一致，但補入必要能力：Markdown 編輯＋預覽、完整/精簡複製、自動儲存。
 
@@ -38,7 +39,7 @@
 原型採固定 Shell：`Main Panel`（主要內容）+ `Side Panel`（輔助資訊/標籤/快速操作）。頂部含：
 
 - Tabs：專案（Projects）/ 提示詞（Prompts）/ 剪貼簿（Scratchpad）
-- Top actions：操作指引（Help）/ 新增提示詞
+- Top actions：操作指引（Help）/ 隱藏片語（Toggle，影響右側片語庫區塊）/ 設定 / 今日變更報告 / 新增提示詞
 
 ## User Stories（對照頁面 / 方便拆 tasks）
 
@@ -69,20 +70,28 @@
 
 ### 1) Projects（專案列表）
 
-- Main：專案卡片列表 + 篩選（狀態/分類/標籤；搜尋框可為示意）
-- Side：專案概覽 KPI + 快速入口
+- Main：專案卡片列表 + 篩選（狀態下拉 + 搜尋框）+「新增專案」
+- Side：專案概覽 KPI（進行中/規劃中/已結案）+ 使用建議（CTA：新增提示詞）
 - 行為：點擊專案卡片 → 進入 Project Detail
 
 ### 2) Project Detail（專案詳情）
 
-- Main：專案摘要、該專案提示詞清單、檔案列表（上傳/描述/刪除）、進度紀錄（新增/編輯/刪除）
-- Side：專案狀態/更新資訊、分類/標籤 chips、危險操作（刪除專案）
+- Main：專案摘要、專案 README（編輯/預覽/儲存）、該專案提示詞清單、檔案列表（上傳/描述/刪除）、進度紀錄（新增/刪除）
+- Side：
+	- 分類與標籤（儲存於專案資料夾的 `_meta.json`；以 taxonomy 選項為主，並允許自訂輸入）
+		- 平台標籤/交付物標籤/受眾標籤/共通標籤：輸入框 + Enter 新增，chips 可移除，提供清空
+		- 若輸入符合 taxonomy 的 code/name，需正規化為 code 後存檔
+	- 專案資訊（狀態等）
+	- 危險操作（刪除專案）
 - 行為：刪除類操作均需 Confirm，刪除後顯示 Snackbar Undo（5 秒）；5 秒內可復原，逾時永久刪除
 
 ### 3) Prompts（提示詞列表）
 
-- Main：跨專案提示詞列表 + 篩選（分類/階段/平台/共通標籤）
-- Side：提示詞概覽 KPI
+- Main：跨專案提示詞列表 + 篩選（搜尋/專案/狀態）
+- Side：
+	- 提示詞概覽 KPI
+	- 常用片語庫（可新增/編輯/插入/刪除；顯示 usage 次數與最後使用）
+	- Topbar「隱藏片語」可隱藏此區塊以讓版面更專注
 - 行為：點擊提示詞列 → 進入 Prompt Detail
 
 ### 4) Prompt Detail（提示詞編輯）
@@ -101,6 +110,19 @@
 - Main：新增/編輯/複製/刪除剪貼簿項目
 - Side：數量 KPI
 - 行為：刪除需 Confirm + Snackbar Undo；5 秒內可復原，逾時永久刪除
+
+### 6) Settings（設定）
+
+- Main：rootPath/logPath 與功能開關（遙測、更新檢查等）
+- rootPath：必填且需可存取；缺失/不可存取時 RootPathAlert 以全站提示導向 Settings
+- logPath：必須位於「使用者目錄」或「rootPath」底下
+	- UI 提供快捷：使用預設（DEFAULT_ROOT/logs/app.log）、使用 rootPath（rootPath/logs/app.log）
+	- 伺服端錯誤需回傳可操作 details（field + userDir/rootPath/examples）
+
+### 7) 今日變更報告（Change Report）
+
+- 提供快速檢視最近 24 小時內的變更（提示詞/收件匣/專案等），從 Topbar 進入
+- 若無資料顯示空狀態；載入/錯誤需有明確回饋
 
 ## 非 UI/UX 的資料層與格式（以現有系統已實作為準）
 

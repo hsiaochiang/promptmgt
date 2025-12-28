@@ -9,9 +9,12 @@
 本次計畫的重點是讓「原型的 UI/UX」與「既有資料層能力」一致對齊：
 
 - UI/UX：Topbar Tabs（專案/提示詞/剪貼簿）+ Main/Side Shell、Toast/Confirm/Snackbar Undo
+- Topbar actions：操作指引、隱藏片語（切換右側片語庫顯示）、設定、今日變更報告、新增提示詞
 - Prompt Detail：Markdown 編輯 + 預覽（以「編輯/預覽」Tabs 切換）、2 秒 autosave、完整/精簡複製
 - 刪除 Undo：5 秒內可撤銷（以 UI 層 deferred delete 視作 soft delete），逾時才呼叫永久刪除
 - 衝突處理：偵測 409/外部修改時，提供「重新載入 / 另存副本 / 強制覆寫」
+- Settings：rootPath/logPath 與可操作的錯誤回饋；logPath 允許位於 userDir 或 rootPath 下
+- Change report：提供最近 24 小時變更檢視（Topbar 入口）
 
 ## Technical Context
 
@@ -33,7 +36,7 @@
 - 針對互動路徑（列表載入、Prompt Detail 讀取/寫入、autosave）建立可重複的量測步驟（手動或簡易腳本皆可），並記錄 p95 結果。
 - 若 p95 未達標，需在同一變更集中附上原因與改善計畫，避免效能回歸。
 **限制條件**：離線可用；rootPath 缺失/不可存取時不得靜默失敗；文件/規格/計畫需維持繁體中文  
-**規模/範圍**：以 prototype 的五個頁面為 UI 範圍；資料層仍保留既有 inbox/snippets/settings 結構但不擴張其 UI（除非後續 spec 另開）
+**規模/範圍**：以 prototype 的頁面與 Topbar actions 為 UI 範圍（Projects / Project Detail / Prompts / Prompt Detail / Scratchpad / Settings / Change report）；資料層沿用既有架構（Route Handlers + lib services + fs）。
 
 ## Constitution Check
 
