@@ -48,8 +48,9 @@ export function useAutosavePrompt({
         });
         if (res.status === 409) {
           const data = await res.json();
-          const serverHash = data?.currentHash ?? null;
-          const serverMtime = data?.currentMtime ?? null;
+          const details = (data as any)?.details ?? data;
+          const serverHash = details?.currentHash ?? null;
+          const serverMtime = details?.currentMtime ?? null;
           setError("發現外部變更，請選擇載入或覆寫。");
           if (serverHash && onConflict) {
             onConflict(serverHash, serverMtime ?? undefined);

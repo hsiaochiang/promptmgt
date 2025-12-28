@@ -7,6 +7,7 @@ import { listPrompts, readPrompt, writePrompt } from "@/lib/fs/prompts";
 import { applyPromptMeta, setPromptMetaFromPrompts } from "@/lib/services/cache";
 import { toIsoWithOffset } from "@/lib/utils/date";
 import type { PromptFrontmatter } from "@/lib/types/schema";
+import { promptFrontmatterSchema } from "@/lib/types/schema";
 
 function decodeId(id: string) {
   return Buffer.from(id, "base64url").toString("utf8");
@@ -52,12 +53,23 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   const baseFrontmatter: Partial<PromptFrontmatter> = current.frontmatter ?? {};
   const serverNow = toIsoWithOffset();
-  const updatedFrontmatter: PromptFrontmatter = {
-    ...baseFrontmatter,
-    ...frontmatter,
-    createdAt: frontmatter?.createdAt ?? baseFrontmatter.createdAt ?? toIsoWithOffset(),
+  const mergedFrontmatter: PromptFrontmatter = {
+    title: frontmatter?.title ?? (baseFrontmatter.title as string),
+    project: frontmatter?.project ?? (baseFrontmatter.project as string),
+    type: (frontmatter?.type ?? baseFrontmatter.type ?? "其他") as PromptFrontmatter["type"],
+    status: (frontmatter?.status ?? baseFrontmatter.status ?? "草稿") as PromptFrontmatter["status"],
+    model: frontmatter?.model ?? baseFrontmatter.model ?? "",
+    tags: Array.isArray(frontmatter?.tags) ? frontmatter.tags : Array.isArray(baseFrontmatter.tags) ? baseFrontmatter.tags : [],
+    note: frontmatter?.note ?? baseFrontmatter.note,
+    createdAt: baseFrontmatter.createdAt ?? frontmatter?.createdAt ?? toIsoWithOffset(),
     updatedAt: serverNow
-  } as PromptFrontmatter;
+  };
+  try {
+    promptFrontmatterSchema.parse(mergedFrontmatter);
+  } catch (err: any) {
+    return badRequest("frontmatter validation failed", { issues: err?.issues });
+  }
+  const updatedFrontmatter = mergedFrontmatter;
   const projectName = updatedFrontmatter.project ?? baseFrontmatter.project;
 
   if (!projectName) {

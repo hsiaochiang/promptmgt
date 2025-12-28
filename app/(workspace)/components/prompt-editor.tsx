@@ -371,6 +371,7 @@ export default function PromptEditor({
               <button
                 onClick={reloadExternal}
                 disabled={busy}
+                data-testid="conflict-load-external"
                 className="px-3 py-1 bg-white border border-amber-300 text-amber-800 rounded text-xs hover:bg-amber-100 transition-colors disabled:opacity-60"
               >
                 載入外部變更
@@ -378,6 +379,7 @@ export default function PromptEditor({
               <button
                 onClick={overwriteWithLocal}
                 disabled={busy}
+                data-testid="conflict-keep-local"
                 className="px-3 py-1 bg-amber-600 text-white rounded text-xs hover:bg-amber-700 transition-colors disabled:opacity-60"
               >
                 保留本地(覆寫)
@@ -385,6 +387,7 @@ export default function PromptEditor({
               <button
                 onClick={saveAsCopy}
                 disabled={busy}
+                data-testid="conflict-save-copy"
                 className="px-3 py-1 bg-white border border-amber-300 text-amber-800 rounded text-xs hover:bg-amber-100 transition-colors disabled:opacity-60"
               >
                 另存副本

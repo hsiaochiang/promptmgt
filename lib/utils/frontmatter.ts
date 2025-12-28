@@ -47,9 +47,18 @@ function normalizeFrontmatter(
   const project = typeof data.project === "string" && data.project.trim().length > 0 ? data.project.trim() : null;
 
   const tags = Array.isArray(data.tags)
-    ? (data.tags as unknown[])
-        .map((t) => (typeof t === "string" ? t.trim() : String(t ?? "").trim()))
-        .filter((t) => t.length > 0)
+    ? (() => {
+        const seen = new Set<string>();
+        return (data.tags as unknown[])
+          .map((t) => (typeof t === "string" ? t.trim() : String(t ?? "").trim()))
+          .filter((t) => t.length > 0)
+          .filter((t) => {
+            const key = t.toLowerCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+      })()
     : [];
 
   const note =

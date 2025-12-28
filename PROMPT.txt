@@ -1,8 +1,6 @@
 /speckit.implement
-Proceed to Phase 6: User Story 4 - Prompt Detail (編輯/預覽 + autosave + 複製 + 409 三選一).
-- Implement T051-T054 (Contract, Integration, and Unit tests).
-- Implement T021-T023 (Editor/Preview tabs, Markdown preview, autosave lastSavedAt).
-- Implement T024, T055-T057 (Server-side updatedAt, frontmatter validation and default values).
-- Implement T025 (Full/Simple copy feedback).
-- Implement T026-T031 (409 Three-way choice: Reload / Save as Copy / Overwrite).
-- Update tasks.md as progress is made.
+Continue Phase 6:
+- Implement T053 (Integration tests for 409 three-way choice in prompt detail).
+- Implement T054 (Unit tests for frontmatter minimal fields and defaults).
+- Complete T026 (Conflict dialog labels/buttons alignment), T029-T031 (README conflict handling updates).
+- Implement T055-T057 (Frontmatter validation and auto-fill in schema/route).

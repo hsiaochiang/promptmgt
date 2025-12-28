@@ -79,14 +79,14 @@ export default function ConflictDialog({
             disabled={isBusy}
             className="px-4 py-2 text-sm font-medium text-white bg-slate-600 hover:bg-slate-700 rounded shadow-sm transition-colors disabled:opacity-50"
           >
-            保留本地 (覆寫)
+            強制覆寫（保留本地）
           </button>
           <button
             onClick={onLoadExternal}
             disabled={isBusy}
             className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded shadow-sm transition-colors disabled:opacity-50"
           >
-            載入外部變更
+            重新載入外部版本
           </button>
         </div>
       </div>

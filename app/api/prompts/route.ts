@@ -6,6 +6,7 @@ import { listPrompts, writePrompt } from "@/lib/fs/prompts";
 import { getDb } from "@/lib/db";
 import { applyPromptMeta, setPromptMetaFromPrompts } from "@/lib/services/cache";
 import type { PromptFrontmatter } from "@/lib/types/schema";
+import { promptFrontmatterSchema } from "@/lib/types/schema";
 import { sanitizeFilename } from "@/lib/utils/sanitizeFilename";
 import { toIsoWithOffset } from "@/lib/utils/date";
 
@@ -53,21 +54,27 @@ export async function POST(request: Request) {
     return badRequest("rootPath is not configured");
   }
 
-  const errors: string[] = [];
-  if (!frontmatter?.title) errors.push("title");
-  if (!frontmatter?.project) errors.push("project");
-  if (errors.length > 0) {
-    return badRequest("frontmatter.title and project are required", { missing: errors });
-  }
+  const normalizedFrontmatter: PromptFrontmatter = (() => {
+    const now = toIsoWithOffset();
+    const raw: PromptFrontmatter = {
+      title: frontmatter?.title ?? "",
+      project: frontmatter?.project ?? "",
+      type: frontmatter?.type ?? "其他",
+      status: frontmatter?.status ?? "草稿",
+      model: frontmatter?.model ?? "",
+      tags: Array.isArray(frontmatter?.tags) ? frontmatter.tags : [],
+      note: frontmatter?.note,
+      updatedAt: frontmatter?.updatedAt ?? now,
+      createdAt: frontmatter?.createdAt ?? now
+    };
+    try {
+      return promptFrontmatterSchema.parse(raw);
+    } catch (err: any) {
+      return badRequest("frontmatter.title and project are required", { issues: err?.issues });
+    }
+  })() as PromptFrontmatter;
 
-  const normalizedFrontmatter: PromptFrontmatter = {
-    ...frontmatter,
-    title: frontmatter.title.trim(),
-    project: frontmatter.project.trim(),
-    updatedAt: frontmatter.updatedAt ?? toIsoWithOffset(),
-    createdAt: frontmatter.createdAt ?? toIsoWithOffset(),
-    tags: Array.isArray(frontmatter.tags) ? frontmatter.tags : []
-  };
+  if (normalizedFrontmatter instanceof NextResponse) return normalizedFrontmatter;
 
   const safeProject = sanitizeFilename(normalizedFrontmatter.project);
   const projectExists = db.data!.projects.find(
