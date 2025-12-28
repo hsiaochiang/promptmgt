@@ -48,6 +48,17 @@ export default function PromptList({
   const setSearchQuery = useWorkspaceStore((s) => s.setSearchQuery);
   const setFilterStatus = useWorkspaceStore((s) => s.setFilterStatus);
 
+  const onLoadedRef = useRef<Props["onLoaded"]>(onLoaded);
+  const hasExternalOpenRef = useRef<boolean>(!!onOpenPrompt);
+
+  useEffect(() => {
+    onLoadedRef.current = onLoaded;
+  }, [onLoaded]);
+
+  useEffect(() => {
+    hasExternalOpenRef.current = !!onOpenPrompt;
+  }, [onOpenPrompt]);
+
   const latestSelectedPromptId = useRef<string | null>(selectedPromptId);
 
   useEffect(() => {
@@ -66,9 +77,9 @@ export default function PromptList({
       if (!res.ok) throw new Error("無法載入提示詞列表");
       const data = (await res.json()) as PromptListItem[];
       setPrompts(data);
-      onLoaded?.(data);
+      onLoadedRef.current?.(data);
       setSelectedIds(new Set());
-      if (!onOpenPrompt) {
+      if (!hasExternalOpenRef.current) {
         const hasSelected = data.some((p) => p.id === latestSelectedPromptId.current);
         if (data.length === 0) {
           setSelectedPromptId(null);
@@ -82,11 +93,11 @@ export default function PromptList({
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, onLoaded, onOpenPrompt, projectIdFilter, searchQuery, setSelectedPromptId]);
+  }, [filterStatus, projectIdFilter, searchQuery, setSelectedPromptId]);
 
   useEffect(() => {
     fetchPrompts();
-  }, [fetchPrompts, refreshKey, filterStatus, searchQuery]);
+  }, [fetchPrompts, refreshKey]);
 
   useEffect(() => {
     return () => {

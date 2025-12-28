@@ -659,14 +659,7 @@ export default function WorkspaceShell() {
               >
                 {isSnippetPanelOpen ? (
                   <SnippetPanel onInsert={(snippet: Snippet) => insertSnippet(snippet)} onClose={() => toggleSnippetPanel(false)} />
-                ) : (
-                  <div className="p-6">
-                    <div className="text-sm font-semibold">常用片語</div>
-                    <div className="mt-1 text-sm" style={{ color: "var(--pm-muted)" }}>
-                      由上方「開啟片語」或側欄「展開」顯示。
-                    </div>
-                  </div>
-                )}
+                ) : null}
               </div>
             </aside>
           </div>

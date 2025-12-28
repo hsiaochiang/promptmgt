@@ -1,196 +1,236 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Project } from "@/lib/types/schema";
-import { useWorkspaceStore } from "../store/useWorkspaceStore";
-import ConfirmModal from "./confirm-modal";
 
 interface Props {
   projects: Project[];
   onScheduleUndo?: (message: string, commit: () => Promise<void>, onUndo?: () => void) => void;
 }
 
-export default function Scratchpad({ projects, onScheduleUndo }: Props) {
-  const scratchpadContent = useWorkspaceStore((s) => s.scratchpadContent);
-  const setScratchpadContent = useWorkspaceStore((s) => s.setScratchpadContent);
-  const selectedProjectId = useWorkspaceStore((s) => s.selectedProjectId);
-  const setSelectedProjectId = useWorkspaceStore((s) => s.setSelectedProjectId);
-  const setSelectedPromptId = useWorkspaceStore((s) => s.setSelectedPromptId);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [confirmClear, setConfirmClear] = useState(false);
+type ScratchpadItem = {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+};
 
-  const projectOptions = projects ?? [];
+const STORAGE_KEY = "pm-scratchpad-items-v1";
+
+function safeJsonParse<T>(value: string | null): T | null {
+  if (!value) return null;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return null;
+  }
+}
+
+function newId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function deriveTitle(content: string) {
+  const firstLine = content.split(/\r?\n/)[0]?.trim() ?? "";
+  if (firstLine) return firstLine.slice(0, 50);
+  return "未命名";
+}
+
+export default function Scratchpad({ projects, onScheduleUndo }: Props) {
+  void projects;
+  void onScheduleUndo;
+
+  const [items, setItems] = useState<ScratchpadItem[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<string>("");
+  const [message, setMessage] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
-    if (!selectedProjectId && projectOptions.length > 0) {
-      setSelectedProjectId(projectOptions[0].name);
-    }
-  }, [projectOptions, selectedProjectId, setSelectedProjectId]);
+    if (typeof window === "undefined") return;
+    const loaded = safeJsonParse<ScratchpadItem[]>(window.localStorage.getItem(STORAGE_KEY)) ?? [];
+    if (!Array.isArray(loaded)) return;
+    setItems(loaded);
+    if (loaded.length > 0) setSelectedId(loaded[0].id);
+  }, []);
 
-  const kpi = useMemo(() => {
-    const text = scratchpadContent ?? "";
-    const lines = text.length === 0 ? 0 : text.split(/\r?\n/).length;
-    return { chars: text.length, lines };
-  }, [scratchpadContent]);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  }, [items]);
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(scratchpadContent ?? "");
-    setMessage("已複製到剪貼簿");
+  const selected = useMemo(() => items.find((i) => i.id === selectedId) ?? null, [items, selectedId]);
+  const listCount = items.length;
+
+  const clearDraft = () => {
+    setDraft("");
+    textareaRef.current?.focus();
   };
 
-  const schedule = onScheduleUndo ?? ((_, c, u) => {
-    u?.();
-    return c();
-  });
-
-  const handleClear = () => {
-    const backup = scratchpadContent;
-    setScratchpadContent("");
-    schedule("已清空剪貼簿，5 秒內可撤銷", async () => {}, () => setScratchpadContent(backup ?? ""));
+  const addToList = () => {
+    const content = draft.trimEnd();
+    if (!content.trim()) return;
+    const now = new Date().toISOString();
+    const next: ScratchpadItem = {
+      id: newId(),
+      title: deriveTitle(content),
+      content,
+      createdAt: now
+    };
+    setItems((prev) => [next, ...prev]);
+    setSelectedId(next.id);
+    setDraft("");
+    setMessage("已加入列表");
+    window.setTimeout(() => setMessage(null), 1600);
   };
 
-  const buildTitle = () => {
-    const firstLine = (scratchpadContent ?? "").split(/\r?\n/)[0]?.trim() ?? "";
-    return firstLine.length > 0 ? firstLine.slice(0, 50) : "Scratchpad";
+  const copyText = async (text: string) => {
+    await navigator.clipboard.writeText(text);
+    setMessage("已複製");
+    window.setTimeout(() => setMessage(null), 1400);
   };
 
-  const handleSavePrompt = async () => {
-    if (!selectedProjectId) {
-      setError("請先選擇專案");
-      return;
+  const copySelected = async () => {
+    if (selected?.content) return copyText(selected.content);
+    if (draft.trim()) return copyText(draft);
+    setMessage("目前沒有可複製內容");
+    window.setTimeout(() => setMessage(null), 1400);
+  };
+
+  const quickFill = () => {
+    if (!draft.trim()) {
+      setDraft("把零碎想法放在這裡，稍後整理成提示詞。\n\n- 目標：\n- 受眾：\n- 輸出格式：\n");
     }
-    setSaving(true);
-    setError(null);
-    setMessage(null);
-    try {
-      const res = await fetch("/api/prompts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          frontmatter: {
-            title: buildTitle(),
-            project: selectedProjectId,
-            type: "其他",
-            status: "草稿",
-            tags: []
-          },
-          body: scratchpadContent ?? ""
-        })
-      });
-      const payload = await res.json().catch(() => ({} as any));
-      if (!res.ok) {
-        setError(payload?.message ?? "另存為提示詞失敗");
-        return;
-      }
-      setMessage("已將剪貼簿另存為提示詞");
-      if (payload?.id) {
-        setSelectedPromptId(payload.id);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "另存失敗");
-    } finally {
-      setSaving(false);
-    }
+    window.setTimeout(() => textareaRef.current?.focus(), 0);
   };
 
   return (
     <div className="flex flex-1 overflow-hidden gap-6">
-      <section className="pm-panel flex-[1.5] p-6 flex flex-col gap-4">
-        <header className="flex items-center justify-between">
+      <section className="pm-panel flex-[1.5] p-6 flex flex-col gap-4 overflow-hidden">
+        <header className="flex items-start justify-between gap-4">
           <div>
             <div className="text-xs font-semibold" style={{ color: "var(--pm-brand-strong)" }}>
-              Scratchpad
+              剪貼簿
             </div>
             <div className="text-lg font-bold">快速草稿</div>
+            <div className="text-xs mt-1" style={{ color: "var(--pm-muted)" }}>
+              快速記下內容，稍後整理成提示詞或複製使用。
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-xs">
-            <select
-              value={selectedProjectId ?? ""}
-              onChange={(e) => setSelectedProjectId(e.target.value)}
-              className="h-9 px-3 rounded-full border bg-[color:var(--pm-panel)]"
-              style={{ borderColor: "var(--pm-border)" }}
-              data-testid="scratchpad-project"
-            >
-              {projectOptions.map((p) => (
-                <option key={p.id ?? p.name} value={p.name}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={handleSavePrompt}
-              disabled={saving || !selectedProjectId}
-              className="pm-btn pm-btn-primary h-9 px-4 text-sm disabled:opacity-60"
-              data-testid="scratchpad-save"
+              onClick={clearDraft}
+              className="pm-btn h-9 px-4 text-sm"
+              data-testid="scratchpad-clear"
             >
-              {saving ? "儲存中…" : "另存為提示詞"}
+              清空輸入
+            </button>
+            <button
+              type="button"
+              onClick={addToList}
+              className="pm-btn pm-btn-primary h-9 px-4 text-sm"
+              data-testid="scratchpad-add"
+            >
+              加入列表
             </button>
           </div>
         </header>
-        <textarea
-          value={scratchpadContent}
-          onChange={(e) => setScratchpadContent(e.target.value)}
-          className="w-full min-h-[260px] flex-1 rounded-[14px] border bg-[color:var(--pm-panel)] px-4 py-3 text-sm font-mono focus:outline-none"
-          style={{ borderColor: "var(--pm-border)" }}
-          placeholder="在此記錄靈感或中繼資料，之後可另存為提示詞。"
-          data-testid="scratchpad-textarea"
-        />
-        <div className="flex items-center gap-2 text-xs">
-          <button
-            type="button"
-            onClick={() => setConfirmClear(true)}
-            className="pm-btn h-9 px-4 text-sm"
-            data-testid="scratchpad-clear"
-          >
-            清空
-          </button>
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="pm-btn h-9 px-4 text-sm"
-            data-testid="scratchpad-copy"
-          >
-            複製
-          </button>
-          {message ? <span style={{ color: "var(--pm-brand-strong)" }}>{message}</span> : null}
-          {error ? <span style={{ color: "var(--pm-danger)" }}>{error}</span> : null}
+
+        <div className="min-h-0 flex-1 overflow-auto">
+          <div className="text-sm font-semibold mb-2">剪貼簿列表</div>
+          <div className="space-y-2">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-[16px] border px-4 py-3 text-sm flex items-center justify-between gap-3"
+                style={{
+                  borderColor: item.id === selectedId ? "rgba(47, 111, 111, 0.45)" : "var(--pm-border)",
+                  background: "var(--pm-panel-ink)",
+                  boxShadow: item.id === selectedId ? "0 12px 26px rgba(47, 111, 111, 0.10)" : "none"
+                }}
+              >
+                <button
+                  type="button"
+                  className="flex-1 text-left"
+                  data-testid={`scratchpad-item-${item.id}`}
+                  onClick={() => setSelectedId(item.id)}
+                >
+                  <div className="font-semibold truncate">{item.title}</div>
+                  <div className="text-xs mt-1" style={{ color: "var(--pm-muted)" }}>
+                    {new Date(item.createdAt).toLocaleString()}
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  className="pm-btn h-8 px-3 text-[11px]"
+                  data-testid={`scratchpad-item-copy-${item.id}`}
+                  onClick={() => void copyText(item.content)}
+                >
+                  複製
+                </button>
+              </div>
+            ))}
+            {items.length === 0 && (
+              <div
+                className="rounded-[16px] px-4 py-3 text-sm"
+                style={{ border: "1px dashed var(--pm-border)", background: "var(--pm-panel-ink)", color: "var(--pm-muted)" }}
+              >
+                目前列表是空的，可用下方「快速新增」加入。
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6">
+            <div className="text-sm font-semibold">快速新增</div>
+            <div className="mt-2 rounded-[16px] border p-4" style={{ borderColor: "var(--pm-border)", background: "var(--pm-panel)" }}>
+              <textarea
+                ref={textareaRef}
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                data-testid="scratchpad-textarea"
+                className="w-full min-h-[220px] rounded-[14px] border bg-[color:var(--pm-panel)] px-4 py-3 text-sm font-mono focus:outline-none"
+                style={{ borderColor: "var(--pm-border)" }}
+                placeholder="把零碎想法放在這裡，稍後整理成提示詞。"
+              />
+              <div className="mt-2 text-xs" style={{ color: "var(--pm-muted)" }}>
+                {message ? <span style={{ color: "var(--pm-brand-strong)" }}>{message}</span> : "把草稿加入列表，或先複製內容再貼到提示詞。"}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
+
       <aside className="pm-panel flex-1 p-6 flex flex-col gap-4">
-        <div className="text-xs uppercase tracking-wide" style={{ color: "var(--pm-muted)" }}>
-          KPI
+        <div className="text-sm font-semibold">剪貼簿操作</div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="pm-btn h-9 px-4 text-sm"
+            onClick={() => void copySelected()}
+            data-testid="scratchpad-copy"
+          >
+            複製內容
+          </button>
+          <button type="button" className="pm-btn h-9 px-4 text-sm" onClick={quickFill}>
+            快速新增
+          </button>
         </div>
-        <div className="flex items-center justify-between text-sm">
-          <span>字數</span>
-          <span data-testid="scratchpad-kpi-chars" className="font-semibold">
-            {kpi.chars}
-          </span>
-        </div>
-        <div className="flex items-center justify-between text-sm">
-          <span>行數</span>
-          <span data-testid="scratchpad-kpi-lines" className="font-semibold">
-            {kpi.lines}
-          </span>
+        <div className="pm-card mt-2" style={{ background: "var(--pm-panel-ink)" }}>
+          <div className="text-xs" style={{ color: "var(--pm-muted)" }}>
+            列表數量
+          </div>
+          <div className="text-lg font-semibold" style={{ color: "var(--pm-text)" }}>
+            <span data-testid="scratchpad-count">{listCount}</span>
+          </div>
         </div>
         <div className="text-xs" style={{ color: "var(--pm-muted)" }}>
-          選擇專案後可直接將草稿另存為提示詞；空白時可先清空或複製後再整理。
+          {selected ? `已選擇：${selected.title}` : "尚未選擇項目，會複製輸入框內容。"}
         </div>
       </aside>
-      <ConfirmModal
-        open={confirmClear}
-        title="確認清空剪貼簿"
-        description="清空後 5 秒內可 Undo。"
-        confirmText="清空"
-        cancelText="取消"
-        onCancel={() => setConfirmClear(false)}
-        onConfirm={() => {
-          setConfirmClear(false);
-          handleClear();
-        }}
-      />
     </div>
   );
 }
