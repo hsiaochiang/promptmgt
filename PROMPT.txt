@@ -1,6 +1,7 @@
 /speckit.implement
-Continue Phase 6:
-- Implement T053 (Integration tests for 409 three-way choice in prompt detail).
-- Implement T054 (Unit tests for frontmatter minimal fields and defaults).
-- Complete T026 (Conflict dialog labels/buttons alignment), T029-T031 (README conflict handling updates).
-- Implement T055-T057 (Frontmatter validation and auto-fill in schema/route).
+Proceed to Phase 7: User Story 5 - Scratchpad (剪貼簿).
+- Implement T058 (Integration tests for Scratchpad: Add/Edit/Copy/KPI).
+- Implement T032 (Scratchpad page component: Main editor, Side KPI/actions).
+- Implement T033 (Integrate Scratchpad into useWorkspaceStore).
+- Ensure the Scratchpad is accessible via the "Scratchpad" tab in TopBar.
+- Update tasks.md as progress is made.

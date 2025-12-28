@@ -11,6 +11,7 @@ import ChangeReportModal, { ChangeReportItem } from "./components/change-report-
 import SnippetPanel from "./components/snippet-panel";
 import DraftEditor from "./components/draft-editor";
 import TabPlaceholders from "./components/tab-placeholders";
+import Scratchpad from "./components/scratchpad";
 import SnackbarUndo from "./components/snackbar-undo";
 import { AsyncBoundary, ErrorBoundary } from "./components/error-boundary";
 import ProjectReadme from "./components/project-readme";
@@ -72,6 +73,19 @@ export default function WorkspaceShell() {
   const leftWidthRef = useRef(leftWidth);
   const middleWidthRef = useRef(middleWidth);
 
+  const fetchProjects = useCallback(async () => {
+    try {
+      const res = await fetch("/api/projects");
+      const list = await res.json();
+      setProjects(list);
+      if (!selectedProjectId && list.length > 0) {
+        setSelectedProjectId(list[0].name);
+      }
+    } catch {
+      // noop
+    }
+  }, [selectedProjectId, setSelectedProjectId]);
+
   const loadPrompt = useCallback(async () => {
     if (!selectedPromptId) {
       setPromptFrontmatter(null);
@@ -125,6 +139,12 @@ export default function WorkspaceShell() {
   useEffect(() => {
     loadPrompt();
   }, [loadPrompt]);
+
+  useEffect(() => {
+    if (activeTab === "scratchpad" || projects.length === 0) {
+      fetchProjects();
+    }
+  }, [activeTab, projects.length, fetchProjects]);
 
   useWorkspaceHotkeys({
     onNewPrompt: () => handleCreatePrompt(),
@@ -500,6 +520,10 @@ export default function WorkspaceShell() {
               )}
             </div>
           </section>
+        </div>
+      ) : activeTab === "scratchpad" ? (
+        <div className="flex flex-1 overflow-hidden">
+          <Scratchpad projects={projects} />
         </div>
       ) : (
         <div className="flex flex-1 overflow-hidden">

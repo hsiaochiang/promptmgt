@@ -138,10 +138,10 @@
 
 ### Tests（必須先寫且先失敗）
 
-- [ ] T058 [P] [US5] 整合測試：Scratchpad 新增/編輯/複製（KPI 更新）：tests/integration/us5-scratchpad.test.tsx
+- [X] T058 [P] [US5] 整合測試：Scratchpad 新增/編輯/複製（KPI 更新）：tests/integration/us5-scratchpad.test.tsx
 
-- [ ] T032 [P] [US5] 建立 Scratchpad（剪貼簿）頁面元件（Main 編輯、Side KPI/動作）：app/(workspace)/components/scratchpad.tsx
-- [ ] T033 [US5] 將 Scratchpad 納入 workspace store（含匯出/另存為提示詞的資料結構）：app/(workspace)/store/useWorkspaceStore.ts
+- [X] T032 [P] [US5] 建立 Scratchpad（剪貼簿）頁面元件（Main 編輯、Side KPI/動作）：app/(workspace)/components/scratchpad.tsx
+- [X] T033 [US5] 將 Scratchpad 納入 workspace store（含匯出/另存為提示詞的資料結構）：app/(workspace)/store/useWorkspaceStore.ts
 
 ---
 
