@@ -15,6 +15,8 @@ import SnackbarUndo from "./components/snackbar-undo";
 import { AsyncBoundary, ErrorBoundary } from "./components/error-boundary";
 import ProjectReadme from "./components/project-readme";
 import HelpModal from "./components/help-modal";
+import ProjectFiles from "./components/project-files";
+import ProjectTimeline from "./components/project-timeline";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { InboxItem, PromptFrontmatter, Project, PromptStatus, PromptType, Snippet } from "@/lib/types/schema";
 import RootPathAlert from "./components/root-path-alert";
@@ -774,6 +776,10 @@ export default function WorkspaceShell() {
                       />
                     </ErrorBoundary>
                   </div>
+
+                  <ProjectFiles project={selectedProject} />
+
+                  <ProjectTimeline project={selectedProject} />
                 </div>
               </div>
 
