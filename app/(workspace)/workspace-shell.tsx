@@ -17,6 +17,7 @@ import ProjectReadme from "./components/project-readme";
 import HelpModal from "./components/help-modal";
 import ProjectFiles from "./components/project-files";
 import ProjectTimeline from "./components/project-timeline";
+import ProjectMeta from "./components/project-meta";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { InboxItem, PromptFrontmatter, Project, PromptStatus, PromptType, Snippet } from "@/lib/types/schema";
 import RootPathAlert from "./components/root-path-alert";
@@ -784,6 +785,7 @@ export default function WorkspaceShell() {
               </div>
 
               <aside className="space-y-6" data-testid="project-detail-side">
+                <ProjectMeta project={selectedProject} />
                 <div className="pm-panel p-6" style={{ position: "sticky", top: 24 }}>
                   <div className="text-sm font-semibold">專案資訊</div>
                   <div className="mt-3 space-y-3 text-sm">

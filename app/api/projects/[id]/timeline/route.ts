@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
-import { join } from "path";
+import { dirname, join } from "path";
 import { nanoid } from "nanoid";
 import { getDb } from "@/lib/db";
 import { badRequest, notFound } from "@/app/api/_lib/responses";
@@ -41,7 +41,7 @@ async function readTimeline(path: string): Promise<TimelineItem[]> {
 }
 
 async function writeTimeline(path: string, items: TimelineItem[]) {
-  await fs.mkdir(join(path, ".."), { recursive: true }).catch(() => {});
+  await fs.mkdir(dirname(path), { recursive: true }).catch(() => {});
   await fs.writeFile(path, JSON.stringify(items, null, 2), "utf8");
 }
 
