@@ -18,10 +18,10 @@
 
 **Purpose**: 確立工作分支與開發基線（不做 story 開發）
 
- - [X] T001 確認本 feature 文件齊備且互相一致：specs/001-local-prompt-manager/{plan.md,spec.md,research.md,data-model.md,quickstart.md}
- - [X] T002 確認本 repo 的 dev/build/test 腳本可用並記錄到文件：package.json
- - [X] T003 [P] 確認 API 錯誤格式文件與實作一致（{code,message,details?}）：specs/001-local-prompt-manager/contracts/api.md
- - [X] T004 [P] 確認 OpenAPI 與 Route Handlers 一致（method/path/409 details）：specs/001-local-prompt-manager/contracts/openapi.yaml
+- [X] T001 確認本 feature 文件齊備且互相一致：specs/001-local-prompt-manager/{plan.md,spec.md,research.md,data-model.md,quickstart.md}
+- [X] T002 確認本 repo 的 dev/build/test 腳本可用並記錄到文件：package.json
+- [X] T003 [P] 確認 API 錯誤格式文件與實作一致（{code,message,details?}）：specs/001-local-prompt-manager/contracts/api.md
+- [X] T004 [P] 確認 OpenAPI 與 Route Handlers 一致（method/path/409 details）：specs/001-local-prompt-manager/contracts/openapi.yaml
 
 ---
 
@@ -48,6 +48,8 @@
 **Independent Test**: 切換三個 Tabs 時，Main/Side 內容正確切換；rootPath 缺失時仍可瀏覽頁面且顯示 RootPathAlert。
 
 ### Tests（必須先寫且先失敗）
+
+- [X] T063 [P] [US1] E2E（最小 smoke）：啟動 app → Tabs 切換（Projects/Prompts/Scratchpad）→ RootPathAlert 不阻擋：tests/e2e/us1-smoke.spec.ts
 
 - [X] T043 [P] [US1] 整合測試：Topbar Tabs 切換 + RootPathAlert 顯示不阻擋：tests/integration/us1-shell-tabs-rootpath.test.tsx
 - [ ] T044 [P] [US1] 契約測試：Settings rootPath 讀寫與錯誤格式（含不可存取路徑）：tests/contract/api-settings.test.ts
@@ -122,7 +124,7 @@
 - [X] T028 [US4] 讓 autosave 409 回傳包含 currentHash/currentMtime，UI 用於顯示與後續覆寫：app/api/prompts/[id]/route.ts
 - [X] T029 [US4] README 儲存遇到 409 時提供三選一（重新載入 / 另存副本（下載 .md） / 強制覆寫）：app/(workspace)/components/project-readme.tsx
 - [X] T030 [US4] README 409 details 回傳補齊 currentHash/currentMtime：app/api/projects/[id]/readme/route.ts
-- [ ] T031 [US4] 更新合約文件反映 409 details 與三選一：specs/001-local-prompt-manager/contracts/{api.md,openapi.yaml}
+- [X] T031 [US4] 更新合約文件反映 409 details 與三選一：specs/001-local-prompt-manager/contracts/{api.md,openapi.yaml}
 
 - [X] T055 [US4] Frontmatter：落實 FR-006 最小欄位要求（缺值補值或阻擋靜默寫入）：lib/utils/frontmatter.ts
 - [X] T056 [US4] Schema：更新/補強 frontmatter 相關驗證（對應 FR-006）：lib/types/schema.ts

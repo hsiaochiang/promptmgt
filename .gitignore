@@ -8,6 +8,10 @@ out/
 coverage/
 .vercel/
 
+# Playwright
+test-results/
+playwright-report/
+
 # Env & logs
 .env*
 *.log

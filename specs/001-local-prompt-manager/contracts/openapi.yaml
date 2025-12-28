@@ -134,7 +134,7 @@ paths:
                   - type: object
                     properties:
                       details:
-                        $ref: "#/components/schemas/ConflictHashDetails"
+                        $ref: "#/components/schemas/ConflictHashMtimeDetails"
 
   /prompts:
     get:

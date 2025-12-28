@@ -41,9 +41,9 @@
 - 更新檢查：僅在 `updateCheckEnabled` 為 true 時執行；停用即為 no-op。
 
 ## 測試
-- 全部測試：`npm run test`  
-- 契約測試：`npm run test -- tests/contract`  
-- 整合測試：`npm run test -- tests/integration`  
+- 合併前/CI（含 coverage 閘門）：`npm run test`  
+- 契約測試（不含 coverage 閘門）：`npm run test:contract`  
+- 單檔快速驗證（不含 coverage 閘門）：`npm run test:fast -- <test-file>`  
 - 覆蓋率需 ≥80%，關鍵路徑力求 100%。
 
 ## 常見錯誤 / 修復

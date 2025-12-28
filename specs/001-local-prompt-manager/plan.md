@@ -58,6 +58,7 @@
 - **契約測試**：所有修改/新增的 Route Handlers 必須新增或更新 `tests/contract`，覆蓋成功回應與 `{code,message,details?}` 錯誤格式，並包含 409 衝突案例。
 - **整合測試**：針對使用者旅程（Prompt Detail 的 autosave、409 三選一、刪除後 Undo）新增或更新 `tests/integration`，以確保 UX 行為一致。
 - **單元測試**：工具函式與關鍵邏輯（frontmatter、日期、deferred delete 計時/狀態）新增或更新 `tests/unit`。
+- **E2E（最小）**：提供至少一條 smoke flow（啟動 app → Tabs 切換 → RootPathAlert 不阻擋），用於驗證端到端啟動與核心導覽不回歸。
 - **門檻**：單元測試 ≥80%；關鍵路徑（autosave、409 衝突三選一、deferred delete/undo）需 100%。
 
 ## Project Structure

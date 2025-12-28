@@ -10,7 +10,7 @@
 
 ## Project README
 - `GET /api/projects/{id}/readme` → 200: { content, path, hash, mtimeMs }
-- `PUT /api/projects/{id}/readme` body: { content, expectedHash?, expectedMtime? } → 200: { path, hash, mtimeMs, updatedAt }；409 on conflict
+- `PUT /api/projects/{id}/readme` body: { content, expectedHash?, expectedMtime? } → 200: { path, hash, mtimeMs, updatedAt }；409 on conflict（details: { currentHash, currentMtime }）
 
 ## Inbox
 - `GET /api/inbox?q=&limit=&offset=` → 200: { items, total, hasMore, limit, offset }
