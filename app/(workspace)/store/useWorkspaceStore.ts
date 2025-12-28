@@ -123,7 +123,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   editorDirty: false,
   lastSavedAt: null,
   inboxCount: 0,
-  isSnippetPanelOpen: true,
+  isSnippetPanelOpen: false,
   isLoading: false,
   focusMode: false,
   pinned: defaultPreferences.pinned,

@@ -651,16 +651,16 @@ export default function WorkspaceShell() {
                 )}
               </div>
 
-              <div
-                className="pm-panel overflow-hidden"
-                data-testid="snippet-drawer"
-                data-open={isSnippetPanelOpen}
-                style={{ position: "sticky", top: 24 + 260 }}
-              >
-                {isSnippetPanelOpen ? (
+              {isSnippetPanelOpen ? (
+                <div
+                  className="pm-panel overflow-hidden"
+                  data-testid="snippet-drawer"
+                  data-open={isSnippetPanelOpen}
+                  style={{ position: "sticky", top: 24 + 260 }}
+                >
                   <SnippetPanel onInsert={(snippet: Snippet) => insertSnippet(snippet)} onClose={() => toggleSnippetPanel(false)} />
-                ) : null}
-              </div>
+                </div>
+              ) : null}
             </aside>
           </div>
         </section>
