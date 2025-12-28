@@ -15,6 +15,7 @@ import Scratchpad from "./components/scratchpad";
 import SnackbarUndo from "./components/snackbar-undo";
 import { AsyncBoundary, ErrorBoundary } from "./components/error-boundary";
 import ProjectReadme from "./components/project-readme";
+import HelpModal from "./components/help-modal";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { InboxItem, PromptFrontmatter, Project, PromptStatus, PromptType, Snippet } from "@/lib/types/schema";
 import RootPathAlert from "./components/root-path-alert";
@@ -29,6 +30,7 @@ export default function WorkspaceShell() {
   const [inboxRefreshKey, setInboxRefreshKey] = useState(0);
   const [creatingPrompt, setCreatingPrompt] = useState(false);
   const [showChangeLog, setShowChangeLog] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const selectedPromptId = useWorkspaceStore((s) => s.selectedPromptId);
   const setEditorDirty = useWorkspaceStore((s) => s.setEditorDirty);
   const setSelectedProjectId = useWorkspaceStore((s) => s.setSelectedProjectId);
@@ -79,6 +81,7 @@ export default function WorkspaceShell() {
     try {
       const res = await fetch("/api/projects");
       const list = await res.json();
+      if (!Array.isArray(list)) return;
       setProjects(list);
       if (!selectedProjectId && list.length > 0) {
         setSelectedProjectId(list[0].name);
@@ -257,6 +260,21 @@ export default function WorkspaceShell() {
 
   const selectedProject = projects.find((p) => p.name === selectedProjectId) ?? null;
 
+  const projectsKpi = React.useMemo(() => {
+    const base = { total: 0, planning: 0, active: 0, done: 0 };
+    if (!Array.isArray(projects)) return base;
+    return projects.reduce(
+      (acc, p) => {
+        acc.total += 1;
+        if (p.status === "規劃中") acc.planning += 1;
+        else if (p.status === "進行中") acc.active += 1;
+        else if (p.status === "已結案") acc.done += 1;
+        return acc;
+      },
+      { ...base }
+    );
+  }, [projects]);
+
   const createPrompt = async (options?: { title?: string; skipPrompt?: boolean }) => {
     const projectName = selectedProjectId ?? projects[0]?.name;
     if (!projectName) {
@@ -391,6 +409,7 @@ export default function WorkspaceShell() {
       <div className="pm-app">
         <TopBar
           onShowChangeReport={() => setShowChangeLog(true)}
+          onOpenHelp={() => setShowHelp(true)}
           onCreatePrompt={handleCreatePrompt}
           creating={creatingPrompt}
           onToggleSnippetPanel={() => toggleSnippetPanel()}
@@ -621,7 +640,61 @@ export default function WorkspaceShell() {
           id="workspace-tabpanel-projects"
           aria-labelledby="workspace-tab-projects"
         >
-          <TabPlaceholders tab={activeTab} />
+          <div className="pm-shell w-full">
+            <div className="pm-panel p-6 min-h-0 overflow-auto" data-testid="project-list-panel">
+              <ErrorBoundary label="專案列表">
+                <ProjectList
+                  refreshKey={projectRefreshKey}
+                  onProjectsChange={(list) => setProjects(list)}
+                  onScheduleUndo={scheduleUndo}
+                />
+              </ErrorBoundary>
+            </div>
+
+            <aside className="space-y-6" data-testid="project-side-panel">
+              <div className="pm-panel p-6" style={{ position: "sticky", top: 24 }}>
+                <div className="text-sm font-semibold">專案概覽</div>
+                <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
+                  <div className="pm-card">
+                    <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
+                      進行中
+                    </div>
+                    <div className="text-lg font-semibold" style={{ color: "var(--pm-text)" }}>
+                      {projectsKpi.active}
+                    </div>
+                  </div>
+                  <div className="pm-card">
+                    <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
+                      規劃中
+                    </div>
+                    <div className="text-lg font-semibold" style={{ color: "var(--pm-text)" }}>
+                      {projectsKpi.planning}
+                    </div>
+                  </div>
+                  <div className="pm-card">
+                    <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
+                      已結案
+                    </div>
+                    <div className="text-lg font-semibold" style={{ color: "var(--pm-text)" }}>
+                      {projectsKpi.done}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 pm-card" style={{ background: "var(--pm-panel-ink)" }}>
+                  <div className="text-sm font-semibold">使用建議</div>
+                  <div className="mt-1 text-sm" style={{ color: "var(--pm-muted)" }}>
+                    先建立 1 個專案，再新增提示詞；提示詞會依專案歸檔並同步更新統計。
+                  </div>
+                  <div className="mt-3 flex justify-end">
+                    <button className="pm-btn pm-btn-accent h-9 px-4 text-sm" type="button" onClick={handleCreatePrompt}>
+                      新增提示詞
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </aside>
+          </div>
         </section>
       )}
       <ChangeReportModal
@@ -630,6 +703,7 @@ export default function WorkspaceShell() {
         onSelect={handleChangeReportSelect}
         onQuickAdd={handleQuickAddPrompt}
       />
+      <HelpModal open={showHelp} onClose={() => setShowHelp(false)} />
       <SnackbarUndo
         open={undoOpen}
         message={undoMessage}

@@ -5,6 +5,7 @@ import type { WorkspaceTab } from "../store/useWorkspaceStore";
 
 interface Props {
   onShowChangeReport?: () => void;
+  onOpenHelp?: () => void;
   onCreatePrompt: () => void;
   creating?: boolean;
   onToggleSnippetPanel: () => void;
@@ -21,6 +22,7 @@ const tabs: { key: WorkspaceTab; label: string }[] = [
 
 export default function TopBar({
   onShowChangeReport,
+  onOpenHelp,
   onCreatePrompt,
   creating,
   onToggleSnippetPanel,
@@ -60,9 +62,9 @@ export default function TopBar({
             aria-hidden="true"
           />
           <div>
-            <div className="font-semibold text-sm tracking-wide">Prompt Management Workspace</div>
+            <div className="font-semibold text-sm tracking-wide">提示詞工作台</div>
             <div className="text-xs" style={{ color: "var(--pm-muted)" }}>
-              專案導向的提示詞管理與整理工作台
+              內容編輯 · 專案管理 · 本機原型
             </div>
           </div>
         </div>
@@ -100,6 +102,12 @@ export default function TopBar({
         </nav>
       </div>
       <div className="flex items-center gap-3 text-xs">
+        <button
+          onClick={() => onOpenHelp?.()}
+          className="pm-btn h-9 px-3 text-sm"
+        >
+          操作指引
+        </button>
         <button
           onClick={onToggleSnippetPanel}
           className="pm-btn h-9 px-3 text-sm"

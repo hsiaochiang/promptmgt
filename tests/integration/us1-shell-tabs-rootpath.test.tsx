@@ -79,8 +79,8 @@ describe("US1 - Shell Tabs 與 RootPathAlert", () => {
 
     fireEvent.click(screen.getByTestId("workspace-tab-projects"));
     expect(screen.queryByTestId("prompt-list-panel")).not.toBeInTheDocument();
-    const projectMain = await screen.findByTestId("tab-placeholder-main");
-    expect(projectMain).toHaveAttribute("data-tab", "projects");
+    expect(await screen.findByTestId("project-list-panel")).toBeInTheDocument();
+    expect(await screen.findByTestId("mock-project-list")).toBeInTheDocument();
     expect(screen.getByTestId("rootpath-alert")).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("workspace-tab-scratchpad"));
