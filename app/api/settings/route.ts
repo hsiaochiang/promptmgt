@@ -83,7 +83,12 @@ export async function POST(request: Request) {
       return badRequest("logPath is required", { field: "logPath" });
     }
     if (!(await isUnderUserDir(targetLogPath))) {
-      return badRequest("logPath must stay under user directory", { field: "logPath" });
+      const userDir = resolve(homedir());
+      return badRequest("logPath must stay under user directory", {
+        field: "logPath",
+        userDir,
+        example: join(userDir, ".promptmgt", "logs", "app.log")
+      });
     }
   }
   if (targetLogPath) {

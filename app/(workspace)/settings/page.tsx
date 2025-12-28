@@ -89,7 +89,7 @@ export default function SettingsPage() {
       const res = await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...settings, ...partial })
+        body: JSON.stringify(partial)
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -228,6 +228,12 @@ export default function SettingsPage() {
                   onChange={(e) => setLogPathInput(e.target.value)}
                   placeholder="例如：C:\\Users\\me\\AppData\\Local\\promptmgt\\logs\\app.log"
                 />
+                <button
+                  onClick={() => update({ logPath: "" })}
+                  className="pm-btn px-4 py-2 text-sm"
+                >
+                  使用預設
+                </button>
                 <button
                   onClick={() => update({ logPath: logPathInput })}
                   className="pm-btn pm-btn-primary px-4 py-2 text-sm disabled:opacity-60"
