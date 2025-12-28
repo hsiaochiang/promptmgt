@@ -136,27 +136,36 @@ export default function SettingsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-100 text-slate-900 p-6">
-      <div className="max-w-3xl mx-auto bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-6">
+    <main className="min-h-screen theme-prototype">
+      <div className="pm-app">
+        <div className="pm-panel max-w-3xl mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-lg font-semibold">設定</h1>
-            <p className="text-sm text-slate-500">遙測與更新檢查可隨時開關，預設開啟。</p>
+            <p className="text-sm" style={{ color: "var(--pm-muted)" }}>
+              遙測與更新檢查可隨時開關，預設開啟。
+            </p>
           </div>
-          {saving && <span className="text-xs text-slate-500">儲存中…</span>}
+          {saving && (
+            <span className="text-xs" style={{ color: "var(--pm-muted)" }}>
+              儲存中…
+            </span>
+          )}
         </div>
 
         {error && (
-          <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          <div className="text-sm rounded-[14px] px-3 py-2" style={{ color: "var(--pm-danger)", background: "rgba(217,95,95,0.08)", border: "1px solid rgba(217,95,95,0.25)" }}>
             {error}
           </div>
         )}
 
         {loading || !settings ? (
-          <div className="text-sm text-slate-500">載入設定中…</div>
+          <div className="text-sm" style={{ color: "var(--pm-muted)" }}>
+            載入設定中…
+          </div>
         ) : (
           <div className="space-y-4">
-            <div className="p-4 border border-slate-200 rounded-lg space-y-2">
+            <div className="p-4 rounded-[14px] space-y-2" style={{ border: "1px solid var(--pm-border)", background: "var(--pm-panel-ink)" }}>
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-semibold text-sm">根路徑</div>
@@ -171,27 +180,28 @@ export default function SettingsPage() {
               </div>
               <div className="flex gap-2">
                 <input
-                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
+                  className="flex-1 rounded-full border bg-[color:var(--pm-panel)] px-4 py-2 text-sm outline-none"
+                  style={{ borderColor: "var(--pm-border)" }}
                   value={rootPathInput}
                   onChange={(e) => setRootPathInput(e.target.value)}
                   placeholder="例如：C:\\Users\\me\\Prompts"
                 />
                 <button
                   onClick={() => update({ rootPath: rootPathInput })}
-                  className="px-3 py-2 rounded-lg bg-slate-900 text-white text-sm hover:bg-slate-800"
+                  className="pm-btn pm-btn-primary px-4 py-2 text-sm"
                 >
                   儲存路徑
                 </button>
                 <button
                   onClick={() => update({ rootPath: rootPathInput })}
-                  className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-700 hover:bg-slate-50"
+                  className="pm-btn px-4 py-2 text-sm disabled:opacity-60"
                   disabled={!rootPathInput}
                 >
                   建立資料夾
                 </button>
                 <button
                   onClick={load}
-                  className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-700 hover:bg-slate-50"
+                  className="pm-btn px-4 py-2 text-sm"
                 >
                   重新檢查
                 </button>
@@ -200,7 +210,7 @@ export default function SettingsPage() {
                 <div className="text-[11px] text-emerald-700">路徑可用：{rootPathInput}</div>
               ) : null}
             </div>
-            <div className="p-4 border border-slate-200 rounded-lg space-y-2">
+            <div className="p-4 rounded-[14px] space-y-2" style={{ border: "1px solid var(--pm-border)", background: "var(--pm-panel-ink)" }}>
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-semibold text-sm">日誌路徑</div>
@@ -212,20 +222,21 @@ export default function SettingsPage() {
               </div>
               <div className="flex gap-2">
                 <input
-                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
+                  className="flex-1 rounded-full border bg-[color:var(--pm-panel)] px-4 py-2 text-sm outline-none"
+                  style={{ borderColor: "var(--pm-border)" }}
                   value={logPathInput}
                   onChange={(e) => setLogPathInput(e.target.value)}
                   placeholder="例如：C:\\Users\\me\\AppData\\Local\\promptmgt\\logs\\app.log"
                 />
                 <button
                   onClick={() => update({ logPath: logPathInput })}
-                  className="px-3 py-2 rounded-lg bg-slate-900 text-white text-sm hover:bg-slate-800 disabled:opacity-60"
+                  className="pm-btn pm-btn-primary px-4 py-2 text-sm disabled:opacity-60"
                   disabled={!logPathInput}
                 >
                   儲存日誌路徑
                 </button>
               </div>
-              <div className="text-[11px] text-slate-500">
+              <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
                 預設值：{settings?.rootPath ? `${settings.rootPath}\\logs\\app.log` : "rootPath/logs/app.log"}
               </div>
             </div>
@@ -241,7 +252,7 @@ export default function SettingsPage() {
               checked={settings.updateCheckEnabled}
               onToggle={() => toggle("updateCheckEnabled")}
             />
-            <div className="p-4 border border-slate-200 rounded-lg space-y-2">
+            <div className="p-4 rounded-[14px] space-y-2" style={{ border: "1px solid var(--pm-border)", background: "var(--pm-panel-ink)" }}>
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-semibold text-sm">手動檢查更新</div>
@@ -250,15 +261,16 @@ export default function SettingsPage() {
                 <button
                   onClick={checkUpdate}
                   disabled={updateChecking}
-                  className="px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                  className="pm-btn px-4 py-2 text-sm disabled:opacity-60"
                 >
                   {updateChecking ? "檢查中…" : "立即檢查"}
                 </button>
               </div>
-              {updateStatus ? <div className="text-sm text-slate-600">{updateStatus}</div> : null}
+              {updateStatus ? <div className="text-sm" style={{ color: "var(--pm-muted)" }}>{updateStatus}</div> : null}
             </div>
           </div>
         )}
+        </div>
       </div>
     </main>
   );

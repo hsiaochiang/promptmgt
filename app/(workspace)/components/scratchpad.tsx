@@ -96,18 +96,21 @@ export default function Scratchpad({ projects, onScheduleUndo }: Props) {
   };
 
   return (
-    <div className="flex flex-1 overflow-hidden gap-4 p-4">
-      <section className="flex-[1.5] bg-white border border-slate-200 rounded-xl shadow-sm p-4 flex flex-col gap-3">
+    <div className="flex flex-1 overflow-hidden gap-6">
+      <section className="pm-panel flex-[1.5] p-6 flex flex-col gap-4">
         <header className="flex items-center justify-between">
           <div>
-            <div className="text-xs font-semibold text-indigo-600">Scratchpad</div>
-            <div className="text-lg font-bold text-slate-900">快速草稿</div>
+            <div className="text-xs font-semibold" style={{ color: "var(--pm-brand-strong)" }}>
+              Scratchpad
+            </div>
+            <div className="text-lg font-bold">快速草稿</div>
           </div>
           <div className="flex items-center gap-2 text-xs">
             <select
               value={selectedProjectId ?? ""}
               onChange={(e) => setSelectedProjectId(e.target.value)}
-              className="h-9 px-2 rounded-lg border border-slate-300 bg-white"
+              className="h-9 px-3 rounded-full border bg-[color:var(--pm-panel)]"
+              style={{ borderColor: "var(--pm-border)" }}
               data-testid="scratchpad-project"
             >
               {projectOptions.map((p) => (
@@ -120,7 +123,7 @@ export default function Scratchpad({ projects, onScheduleUndo }: Props) {
               type="button"
               onClick={handleSavePrompt}
               disabled={saving || !selectedProjectId}
-              className="h-9 px-3 rounded-lg bg-emerald-600 text-white text-sm disabled:opacity-60"
+              className="pm-btn pm-btn-primary h-9 px-4 text-sm disabled:opacity-60"
               data-testid="scratchpad-save"
             >
               {saving ? "儲存中…" : "另存為提示詞"}
@@ -130,7 +133,8 @@ export default function Scratchpad({ projects, onScheduleUndo }: Props) {
         <textarea
           value={scratchpadContent}
           onChange={(e) => setScratchpadContent(e.target.value)}
-          className="w-full min-h-[260px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-mono focus:outline-none focus:border-slate-400"
+          className="w-full min-h-[260px] flex-1 rounded-[14px] border bg-[color:var(--pm-panel)] px-4 py-3 text-sm font-mono focus:outline-none"
+          style={{ borderColor: "var(--pm-border)" }}
           placeholder="在此記錄靈感或中繼資料，之後可另存為提示詞。"
           data-testid="scratchpad-textarea"
         />
@@ -138,7 +142,7 @@ export default function Scratchpad({ projects, onScheduleUndo }: Props) {
           <button
             type="button"
             onClick={() => setConfirmClear(true)}
-            className="h-9 px-3 rounded-lg border border-slate-300 bg-white"
+            className="pm-btn h-9 px-4 text-sm"
             data-testid="scratchpad-clear"
           >
             清空
@@ -146,30 +150,32 @@ export default function Scratchpad({ projects, onScheduleUndo }: Props) {
           <button
             type="button"
             onClick={handleCopy}
-            className="h-9 px-3 rounded-lg border border-slate-300 bg-white"
+            className="pm-btn h-9 px-4 text-sm"
             data-testid="scratchpad-copy"
           >
             複製
           </button>
-          {message ? <span className="text-emerald-600">{message}</span> : null}
-          {error ? <span className="text-amber-700">{error}</span> : null}
+          {message ? <span style={{ color: "var(--pm-brand-strong)" }}>{message}</span> : null}
+          {error ? <span style={{ color: "var(--pm-danger)" }}>{error}</span> : null}
         </div>
       </section>
-      <aside className="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col gap-3">
-        <div className="text-xs uppercase tracking-wide text-slate-500">KPI</div>
+      <aside className="pm-panel flex-1 p-6 flex flex-col gap-4">
+        <div className="text-xs uppercase tracking-wide" style={{ color: "var(--pm-muted)" }}>
+          KPI
+        </div>
         <div className="flex items-center justify-between text-sm">
           <span>字數</span>
-          <span data-testid="scratchpad-kpi-chars" className="font-semibold text-slate-800">
+          <span data-testid="scratchpad-kpi-chars" className="font-semibold">
             {kpi.chars}
           </span>
         </div>
         <div className="flex items-center justify-between text-sm">
           <span>行數</span>
-          <span data-testid="scratchpad-kpi-lines" className="font-semibold text-slate-800">
+          <span data-testid="scratchpad-kpi-lines" className="font-semibold">
             {kpi.lines}
           </span>
         </div>
-        <div className="text-xs text-slate-500">
+        <div className="text-xs" style={{ color: "var(--pm-muted)" }}>
           選擇專案後可直接將草稿另存為提示詞；空白時可先清空或複製後再整理。
         </div>
       </aside>

@@ -10,21 +10,23 @@ const COPY: Record<WorkspaceTab, { title: string; helper: string }> = {
 export default function TabPlaceholders({ tab }: { tab: WorkspaceTab }) {
   const copy = COPY[tab];
   return (
-    <div className="flex flex-1 overflow-hidden">
+    <div className="flex flex-1 overflow-hidden gap-6">
       <section
-        className="flex-[1.2] bg-white border-r border-slate-200 flex flex-col items-center justify-center gap-2 text-sm text-slate-700"
+        className="pm-panel flex-[1.2] flex flex-col items-center justify-center gap-2 text-sm"
         data-testid="tab-placeholder-main"
         data-tab={tab}
       >
-        <div className="font-semibold text-slate-900">{copy.title}</div>
-        <div className="text-slate-500">{copy.helper}</div>
+        <div className="font-semibold">{copy.title}</div>
+        <div style={{ color: "var(--pm-muted)" }}>{copy.helper}</div>
       </section>
       <aside
-        className="flex-1 bg-slate-50 flex flex-col items-center justify-center gap-2 text-sm text-slate-600"
+        className="pm-panel flex-1 flex flex-col items-center justify-center gap-2 text-sm"
         data-testid="tab-placeholder-side"
         data-tab={tab}
       >
-        <div className="text-xs uppercase tracking-wide text-slate-500">Side</div>
+        <div className="text-xs uppercase tracking-wide" style={{ color: "var(--pm-muted)" }}>
+          Side
+        </div>
         <div>此區顯示 {copy.title}</div>
       </aside>
     </div>

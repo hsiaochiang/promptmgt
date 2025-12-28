@@ -386,33 +386,41 @@ export default function WorkspaceShell() {
   };
 
   return (
-    <div className="min-h-screen theme-prototype flex flex-col">
-      <TopBar
-        onShowChangeReport={() => setShowChangeLog(true)}
-        onCreatePrompt={handleCreatePrompt}
-        creating={creatingPrompt}
-        onToggleSnippetPanel={() => toggleSnippetPanel()}
-        snippetOpen={isSnippetPanelOpen}
-        activeTab={activeTab}
-        onTabChange={(tab) => {
-          setActiveTab(tab);
-          setListCollapsed(false);
-        }}
-      />
-      <RootPathAlert className="fixed left-1/2 top-16 z-30 w-[min(960px,calc(100%-32px))] -translate-x-1/2 drop-shadow" />
+    <div className="theme-prototype">
+      <div className="pm-app">
+        <TopBar
+          onShowChangeReport={() => setShowChangeLog(true)}
+          onCreatePrompt={handleCreatePrompt}
+          creating={creatingPrompt}
+          onToggleSnippetPanel={() => toggleSnippetPanel()}
+          snippetOpen={isSnippetPanelOpen}
+          activeTab={activeTab}
+          onTabChange={(tab) => {
+            setActiveTab(tab);
+            setListCollapsed(false);
+          }}
+        />
+        <div
+          className="fixed left-1/2 z-30 w-[min(960px,calc(100%-64px))] -translate-x-1/2"
+          style={{ top: "calc(var(--pm-app-pad-y) + 4rem)" }}
+        >
+          <RootPathAlert className="w-full drop-shadow" />
+        </div>
       {activeTab === "prompts" ? (
         <section
-          className="flex flex-1 overflow-hidden"
+          className="flex flex-1 overflow-hidden gap-6"
           role="tabpanel"
           id="workspace-tabpanel-prompts"
           aria-labelledby="workspace-tab-prompts"
         >
           <aside
-            className="flex-shrink-0 border-r border-slate-200 bg-white flex flex-col transition-all duration-200"
+            className="pm-panel flex-shrink-0 flex flex-col overflow-hidden transition-all duration-200"
             style={{ width: leftWidth }}
           >
-            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-              <div className="font-semibold text-xs tracking-wide text-slate-600">專案與收件匣</div>
+            <div className="pm-panel-header px-4 py-3 flex items-center justify-between">
+              <div className="font-semibold text-xs tracking-wide" style={{ color: "var(--pm-muted)" }}>
+                專案與收件匣
+              </div>
               <div className="text-[10px] rounded-full bg-amber-100 text-amber-800 px-2 py-0.5 border border-amber-200">
                 收件匣 {inboxCount}
               </div>
@@ -447,21 +455,27 @@ export default function WorkspaceShell() {
               </div>
             </div>
           </aside>
-          <div className="w-[6px] cursor-col-resize bg-slate-200/70" onMouseDown={startResize("left")} role="separator" />
+          <div
+            className="w-[6px] cursor-col-resize bg-transparent hover:bg-[color:var(--pm-border)] rounded-full"
+            onMouseDown={startResize("left")}
+            role="separator"
+          />
           <main
-            className={`flex flex-col border-r border-slate-200 transition-all duration-200 ${focusMode ? "hidden" : ""} ${
+            className={`pm-panel flex flex-col overflow-hidden transition-all duration-200 ${focusMode ? "hidden" : ""} ${
               listCollapsed ? "hidden" : ""
             }`}
             style={{ width: middleWidth }}
             data-testid="prompt-list-panel"
           >
-            <div className="h-16 bg-slate-50 border-b border-slate-200 px-4 flex items-center justify-between gap-4">
+            <div className="h-16 pm-panel-header px-4 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 flex-1">
-                <div className="text-xs text-slate-500">提示詞列表</div>
+                <div className="text-xs" style={{ color: "var(--pm-muted)" }}>
+                  提示詞列表
+                </div>
               </div>
               <div className="flex items-center gap-2 text-[11px]">
-                <button className="px-2 py-1 rounded-full bg-slate-900 text-white">進行中</button>
-                <button className="px-2 py-1 rounded-full border border-slate-300 bg-white">
+                <button className="pm-btn pm-btn-primary h-7 px-3 text-[11px]">進行中</button>
+                <button className="pm-btn h-7 px-3 text-[11px]">
                   全部
                 </button>
               </div>
@@ -480,16 +494,20 @@ export default function WorkspaceShell() {
           </main>
           {listCollapsed && !focusMode && (
             <button
-              className="absolute left-2 top-16 z-30 px-3 py-1 rounded-full bg-white shadow border border-slate-200 text-[11px]"
+              className="absolute left-2 top-16 z-30 pm-btn h-8 px-3 text-[11px]"
               onClick={() => setListCollapsed(false)}
               data-testid="list-recall"
             >
               顯示列表 (Alt+L)
             </button>
           )}
-          <div className="w-[6px] cursor-col-resize bg-slate-200/70" onMouseDown={startResize("middle")} role="separator" />
+          <div
+            className="w-[6px] cursor-col-resize bg-transparent hover:bg-[color:var(--pm-border)] rounded-full"
+            onMouseDown={startResize("middle")}
+            role="separator"
+          />
           <section
-            className={`relative flex flex-col p-4 bg-slate-50 transition-all ${focusMode ? "flex-[1_1_100%]" : "flex-[1.8]"}`}
+            className={`pm-panel relative flex flex-col p-6 transition-all ${focusMode ? "flex-[1_1_100%]" : "flex-[1.8]"}`}
             data-testid="editor-panel"
           >
             <div className="flex flex-col gap-3 h-full">
@@ -604,6 +622,7 @@ export default function WorkspaceShell() {
         onTimeout={() => setUndoOpen(false)}
         onClose={() => setUndoOpen(false)}
       />
+      </div>
     </div>
   );
 }

@@ -51,7 +51,7 @@ export default function TopBar({
   };
 
   return (
-    <header className="h-16 px-4 flex items-center justify-between bg-transparent">
+    <header className="h-16 px-0 flex items-center justify-between bg-transparent">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-3">
           <div
@@ -102,16 +102,14 @@ export default function TopBar({
       <div className="flex items-center gap-3 text-xs">
         <button
           onClick={onToggleSnippetPanel}
-          className="px-3 py-1 rounded-full border bg-[color:var(--pm-panel)] hover:bg-[color:var(--pm-panel-ink)]"
-          style={{ borderColor: "var(--pm-border)", color: "var(--pm-text)" }}
+          className="pm-btn h-9 px-3 text-sm"
           data-testid="snippet-toggle"
         >
           {snippetOpen ? "隱藏片語" : "開啟片語"}
         </button>
         <Link
           href="/settings"
-          className="px-3 py-1 rounded-full border bg-[color:var(--pm-panel)] hover:bg-[color:var(--pm-panel-ink)]"
-          style={{ borderColor: "var(--pm-border)", color: "var(--pm-text)" }}
+          className="pm-btn h-9 px-3 text-sm"
         >
           設定
         </Link>
@@ -119,16 +117,14 @@ export default function TopBar({
           onClick={() => {
             onShowChangeReport?.();
           }}
-          className="px-3 py-1 rounded-full border bg-[color:var(--pm-panel)] hover:bg-[color:var(--pm-panel-ink)]"
-          style={{ borderColor: "var(--pm-border)", color: "var(--pm-text)" }}
+          className="pm-btn h-9 px-3 text-sm"
         >
           今日變更報告
         </button>
         <button
           onClick={onCreatePrompt}
           disabled={creating}
-          className="px-3 py-1 rounded-full text-white disabled:opacity-60"
-          style={{ background: "linear-gradient(135deg, var(--pm-brand) 0%, var(--pm-brand-strong) 100%)" }}
+          className="pm-btn pm-btn-primary h-9 px-3 text-sm disabled:opacity-60"
         >
           {creating ? "建立中…" : "新增提示詞"}
         </button>

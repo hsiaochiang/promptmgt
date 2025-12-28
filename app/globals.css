@@ -45,6 +45,10 @@ body {
 
 /* Prototype-aligned theme (opt-in via wrapper class) */
 .theme-prototype {
+  --pm-app-pad-y: 28px;
+  --pm-app-pad-x: 32px;
+  --pm-app-pad-bottom: 40px;
+
   --pm-bg: #f6f5f2;
   --pm-bg-ink: #f1efe9;
   --pm-panel: #ffffff;
@@ -70,10 +74,52 @@ body {
 }
 
 @layer components {
+  .pm-app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: var(--pm-app-pad-y) var(--pm-app-pad-x) var(--pm-app-pad-bottom);
+  }
+
   .pm-panel {
     background: var(--pm-panel);
     border: 1px solid var(--pm-border);
     border-radius: var(--pm-radius);
     box-shadow: var(--pm-shadow);
+  }
+
+  .pm-panel-header {
+    background: var(--pm-panel-ink);
+    border-bottom: 1px solid var(--pm-border);
+  }
+
+  .pm-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid var(--pm-border);
+    background: var(--pm-panel);
+    color: var(--pm-text);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    user-select: none;
+  }
+
+  .pm-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--pm-shadow-soft);
+  }
+
+  .pm-btn-primary {
+    border: none;
+    color: #fff;
+    background: linear-gradient(135deg, var(--pm-brand) 0%, var(--pm-brand-strong) 100%);
+  }
+
+  .pm-btn-accent {
+    border: none;
+    color: #fff;
+    background: linear-gradient(135deg, var(--pm-accent) 0%, var(--pm-accent-strong) 100%);
   }
 }
