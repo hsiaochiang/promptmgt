@@ -180,6 +180,8 @@
 - [X] T061 [P] 覆蓋率門檢核：單元 ≥80%，關鍵路徑 100%（記錄落差與修正清單）：docs/perf-checks.md
 - [X] T062 [P] FR-035 落地檢核：Project/Prompt/Inbox/Snippet/Settings 的 createdAt/updatedAt 自動補值與更新規則逐一驗證：lib/types/schema.ts
 
+- [X] T067 [P] Prompts 版面對齊 prototype：改為 Main/Side 兩欄 shell，Side 放 KPI + 片語面板並套用 pm tokens：app/(workspace)/workspace-shell.tsx, app/(workspace)/components/snippet-panel.tsx, app/globals.css
+
 ---
 
 ## Dependencies & Execution Order

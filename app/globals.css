@@ -82,6 +82,13 @@ body {
     padding: var(--pm-app-pad-y) var(--pm-app-pad-x) var(--pm-app-pad-bottom);
   }
 
+  .pm-shell {
+    display: grid;
+    grid-template-columns: minmax(640px, 1fr) 360px;
+    gap: 24px;
+    align-items: start;
+  }
+
   .pm-panel {
     background: var(--pm-panel);
     border: 1px solid var(--pm-border);

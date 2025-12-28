@@ -97,15 +97,17 @@ export default function SnippetPanel({ onInsert, onClose }: Props) {
   };
 
   return (
-    <div className="w-64 bg-white flex flex-col border border-slate-200 rounded-lg overflow-hidden">
-      <div className="h-8 px-3 flex items-center justify-between text-[10px] text-slate-500 border-b border-slate-200">
+    <div className="w-full flex flex-col overflow-hidden" style={{ background: "var(--pm-panel)", color: "var(--pm-text)" }}>
+      <div className="h-10 px-4 flex items-center justify-between text-[11px] pm-panel-header">
         <span>常用片語剪貼簿</span>
         <div className="flex items-center gap-1">
-          <span className="text-[10px] text-slate-400">{snippets.length} 條</span>
+          <span className="text-[10px]" style={{ color: "var(--pm-muted)" }}>
+            {snippets.length} 條
+          </span>
           {onClose && (
             <button
               onClick={onClose}
-              className="px-2 py-0.5 rounded-full border border-slate-300 bg-white hover:bg-slate-50"
+              className="pm-btn h-7 px-3 text-[11px]"
               data-testid="snippet-close"
             >
               關閉
@@ -114,44 +116,54 @@ export default function SnippetPanel({ onInsert, onClose }: Props) {
           <button
             onClick={startCreate}
             data-testid="snippet-add-trigger"
-            className="px-2 py-0.5 rounded-full border border-slate-300 bg-white hover:bg-slate-50"
+            className="pm-btn h-7 px-3 text-[11px]"
           >
             新增
           </button>
         </div>
       </div>
-      <div className="p-2 border-b border-slate-100 text-[10px] flex items-center gap-1">
+      <div className="p-3 text-[11px] flex items-center gap-1" style={{ borderBottom: "1px solid var(--pm-border)" }}>
         <input
-          className="flex-1 rounded-full border border-slate-300 bg-white px-2 py-1 outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
+          className="flex-1 rounded-full border bg-[color:var(--pm-panel)] px-3 py-2 outline-none"
+          style={{ borderColor: "var(--pm-border)" }}
           placeholder="搜尋片語名稱或內容"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
       {formOpen && (
-        <div className="border-b border-slate-100 p-2 space-y-2 text-[11px] bg-slate-50">
+        <div className="p-3 space-y-2 text-[11px]" style={{ background: "var(--pm-panel-ink)", borderBottom: "1px solid var(--pm-border)" }}>
           <div className="space-y-1">
-            <div className="text-[10px] text-slate-500">名稱</div>
+            <div className="text-[10px]" style={{ color: "var(--pm-muted)" }}>
+              名稱
+            </div>
             <input
-              className="w-full border border-slate-300 rounded px-2 py-1 text-[11px]"
+              className="w-full border rounded-[14px] px-3 py-2 text-[11px]"
+              style={{ borderColor: "var(--pm-border)", background: "var(--pm-panel)" }}
               value={form.name}
               placeholder="名稱"
               onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
             />
           </div>
           <div className="space-y-1">
-            <div className="text-[10px] text-slate-500">分類</div>
+            <div className="text-[10px]" style={{ color: "var(--pm-muted)" }}>
+              分類
+            </div>
             <input
-              className="w-full border border-slate-300 rounded px-2 py-1 text-[11px]"
+              className="w-full border rounded-[14px] px-3 py-2 text-[11px]"
+              style={{ borderColor: "var(--pm-border)", background: "var(--pm-panel)" }}
               value={form.category}
               placeholder="分類"
               onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
             />
           </div>
           <div className="space-y-1">
-            <div className="text-[10px] text-slate-500">內容</div>
+            <div className="text-[10px]" style={{ color: "var(--pm-muted)" }}>
+              內容
+            </div>
             <textarea
-              className="w-full border border-slate-300 rounded px-2 py-1 text-[11px] min-h-[80px]"
+              className="w-full border rounded-[14px] px-3 py-2 text-[11px] min-h-[96px]"
+              style={{ borderColor: "var(--pm-border)", background: "var(--pm-panel)" }}
               value={form.content}
               placeholder="內容"
               onChange={(e) => setForm((prev) => ({ ...prev, content: e.target.value }))}
@@ -160,37 +172,46 @@ export default function SnippetPanel({ onInsert, onClose }: Props) {
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setFormOpen(false)}
-              className="px-2 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-50"
+              className="pm-btn h-8 px-3 text-[11px]"
             >
               取消
             </button>
             <button
               onClick={saveSnippet}
               data-testid="snippet-save"
-              className="px-2 py-1 rounded-full bg-slate-900 text-white hover:bg-slate-800"
+              className="pm-btn pm-btn-primary h-8 px-3 text-[11px]"
             >
               {formMode === "create" ? "新增" : "更新"}
             </button>
           </div>
         </div>
       )}
-      {loading && <div className="text-[10px] text-slate-400 px-3 py-2">載入中…</div>}
+      {loading && (
+        <div className="text-[11px] px-4 py-3" style={{ color: "var(--pm-muted)" }}>
+          載入中…
+        </div>
+      )}
       {error && (
-        <div className="text-[10px] text-amber-700 px-3 py-2 bg-amber-50 border border-amber-200">
+        <div className="text-[11px] px-4 py-3" style={{ color: "var(--pm-danger)", background: "rgba(217,95,95,0.08)", borderTop: "1px solid rgba(217,95,95,0.25)", borderBottom: "1px solid rgba(217,95,95,0.25)" }}>
           {error}
         </div>
       )}
-      <div className="flex-1 overflow-auto p-2 space-y-2 text-[11px]">
+      <div className="flex-1 overflow-auto p-3 space-y-2 text-[11px]">
         {filtered.map((s) => (
-          <div key={s.id} className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-2 flex flex-col gap-1">
+          <div
+            key={s.id}
+            className="rounded-[14px] px-3 py-2 flex flex-col gap-1"
+            style={{ border: "1px solid var(--pm-border)", background: "var(--pm-panel-ink)" }}
+          >
             <div className="flex items-center justify-between gap-1">
               <span className="font-semibold truncate">{s.name}</span>
-              <span className="text-[9px] text-slate-400 flex items-center gap-1">
+              <span className="text-[10px] flex items-center gap-1" style={{ color: "var(--pm-muted)" }}>
                 使用 {s.usageCount ?? s.usage ?? 0}
                 {busyId === s.id && <span className="text-amber-600">更新中…</span>}
                 {insertedId === s.id && (
                   <span
-                    className="px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    className="px-2 py-0.5 rounded-full"
+                    style={{ background: "rgba(47,111,111,0.12)", color: "var(--pm-brand-strong)", border: "1px solid rgba(47,111,111,0.25)" }}
                     data-testid={`snippet-inserted-${s.id}`}
                   >
                     已插入
@@ -198,7 +219,9 @@ export default function SnippetPanel({ onInsert, onClose }: Props) {
                 )}
               </span>
             </div>
-            <div className="text-[10px] text-slate-500 truncate">{s.content}</div>
+            <div className="text-[11px] truncate" style={{ color: "var(--pm-muted)" }}>
+              {s.content}
+            </div>
             <div className="flex items-center justify-between mt-1 text-[9px] text-slate-400">
               <span className="px-1.5 py-0.5 rounded-full bg-slate-100">{s.category}</span>
               <span>點擊插入到游標</span>
