@@ -1,6 +1,5 @@
 /speckit.implement
-Proceed to Phase 4: User Story 2 - Projects + Project Detail + README.
-- Implement T048 (Contract tests for README API) and T049 (Integration tests for Project Detail).
-- Align T017 (Project List UI) with prototype, including cards and filter.
-- Implement T018 (README editor in Project Detail) and T019 (UI update after save).
-- Ensure 409 conflict handling is considered for README saving.
+Proceed to Phase 5: User Story 3 - Prompts (提示詞列表).
+- Implement T050 (Integration tests for Prompts navigation).
+- Align T020 (Prompt List UI) with prototype, including filter, search, and Side KPI.
+- Ensure clicking a prompt enters Prompt Detail view correctly.

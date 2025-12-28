@@ -89,9 +89,9 @@
 
 ### Tests（必須先寫且先失敗）
 
-- [ ] T050 [P] [US3] 整合測試：Prompts 列表點擊進入 Prompt Detail（選取狀態/Side KPI）：tests/integration/us3-prompts-nav.test.tsx
+- [X] T050 [P] [US3] 整合測試：Prompts 列表點擊進入 Prompt Detail（選取狀態/Side KPI）：tests/integration/us3-prompts-nav.test.tsx
 
-- [ ] T020 [US3] 對齊 Prompts 列表（篩選/搜尋/點擊進入詳情）與 Side KPI：app/(workspace)/components/prompt-list.tsx
+- [X] T020 [US3] 對齊 Prompts 列表（篩選/搜尋/點擊進入詳情）與 Side KPI：app/(workspace)/components/prompt-list.tsx
 
 ---
 
