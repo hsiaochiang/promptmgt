@@ -77,3 +77,14 @@
 | SC-020 | 長操作忙碌指示 | 通過 | video-020.mp4 | 顯示 loading | |
 
 若有卡頓或可用性問題，需回填 T055–T060 與 SC 對應表，並提供具體改進方案（文案、指示、快捷鍵揭露、動畫節流等）。
+
+### 檢核結果（T066）
+
+| 項目 | 方法 | 結果 | 備註 |
+|------|------|------|------|
+| Topbar Tabs 鍵盤操作/ARIA | 既有測試 `tests/integration/us1-shell-tabs-a11y.test.tsx` + 元件檢閱 | PASS | `role=tablist/tab/tabpanel`、`aria-selected/tabIndex` 完整，左右鍵+Enter/Space 皆可用 |
+| Confirm Modal 焦點管理 | 元件檢閱 | PASS | 新增 `role="dialog" aria-modal`、Tab 焦點圈與 Esc 關閉，關閉時將焦點還原觸發點 |
+| Snackbar Undo 可聚焦/可操作 | 元件檢閱 | PASS | Undo 按鈕可聚焦，保持倒數提示文字可讀 |
+| RootPathAlert 導向可讀性 | 元件檢閱 | PASS | 文字導向與 `/settings` 連結可鍵盤觸發 |
+
+> 說明：本輪以元件檢閱 + 既有 a11y 測試確認重點互動；如需錄影/trace，請依上方檢查步驟再次實機跑一輪並附證據。

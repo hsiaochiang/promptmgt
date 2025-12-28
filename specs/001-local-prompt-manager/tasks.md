@@ -56,7 +56,7 @@
 - [X] T064 [P] [US1] 契約測試：Settings rootPath 不可存取路徑回傳標準錯誤格式（400 + details）：tests/contract/api-settings.test.ts
 
 - [X] T065 [P] [US1] a11y 整合測試：Topbar Tabs 支援鍵盤操作（左右鍵切換、Enter/Space 啟用、aria-selected 正確）：tests/integration/us1-shell-tabs-a11y.test.tsx
-- [ ] T066 [P] a11y 手動檢核：依 WCAG 2.1 AA 最小驗收逐項確認（Tabs/Modal/Snackbar/RootPathAlert/錯誤訊息）：docs/ux-checks.md
+- [X] T066 [P] a11y 手動檢核：依 WCAG 2.1 AA 最小驗收逐項確認（Tabs/Modal/Snackbar/RootPathAlert/錯誤訊息）：docs/ux-checks.md
 
 - [X] T012 [US1] 將 Topbar 改為 Tabs 導覽（Projects/Prompts/Scratchpad）並保留設定入口：app/(workspace)/components/top-bar.tsx
 - [X] T013 [US1] 在 workspace shell 實作 tab routing/state（不依賴 URL 亦可）：app/(workspace)/workspace-shell.tsx
