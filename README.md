@@ -23,6 +23,8 @@ npm run dev
 - 快速跑測試（不含覆蓋率閘門，適合單檔迭代）：`npm run test:fast -- tests/contract/api-project-readme.test.ts`
 - 跑契約測試（不含覆蓋率閘門）：`npm run test:contract`
 - Watch 模式（不含覆蓋率閘門）：`npm run test:watch`
+- E2E（Playwright）：`npm run e2e -- tests/e2e/us1-smoke.spec.ts`
+- 安裝 Playwright 瀏覽器（首次或 CI 本機排查用）：`npm run e2e:install`
 - 生產建置：`npm run build`（之後可 `npm start`）
 
 ## 設定與資料位置
@@ -37,6 +39,7 @@ npm run dev
   - 遙測匯出（Export Telemetry）：於設定頁匯出診斷檔，預設寫入 `logPath`（或 `telemetry.exportPath` 覆寫），檔案大小應 ≤5MB
   - 更新檢查（Update Check Enabled）：預設開啟，可停用避免對外連線；可於設定頁「手動檢查更新」呼叫安全端點（`UPDATE_CHECK_ENDPOINT`）。
 - 提示詞儲存在 `DEFAULT_ROOT/{ProjectName}/{SafeTitle}.md`，含 YAML frontmatter（title/project/type/status/model/tags/updatedAt/notes）；資料沿用 OS 權限，預設無應用層加密。
+- 提示詞儲存在 `DEFAULT_ROOT/{ProjectName}/{SafeTitle}.md`，含 YAML frontmatter（title/project/type/status/model/tags/updatedAt/note；歷史相容 `notes`）；資料沿用 OS 權限，預設無應用層加密。
 - 專案 README：建立專案時會自動生成 `rootPath/Prompts/{專案名稱}/README.md`（名稱經 `sanitizeFilename` 處理）；儲存會帶 `expectedHash/expectedMtime`，若收到 409 代表檔案已被外部修改，請重新載入後合併。
 
 ## API 概覽（App Router route handlers）
@@ -68,6 +71,13 @@ npm run dev
 - 使用 Vitest（jsdom）涵蓋契約、單元、整合測試，覆蓋率門檻 80%（臨界路徑更高）。
 - 合併前/CI：`npm run test`（含 coverage，會套用全域 coverage threshold）
 - 本機快速驗證：`npm run test:fast -- <test-file>`（不含 coverage threshold）
+
+### 何時用哪個指令
+
+- `npm run test`：CI/合併前必跑（含 coverage gate）。
+- `npm run test:contract`：只跑 API 契約測試（不含 coverage gate），適合本機快速驗證 API 變更。
+- `npm run test:fast -- <test-file>`：單檔迭代（不含 coverage gate）。
+- `npm run e2e -- tests/e2e/us1-smoke.spec.ts`：最小 E2E smoke（啟動 app → Tabs 切換 → RootPathAlert 不阻擋）。
 
 ## 開發提示
 - 檔名經 `sanitizeFilename` 處理避免非法字元。

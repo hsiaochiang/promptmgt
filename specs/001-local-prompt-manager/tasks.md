@@ -52,7 +52,8 @@
 - [X] T063 [P] [US1] E2E（最小 smoke）：啟動 app → Tabs 切換（Projects/Prompts/Scratchpad）→ RootPathAlert 不阻擋：tests/e2e/us1-smoke.spec.ts
 
 - [X] T043 [P] [US1] 整合測試：Topbar Tabs 切換 + RootPathAlert 顯示不阻擋：tests/integration/us1-shell-tabs-rootpath.test.tsx
-- [ ] T044 [P] [US1] 契約測試：Settings rootPath 讀寫與錯誤格式（含不可存取路徑）：tests/contract/api-settings.test.ts
+- [X] T044 [P] [US1] 契約測試：Settings rootPath 讀寫與基本錯誤格式（空字串等）：tests/contract/api-settings.test.ts
+- [ ] T064 [P] [US1] 契約測試：Settings rootPath 不可存取路徑回傳標準錯誤格式（400 + details）：tests/contract/api-settings.test.ts
 
 - [X] T012 [US1] 將 Topbar 改為 Tabs 導覽（Projects/Prompts/Scratchpad）並保留設定入口：app/(workspace)/components/top-bar.tsx
 - [X] T013 [US1] 在 workspace shell 實作 tab routing/state（不依賴 URL 亦可）：app/(workspace)/workspace-shell.tsx

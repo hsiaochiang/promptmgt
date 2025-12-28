@@ -57,6 +57,14 @@
 - Confirm Modal：危險操作二段式確認（取消/刪除）
 - Snackbar Undo：刪除後 5 秒可復原（復原/關閉）；5 秒內採軟刪以支援完整復原，逾時才永久刪除
 
+## 無障礙（a11y）最小驗收（對齊 WCAG 2.1 AA）
+
+- Tabs 導覽需支援鍵盤操作：Tab 可聚焦、左右方向鍵切換、Enter/Space 啟用；並具備正確的 ARIA role（tablist/tab/tabpanel）與 aria-selected 狀態。
+- Confirm Modal 開啟後需 focus trap；Esc 可關閉；關閉後焦點回到觸發按鈕。
+- Snackbar Undo 需可被鍵盤聚焦並可操作（Undo/Close）；倒數期間不應阻斷其他互動。
+- RootPathAlert 的導向連結需有可理解的文字（非僅圖示），並可用鍵盤觸發。
+- 錯誤訊息需「可操作」且可被輔助工具讀取（不要只靠顏色區分）。
+
 ## 頁面規格（以原型為準）
 
 ### 1) Projects（專案列表）
@@ -105,7 +113,28 @@
 
 - 正式提示詞以 Markdown 檔案儲存於專案資料夾。
 - 檔案包含 YAML frontmatter + 內容本體。
-- Frontmatter 至少包含：標題、專案、類型、狀態、模型、標籤、最後更新時間、備註。
+- Frontmatter 至少包含：標題、專案、類型、狀態、模型、標籤、`updatedAt`（最後更新時間）、備註（`note`）。
+
+#### Prompt Frontmatter 欄位表（規格即契約）
+
+> 本 spec 中「最後更新時間」一律指 `updatedAt`（ISO 8601，UTC+08:00）。
+
+| key | type | required | default | notes |
+|-----|------|----------|---------|-------|
+| title | string | Y | `"untitled"`（補值） | 不可空白；做為顯示標題 |
+| project | string | Y | `"unspecified"`（補值） | 不可空白；用於歸屬專案（顯示用專案名） |
+| type | string | Y | `"其他"` | 長度 ≤100；目前不限制枚舉值 |
+| status | string | Y | `"草稿"` | 允許值：`draft/active/archived` 或 `草稿/使用中/已封存`（允許英中並行） |
+| model | string | N | `""`（可省略） | 長度 ≤100 |
+| tags | string[] | Y | `[]` | 去空白、去重（不分大小寫） |
+| note | string | N | （省略） | 長度 ≤2000；歷史相容 `notes` → 正規化為 `note` |
+| createdAt | string | Y | server/資料層補值 | ISO 8601 (UTC+08:00)；僅首次建立設定 |
+| updatedAt | string | Y | server/資料層補值 | ISO 8601 (UTC+08:00)；每次成功儲存（含 autosave）都由 server/資料層更新並回傳 |
+
+**規則（非選配）**
+
+- client 不得自行宣告 `updatedAt` 作為權威；UI 顯示以 server 回傳值為準。
+- 若 frontmatter 缺必要欄位：必須「補值」或回傳「可操作錯誤」阻擋靜默寫入（不得默默產生不完整檔）。
 
 ### 衝突偵測與解決（寫入衝突 / 409）
 
@@ -130,6 +159,11 @@
 4. **Given** 使用者刪除專案/提示詞/剪貼簿項目，**When** 確認刪除，**Then** 顯示 Snackbar Undo（5 秒）且可在時限內復原；逾時則永久刪除
 5. **Given** 使用者編輯提示詞且該檔案被外部修改，**When** autosave 觸發並偵測寫入衝突（409），**Then** 顯示衝突提示並提供「重新載入 / 另存副本 / 強制覆寫」三選一
 
+## 非功能需求（NFR）
+
+- **效能**：互動 API p95 < 200ms（本機、非大量資料）；列表/搜尋結果上限 1000，超出需截斷或提示收斂。
+- **量測與紀錄**：針對互動路徑（列表載入、Prompt Detail 讀取/寫入、autosave）建立可重複量測步驟並記錄 p95；若未達標需在同一變更集中附上原因與改善計畫，避免回歸。
+
 ## Testing / Quality Gates（依 Constitution，非選配）
 
 - 本功能的所有變更必須遵循專案 Constitution 的 **Testing Standards (NON-NEGOTIABLE)**：測試需先寫、先失敗、再實作使其通過（Red-Green-Refactor）。
@@ -142,6 +176,7 @@
 - **FR-005**: 系統必須將正式提示詞以 Markdown 檔案儲存於專案資料夾，包含 YAML Frontmatter 與內容本體
 	- 驗收補充：提示詞檔案必須維持「Markdown + YAML frontmatter」格式；不得靜默寫出不含 frontmatter 的檔案。
 - **FR-006**: 系統必須在 Frontmatter 中保存至少：標題、專案、類型、狀態、模型、標籤、最後更新時間、備註
+	- 註：本 spec 的「最後更新時間」指 `updatedAt`；「備註」欄位 key 為 `note`（歷史相容 `notes`）。
 	- 驗收補充：若 frontmatter 缺必要欄位，需由系統補值或以可操作錯誤提示阻擋靜默寫入（不得默默產生不完整檔）。
 - **FR-008**: 系統必須提供 Markdown 編輯器與預覽，支援語法高亮與多種區塊（程式碼、列表、標題）
 - **FR-009**: 系統必須提供兩種複製模式：完整複製（含 Frontmatter）與精簡複製（僅內容本體，排除元數據）

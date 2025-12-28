@@ -91,6 +91,29 @@ describe("Settings API", () => {
     expect(data.pathExists).toBe(true);
   });
 
+  it("rootPath 不可存取時會以標準錯誤格式回傳", async () => {
+    const targetRoot = join(process.env.DEFAULT_ROOT!, "not-a-dir");
+    const { writeFile, mkdir } = await import("fs/promises");
+    await mkdir(process.env.DEFAULT_ROOT!, { recursive: true });
+    await writeFile(targetRoot, "this is a file, not a directory", "utf8");
+
+    const { POST } = await import("@/app/api/settings/route");
+    const res = await POST(
+      new Request("http://localhost/api/settings", {
+        method: "POST",
+        body: JSON.stringify({ rootPath: targetRoot })
+      })
+    );
+
+    expect(res.status).toBe(400);
+    const payload = await res.json();
+    expect(payload).toMatchObject({
+      code: "bad_request",
+      message: expect.stringContaining("rootPath"),
+      details: { message: expect.any(String) }
+    });
+  });
+
   it("rootPath 為 null 時 pathExists 為 false", async () => {
     const { updateSettings } = await import("@/lib/services/settings");
     const { GET } = await import("@/app/api/settings/route");
