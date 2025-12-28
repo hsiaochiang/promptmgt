@@ -229,4 +229,38 @@ body {
     border-color: rgba(111, 106, 96, 0.18);
     background: rgba(250, 249, 246, 0.9);
   }
+
+  /* Typography for Markdown preview (Tailwind Typography plugin) */
+  .pm-prose {
+    --tw-prose-body: var(--pm-text);
+    --tw-prose-headings: var(--pm-text);
+    --tw-prose-lead: var(--pm-muted);
+    --tw-prose-links: var(--pm-brand-strong);
+    --tw-prose-bold: var(--pm-text);
+    --tw-prose-counters: var(--pm-muted);
+    --tw-prose-bullets: var(--pm-muted);
+    --tw-prose-hr: var(--pm-border);
+    --tw-prose-quotes: var(--pm-text);
+    --tw-prose-quote-borders: var(--pm-border);
+    --tw-prose-captions: var(--pm-muted);
+    --tw-prose-code: var(--pm-text);
+    --tw-prose-pre-code: #fff;
+    --tw-prose-pre-bg: #1d1d1f;
+    --tw-prose-th-borders: var(--pm-border);
+    --tw-prose-td-borders: var(--pm-border);
+  }
+
+  .pm-prose :where(code):not(:where(pre code)) {
+    background: rgba(212, 163, 115, 0.18);
+    border: 1px solid rgba(212, 163, 115, 0.35);
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-weight: 600;
+  }
+
+  .pm-prose :where(pre) {
+    border-radius: 16px;
+    border: 1px solid rgba(47, 111, 111, 0.22);
+    box-shadow: var(--pm-shadow-soft);
+  }
 }
