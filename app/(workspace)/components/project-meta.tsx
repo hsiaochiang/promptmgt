@@ -13,13 +13,65 @@ type ProjectMeta = {
   updatedAt?: string;
 };
 
-const CATEGORY_OPTIONS = ["提示詞撰寫手冊", "內容策略與流程", "業務知識庫", "RAG/資料", "其他"];
-const STAGE_OPTIONS = ["規劃", "進行中", "封存"];
+const CATEGORY_OPTIONS = [
+  { code: "PRESALES", name: "售前/提案（對客戶）" },
+  { code: "DELIVERY", name: "交付/導入（對客戶）" },
+  { code: "INTERNAL_PRODUCT", name: "內部工具/產品化" },
+  { code: "AUTOMATION", name: "自動化工作流" },
+  { code: "TEST_QA", name: "測試/品質" },
+  { code: "TRAINING", name: "教材/課程/內訓" },
+  { code: "RESEARCH", name: "研究/選型/技術探索" },
+  { code: "OTHER", name: "其他" }
+];
 
-const PLATFORM_OPTIONS = ["ChatGPT", "Gemini", "Claude", "GitHub Copilot", "v0", "n8n", "Power Platform"];
-const DELIVERABLE_OPTIONS = ["Markdown", "PPT", "PDF", "Mermaid/流程圖", "JSON", "Excel"];
-const AUDIENCE_OPTIONS = ["對客戶", "對主管", "對內部", "教育訓練"];
-const COMMON_TAG_OPTIONS = ["可重用", "待確認", "決策", "卡關", "效果佳", "需修正", "敏感資訊"];
+const STAGE_OPTIONS = [
+  { code: "ACTIVE", name: "進行中" },
+  { code: "PAUSED", name: "暫停" },
+  { code: "ARCHIVED", name: "已封存" }
+];
+
+const PLATFORM_OPTIONS = [
+  { code: "CHATGPT", name: "ChatGPT" },
+  { code: "GEMINI", name: "Gemini" },
+  { code: "CLAUDE", name: "Claude" },
+  { code: "COPILOT", name: "GitHub Copilot" },
+  { code: "CODEX", name: "Codex" },
+  { code: "N8N", name: "n8n" },
+  { code: "POWER_PLATFORM", name: "Power Platform" }
+];
+
+const DELIVERABLE_OPTIONS = [
+  { code: "MD", name: "Markdown" },
+  { code: "PPTX", name: "PPT" },
+  { code: "PDF", name: "PDF" },
+  { code: "MERMAID", name: "Mermaid/流程圖" },
+  { code: "JSON", name: "JSON" },
+  { code: "XLSX", name: "Excel" },
+  { code: "CODE", name: "程式碼/腳本" },
+  { code: "SCRIPT", name: "逐字稿/講稿" }
+];
+
+const AUDIENCE_OPTIONS = [
+  { code: "CLIENT", name: "對客戶" },
+  { code: "MANAGER", name: "對主管" },
+  { code: "INTERNAL", name: "內部" },
+  { code: "TRAINING", name: "教育訓練" }
+];
+
+const COMMON_TAG_OPTIONS = [
+  { code: "REUSABLE", name: "可重用" },
+  { code: "NEED_CONFIRM", name: "待確認" },
+  { code: "DECISION", name: "決策" },
+  { code: "BLOCKED", name: "卡關" },
+  { code: "GOOD_RESULT", name: "效果佳" },
+  { code: "NEED_REWORK", name: "需重作" },
+  { code: "SENSITIVE", name: "敏感資訊" }
+];
+
+function labelFromOptions(value: string, options: Array<{ code: string; name: string }>) {
+  const found = options.find((o) => o.code.toLowerCase() === value.toLowerCase());
+  return found?.name ?? value;
+}
 
 function uniq(arr: string[]) {
   const seen = new Set<string>();
@@ -165,7 +217,7 @@ export default function ProjectMeta({ project }: { project: Project | null }) {
         <div className="grid grid-cols-1 gap-3">
           <div>
             <div className="text-[11px] font-semibold" style={{ color: "var(--pm-muted)" }}>
-              分類
+              專案類型
             </div>
             <select
               className="pm-select h-9 !text-sm"
@@ -175,8 +227,8 @@ export default function ProjectMeta({ project }: { project: Project | null }) {
             >
               <option value="">未設定</option>
               {CATEGORY_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
+                <option key={opt.code} value={opt.code}>
+                  {opt.name}
                 </option>
               ))}
             </select>
@@ -184,7 +236,7 @@ export default function ProjectMeta({ project }: { project: Project | null }) {
 
           <div>
             <div className="text-[11px] font-semibold" style={{ color: "var(--pm-muted)" }}>
-              階段
+              狀態（Prototype taxonomy）
             </div>
             <select
               className="pm-select h-9 !text-sm"
@@ -194,13 +246,45 @@ export default function ProjectMeta({ project }: { project: Project | null }) {
             >
               <option value="">未設定</option>
               {STAGE_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
+                <option key={opt.code} value={opt.code}>
+                  {opt.name}
                 </option>
               ))}
             </select>
           </div>
         </div>
+
+        {meta.category || meta.stage || platforms.length || deliverables.length || audiences.length || commonTags.length ? (
+          <div className="pm-card" style={{ background: "var(--pm-panel-ink)" }}>
+            <div className="text-[11px] font-semibold" style={{ color: "var(--pm-muted)" }}>
+              快速摘要
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {meta.category ? <Chip active={true}>{labelFromOptions(meta.category, CATEGORY_OPTIONS)}</Chip> : null}
+              {meta.stage ? <Chip active={true}>{labelFromOptions(meta.stage, STAGE_OPTIONS)}</Chip> : null}
+              {platforms.map((x) => (
+                <Chip key={`p-${x}`} active={true}>
+                  {labelFromOptions(x, PLATFORM_OPTIONS)}
+                </Chip>
+              ))}
+              {deliverables.map((x) => (
+                <Chip key={`d-${x}`} active={true}>
+                  {labelFromOptions(x, DELIVERABLE_OPTIONS)}
+                </Chip>
+              ))}
+              {audiences.map((x) => (
+                <Chip key={`a-${x}`} active={true}>
+                  {labelFromOptions(x, AUDIENCE_OPTIONS)}
+                </Chip>
+              ))}
+              {commonTags.map((x) => (
+                <Chip key={`t-${x}`} active={true}>
+                  {labelFromOptions(x, COMMON_TAG_OPTIONS)}
+                </Chip>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         <div className="pm-card" style={{ background: "var(--pm-panel-ink)" }}>
           <div className="text-[11px] font-semibold" style={{ color: "var(--pm-muted)" }}>
@@ -209,11 +293,11 @@ export default function ProjectMeta({ project }: { project: Project | null }) {
           <div className="mt-2 flex flex-wrap gap-2">
             {PLATFORM_OPTIONS.map((opt) => (
               <Chip
-                key={opt}
-                active={platforms.some((x) => x.toLowerCase() === opt.toLowerCase())}
-                onClick={() => setList("platforms", toggle(platforms, opt))}
+                key={opt.code}
+                active={platforms.some((x) => x.toLowerCase() === opt.code.toLowerCase())}
+                onClick={() => setList("platforms", toggle(platforms, opt.code))}
               >
-                {opt}
+                {opt.name}
               </Chip>
             ))}
           </div>
@@ -226,11 +310,11 @@ export default function ProjectMeta({ project }: { project: Project | null }) {
           <div className="mt-2 flex flex-wrap gap-2">
             {DELIVERABLE_OPTIONS.map((opt) => (
               <Chip
-                key={opt}
-                active={deliverables.some((x) => x.toLowerCase() === opt.toLowerCase())}
-                onClick={() => setList("deliverables", toggle(deliverables, opt))}
+                key={opt.code}
+                active={deliverables.some((x) => x.toLowerCase() === opt.code.toLowerCase())}
+                onClick={() => setList("deliverables", toggle(deliverables, opt.code))}
               >
-                {opt}
+                {opt.name}
               </Chip>
             ))}
           </div>
@@ -243,11 +327,11 @@ export default function ProjectMeta({ project }: { project: Project | null }) {
           <div className="mt-2 flex flex-wrap gap-2">
             {AUDIENCE_OPTIONS.map((opt) => (
               <Chip
-                key={opt}
-                active={audiences.some((x) => x.toLowerCase() === opt.toLowerCase())}
-                onClick={() => setList("audiences", toggle(audiences, opt))}
+                key={opt.code}
+                active={audiences.some((x) => x.toLowerCase() === opt.code.toLowerCase())}
+                onClick={() => setList("audiences", toggle(audiences, opt.code))}
               >
-                {opt}
+                {opt.name}
               </Chip>
             ))}
           </div>
@@ -260,11 +344,11 @@ export default function ProjectMeta({ project }: { project: Project | null }) {
           <div className="mt-2 flex flex-wrap gap-2">
             {COMMON_TAG_OPTIONS.map((opt) => (
               <Chip
-                key={opt}
-                active={commonTags.some((x) => x.toLowerCase() === opt.toLowerCase())}
-                onClick={() => setList("commonTags", toggle(commonTags, opt))}
+                key={opt.code}
+                active={commonTags.some((x) => x.toLowerCase() === opt.code.toLowerCase())}
+                onClick={() => setList("commonTags", toggle(commonTags, opt.code))}
               >
-                {opt}
+                {opt.name}
               </Chip>
             ))}
           </div>

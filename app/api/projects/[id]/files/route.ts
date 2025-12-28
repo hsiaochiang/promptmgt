@@ -12,6 +12,17 @@ async function ensureDir(path: string) {
   await fs.mkdir(path, { recursive: true });
 }
 
+async function readFileBytes(file: unknown): Promise<Uint8Array> {
+  const anyFile = file as any;
+  if (anyFile && typeof anyFile.arrayBuffer === "function") {
+    return new Uint8Array(await anyFile.arrayBuffer());
+  }
+
+  // Works for many Blob/File polyfills (including jsdom) where arrayBuffer() may be missing.
+  const ab = await new Response(anyFile as BodyInit).arrayBuffer();
+  return new Uint8Array(ab);
+}
+
 function safeFileName(original: string) {
   const ext = extname(original);
   const base = original.slice(0, ext.length ? -ext.length : undefined);
@@ -68,9 +79,10 @@ export async function POST(request: Request, { params }: { params: { id: string 
   if (!form) return badRequest("invalid form data");
 
   const file = form.get("file");
-  if (!(file instanceof File)) return badRequest("file is required", { field: "file" });
+  const fileName = (file as any)?.name;
+  if (!file || typeof fileName !== "string") return badRequest("file is required", { field: "file" });
 
-  const rawName = file.name || `upload-${nanoid(6)}`;
+  const rawName = fileName || `upload-${nanoid(6)}`;
   const safeName = safeFileName(rawName);
   await ensureDir(dirOrRes);
 
@@ -82,8 +94,12 @@ export async function POST(request: Request, { params }: { params: { id: string 
   const finalName = exists ? safeFileName(`${rawName}-${nanoid(4)}`) : safeName;
   const writePath = join(dirOrRes, finalName);
 
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  await fs.writeFile(writePath, bytes);
+  try {
+    const bytes = await readFileBytes(file);
+    await fs.writeFile(writePath, bytes);
+  } catch {
+    return badRequest("invalid file payload", { field: "file" });
+  }
   const stat = await fs.stat(writePath);
 
   return NextResponse.json({ name: finalName, size: stat.size, mtimeMs: stat.mtimeMs }, { status: 201 });
