@@ -10,9 +10,10 @@ interface Props {
   refreshKey?: number;
   onProjectsChange?: (projects: Project[]) => void;
   onScheduleUndo?: (message: string, commit: () => Promise<void>, onUndo?: () => void) => void;
+  onOpenProject?: (projectName: string) => void;
 }
 
-export default function ProjectList({ refreshKey = 0, onProjectsChange, onScheduleUndo }: Props) {
+export default function ProjectList({ refreshKey = 0, onProjectsChange, onScheduleUndo, onOpenProject }: Props) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -294,9 +295,15 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
             role="button"
             tabIndex={0}
             key={p.id}
-            onClick={() => setSelectedProjectId(p.name)}
+            onClick={() => {
+              setSelectedProjectId(p.name);
+              onOpenProject?.(p.name);
+            }}
             onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") setSelectedProjectId(p.name);
+              if (e.key === "Enter" || e.key === " ") {
+                setSelectedProjectId(p.name);
+                onOpenProject?.(p.name);
+              }
             }}
             className={
               "w-full text-left rounded-[16px] px-4 py-3 border text-xs flex flex-col gap-2 outline-none transition-all " +

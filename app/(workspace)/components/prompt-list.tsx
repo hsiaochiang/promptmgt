@@ -13,6 +13,7 @@ interface Props {
   onSelectedWhileUnpinned?: () => void;
   onOpenPrompt?: (id: string) => void;
   onLoaded?: (prompts: PromptListItem[]) => void;
+  projectIdFilter?: string | null;
   searchInputRef?: React.RefObject<HTMLInputElement>;
   pinned?: boolean;
   onTogglePinned?: () => void;
@@ -25,6 +26,7 @@ export default function PromptList({
   onSelectedWhileUnpinned,
   onOpenPrompt,
   onLoaded,
+  projectIdFilter,
   searchInputRef,
   pinned = true,
   onTogglePinned,
@@ -57,6 +59,7 @@ export default function PromptList({
     setError(null);
     try {
       const params = new URLSearchParams();
+      if (projectIdFilter) params.set("projectId", projectIdFilter);
       if (filterStatus !== "全部") params.set("status", filterStatus);
       if (searchQuery.trim()) params.set("q", searchQuery.trim());
       const res = await fetch(`/api/prompts?${params.toString()}`);
@@ -79,7 +82,7 @@ export default function PromptList({
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, onLoaded, onOpenPrompt, searchQuery, setSelectedPromptId]);
+  }, [filterStatus, onLoaded, onOpenPrompt, projectIdFilter, searchQuery, setSelectedPromptId]);
 
   useEffect(() => {
     fetchPrompts();

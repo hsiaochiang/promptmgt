@@ -10,7 +10,6 @@ import PromptEditor from "./components/prompt-editor";
 import ChangeReportModal, { ChangeReportItem } from "./components/change-report-modal";
 import SnippetPanel from "./components/snippet-panel";
 import DraftEditor from "./components/draft-editor";
-import TabPlaceholders from "./components/tab-placeholders";
 import Scratchpad from "./components/scratchpad";
 import SnackbarUndo from "./components/snackbar-undo";
 import { AsyncBoundary, ErrorBoundary } from "./components/error-boundary";
@@ -31,6 +30,7 @@ export default function WorkspaceShell() {
   const [creatingPrompt, setCreatingPrompt] = useState(false);
   const [showChangeLog, setShowChangeLog] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [projectView, setProjectView] = useState<"list" | "detail">("list");
   const selectedPromptId = useWorkspaceStore((s) => s.selectedPromptId);
   const setEditorDirty = useWorkspaceStore((s) => s.setEditorDirty);
   const setSelectedProjectId = useWorkspaceStore((s) => s.setSelectedProjectId);
@@ -240,6 +240,47 @@ export default function WorkspaceShell() {
     return Promise.resolve();
   };
 
+  const handleDeleteProjectDeferred = async (project: Project) => {
+    const backupProjects = projects;
+    const backupSelected = selectedProjectId;
+    setProjects((list) => list.filter((p) => p.id !== project.id));
+    if (selectedProjectId === project.name) {
+      setSelectedProjectId(null);
+    }
+
+    const commit = async () => {
+      try {
+        const res = await fetch("/api/projects", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: project.id })
+        });
+        if (!res.ok) throw new Error("刪除專案失敗");
+        setProjectRefreshKey((k) => k + 1);
+        setPromptRefreshKey((k) => k + 1);
+      } catch (err) {
+        window.alert(err instanceof Error ? err.message : "刪除專案失敗");
+        setProjects(backupProjects);
+        setSelectedProjectId(backupSelected);
+      }
+    };
+
+    const undo = () => {
+      setProjects(backupProjects);
+      setSelectedProjectId(backupSelected);
+    };
+
+    scheduleUndo(`已排程刪除「${project.name}」，5 秒內可撤銷`, commit, undo);
+    return Promise.resolve();
+  };
+
+  const handleDeletePromptSimple = async (id: string) => {
+    const res = await fetch(`/api/prompts/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("刪除提示詞失敗");
+    setPromptRefreshKey((k) => k + 1);
+    setProjectRefreshKey((k) => k + 1);
+  };
+
   const handleArchiveSuccess = (result: { promptId?: string; projectName?: string }) => {
     setSelectedInboxId(null);
     setInboxRefreshKey((k) => k + 1);
@@ -421,6 +462,9 @@ export default function WorkspaceShell() {
             if (tab === "prompts") {
               setSelectedInboxId(null);
               setSelectedPromptId(null);
+            }
+            if (tab === "projects") {
+              setProjectView("list");
             }
           }}
         />
@@ -640,61 +684,230 @@ export default function WorkspaceShell() {
           id="workspace-tabpanel-projects"
           aria-labelledby="workspace-tab-projects"
         >
-          <div className="pm-shell w-full">
-            <div className="pm-panel p-6 min-h-0 overflow-auto" data-testid="project-list-panel">
-              <ErrorBoundary label="專案列表">
-                <ProjectList
-                  refreshKey={projectRefreshKey}
-                  onProjectsChange={(list) => setProjects(list)}
-                  onScheduleUndo={scheduleUndo}
-                />
-              </ErrorBoundary>
-            </div>
-
-            <aside className="space-y-6" data-testid="project-side-panel">
-              <div className="pm-panel p-6" style={{ position: "sticky", top: 24 }}>
-                <div className="text-sm font-semibold">專案概覽</div>
-                <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
-                  <div className="pm-card">
-                    <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
-                      進行中
+          {projectView === "detail" ? (
+            <div className="pm-shell w-full">
+              <div className="pm-panel min-h-0 overflow-hidden" data-testid="project-detail-panel">
+                <div
+                  className="pm-panel-header px-4 py-3 flex items-center justify-between"
+                  style={{ borderBottom: "1px solid var(--pm-border)" }}
+                >
+                  <div className="flex items-center gap-3">
+                    <button
+                      className="pm-btn pm-btn-ghost h-8 px-3 text-[11px]"
+                      type="button"
+                      onClick={() => setProjectView("list")}
+                    >
+                      ← 回到專案列表
+                    </button>
+                    <div className="text-sm font-semibold" style={{ color: "var(--pm-text)" }}>
+                      {selectedProject?.name ?? "專案詳情"}
                     </div>
-                    <div className="text-lg font-semibold" style={{ color: "var(--pm-text)" }}>
-                      {projectsKpi.active}
-                    </div>
+                    {selectedProject?.status ? (
+                      <span
+                        className="pm-badge pm-badge-brand text-[10px]"
+                        style={{ background: "rgba(47, 111, 111, 0.08)", borderColor: "rgba(47, 111, 111, 0.25)", color: "var(--pm-brand-strong)" }}
+                      >
+                        {selectedProject.status}
+                      </span>
+                    ) : null}
                   </div>
-                  <div className="pm-card">
-                    <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
-                      規劃中
-                    </div>
-                    <div className="text-lg font-semibold" style={{ color: "var(--pm-text)" }}>
-                      {projectsKpi.planning}
-                    </div>
-                  </div>
-                  <div className="pm-card">
-                    <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
-                      已結案
-                    </div>
-                    <div className="text-lg font-semibold" style={{ color: "var(--pm-text)" }}>
-                      {projectsKpi.done}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 pm-card" style={{ background: "var(--pm-panel-ink)" }}>
-                  <div className="text-sm font-semibold">使用建議</div>
-                  <div className="mt-1 text-sm" style={{ color: "var(--pm-muted)" }}>
-                    先建立 1 個專案，再新增提示詞；提示詞會依專案歸檔並同步更新統計。
-                  </div>
-                  <div className="mt-3 flex justify-end">
-                    <button className="pm-btn pm-btn-accent h-9 px-4 text-sm" type="button" onClick={handleCreatePrompt}>
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="pm-btn h-8 px-3 text-[11px]"
+                      type="button"
+                      onClick={() => {
+                        setProjectRefreshKey((k) => k + 1);
+                        setPromptRefreshKey((k) => k + 1);
+                      }}
+                    >
+                      重新整理
+                    </button>
+                    <button
+                      className="pm-btn pm-btn-primary h-8 px-3 text-[11px]"
+                      type="button"
+                      onClick={handleCreatePrompt}
+                      disabled={!selectedProjectId}
+                    >
                       新增提示詞
                     </button>
                   </div>
                 </div>
+
+                <div className="p-6 space-y-6 overflow-auto" style={{ maxHeight: "calc(100vh - 220px)" }}>
+                  <div className="pm-card" style={{ background: "var(--pm-panel-ink)" }}>
+                    <div className="text-sm font-semibold">專案摘要</div>
+                    <div className="mt-1 text-sm" style={{ color: "var(--pm-muted)" }}>
+                      在此維護 README、提示詞清單與專案狀態；右側會同步顯示資訊與快捷操作。
+                    </div>
+                  </div>
+
+                  <ProjectReadme project={selectedProject} onSaved={() => setProjectRefreshKey((k) => k + 1)} />
+
+                  <div className="pm-panel" style={{ padding: 0 }}>
+                    <div
+                      className="pm-panel-header px-4 py-3 flex items-center justify-between"
+                      style={{ borderBottom: "1px solid var(--pm-border)" }}
+                    >
+                      <div className="text-sm font-semibold">提示詞清單</div>
+                      <button
+                        className="pm-btn h-8 px-3 text-[11px]"
+                        type="button"
+                        onClick={() => {
+                          setActiveTab("prompts");
+                          setSelectedPromptId(null);
+                        }}
+                      >
+                        查看全部提示詞
+                      </button>
+                    </div>
+                    <ErrorBoundary label="專案提示詞列表">
+                      <PromptList
+                        refreshKey={promptRefreshKey}
+                        projectIdFilter={selectedProjectId}
+                        pinned={true}
+                        onOpenPrompt={(id) => {
+                          setActiveTab("prompts");
+                          setSelectedPromptId(id);
+                        }}
+                        onDeletePrompt={handleDeletePromptSimple}
+                        onScheduleUndo={scheduleUndo}
+                      />
+                    </ErrorBoundary>
+                  </div>
+                </div>
               </div>
-            </aside>
-          </div>
+
+              <aside className="space-y-6" data-testid="project-detail-side">
+                <div className="pm-panel p-6" style={{ position: "sticky", top: 24 }}>
+                  <div className="text-sm font-semibold">專案資訊</div>
+                  <div className="mt-3 space-y-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span style={{ color: "var(--pm-muted)" }}>狀態</span>
+                      <span className="font-semibold">{selectedProject?.status ?? "—"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span style={{ color: "var(--pm-muted)" }}>提示詞數</span>
+                      <span className="font-semibold">{selectedProject?.promptCount ?? 0}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span style={{ color: "var(--pm-muted)" }}>更新</span>
+                      <span className="font-semibold">{selectedProject?.updatedAt ?? "—"}</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <div className="text-xs uppercase tracking-wide" style={{ color: "var(--pm-muted)" }}>
+                      快捷操作
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button className="pm-btn h-9 px-4 text-sm" type="button" onClick={handleCreatePrompt}>
+                        新增提示詞
+                      </button>
+                      <button
+                        className="pm-btn h-9 px-4 text-sm"
+                        type="button"
+                        onClick={() => {
+                          setActiveTab("prompts");
+                          setSelectedPromptId(null);
+                        }}
+                      >
+                        切換到提示詞列表
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-6" style={{ borderTop: "1px dashed var(--pm-border)", paddingTop: 12 }}>
+                    <div className="text-xs uppercase tracking-wide" style={{ color: "var(--pm-muted)" }}>
+                      危險操作
+                    </div>
+                    <div
+                      className="mt-2 rounded-[16px] p-4"
+                      style={{ border: "1px dashed rgba(217, 95, 95, 0.3)", background: "rgba(217, 95, 95, 0.05)" }}
+                    >
+                      <div className="text-sm font-semibold" style={{ color: "var(--pm-text)" }}>
+                        刪除專案
+                      </div>
+                      <div className="mt-1 text-sm" style={{ color: "var(--pm-muted)" }}>
+                        會刪除專案目錄與提示詞檔案。刪除採延遲 5 秒，可 Undo。
+                      </div>
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          className="pm-btn h-9 px-4 text-sm"
+                          type="button"
+                          style={{ border: "1px solid rgba(217, 95, 95, 0.35)", background: "rgba(217, 95, 95, 0.08)", color: "var(--pm-danger)" }}
+                          onClick={() => {
+                            if (!selectedProject) return;
+                            if (!window.confirm(`確定刪除專案「${selectedProject.name}」？`)) return;
+                            void handleDeleteProjectDeferred(selectedProject);
+                            setProjectView("list");
+                          }}
+                        >
+                          刪除專案
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          ) : (
+            <div className="pm-shell w-full">
+              <div className="pm-panel p-6 min-h-0 overflow-auto" data-testid="project-list-panel">
+                <ErrorBoundary label="專案列表">
+                  <ProjectList
+                    refreshKey={projectRefreshKey}
+                    onProjectsChange={(list) => setProjects(list)}
+                    onScheduleUndo={scheduleUndo}
+                    onOpenProject={() => setProjectView("detail")}
+                  />
+                </ErrorBoundary>
+              </div>
+
+              <aside className="space-y-6" data-testid="project-side-panel">
+                <div className="pm-panel p-6" style={{ position: "sticky", top: 24 }}>
+                  <div className="text-sm font-semibold">專案概覽</div>
+                  <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
+                    <div className="pm-card">
+                      <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
+                        進行中
+                      </div>
+                      <div className="text-lg font-semibold" style={{ color: "var(--pm-text)" }}>
+                        {projectsKpi.active}
+                      </div>
+                    </div>
+                    <div className="pm-card">
+                      <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
+                        規劃中
+                      </div>
+                      <div className="text-lg font-semibold" style={{ color: "var(--pm-text)" }}>
+                        {projectsKpi.planning}
+                      </div>
+                    </div>
+                    <div className="pm-card">
+                      <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
+                        已結案
+                      </div>
+                      <div className="text-lg font-semibold" style={{ color: "var(--pm-text)" }}>
+                        {projectsKpi.done}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 pm-card" style={{ background: "var(--pm-panel-ink)" }}>
+                    <div className="text-sm font-semibold">使用建議</div>
+                    <div className="mt-1 text-sm" style={{ color: "var(--pm-muted)" }}>
+                      先建立 1 個專案，再新增提示詞；提示詞會依專案歸檔並同步更新統計。
+                    </div>
+                    <div className="mt-3 flex justify-end">
+                      <button className="pm-btn pm-btn-accent h-9 px-4 text-sm" type="button" onClick={handleCreatePrompt}>
+                        新增提示詞
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          )}
         </section>
       )}
       <ChangeReportModal
