@@ -317,14 +317,17 @@ export default function PromptEditor({
 
   if (!promptId) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center text-sm text-slate-500 bg-slate-50 border border-dashed border-slate-200 rounded-lg">
+      <div
+        className="flex-1 flex flex-col items-center justify-center text-sm rounded-[16px]"
+        style={{ color: "var(--pm-muted)", background: "var(--pm-panel-ink)", border: "1px dashed var(--pm-border)" }}
+      >
         請從列表選擇提示詞
       </div>
     );
   }
 
   return (
-    <div className="flex-1 border border-slate-200 rounded-lg overflow-hidden bg-white flex flex-col relative">
+    <div className="flex-1 pm-panel overflow-hidden flex flex-col relative">
       <ConflictDialog
         open={showConflictDialog}
         localDate={mtimeMs}
@@ -339,10 +342,13 @@ export default function PromptEditor({
         }}
       />
       {damaged && (
-        <div className="bg-rose-50 border-b border-rose-200 p-3 flex items-center justify-between gap-4">
-          <div className="text-sm text-rose-800 flex flex-col gap-1">
+        <div
+          className="p-3 flex items-center justify-between gap-4"
+          style={{ background: "rgba(217, 95, 95, 0.10)", borderBottom: "1px solid rgba(217, 95, 95, 0.25)" }}
+        >
+          <div className="text-sm flex flex-col gap-1" style={{ color: "#7a2b2b" }}>
             <span className="font-semibold">需修復：Frontmatter 損壞</span>
-            <span className="text-xs text-rose-700">
+            <span className="text-xs" style={{ color: "#8f3a3a" }}>
               {parseErrorMessage ?? "Frontmatter YAML 損壞，已切換為純文字模式。"}
               {parseErrorCode ? `（${parseErrorCode}）` : ""}
             </span>
@@ -350,7 +356,7 @@ export default function PromptEditor({
           <button
             onClick={handleRepair}
             disabled={busy}
-            className="px-3 py-1 bg-rose-600 text-white rounded text-xs hover:bg-rose-700 transition-colors disabled:opacity-60"
+            className="pm-btn pm-btn-primary h-8 px-3 text-[11px] disabled:opacity-60"
           >
             一鍵修復並保存
           </button>
@@ -358,13 +364,16 @@ export default function PromptEditor({
       )}
       {conflictHash && !showConflictDialog && (
         <div
-          className="absolute inset-x-0 top-0 z-10 bg-amber-50 border-b border-amber-200 p-3 shadow-sm animate-in fade-in slide-in-from-top-1"
+          className="absolute inset-x-0 top-0 z-10 p-3 shadow-sm animate-in fade-in slide-in-from-top-1"
           style={{ top: damaged ? 60 : 0 }}
         >
-
+          <div
+            className="rounded-[14px] p-3"
+            style={{ background: "rgba(212, 163, 115, 0.18)", border: "1px solid rgba(212, 163, 115, 0.35)" }}
+          >
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-amber-800 text-sm">
-              <span className="font-semibold">⚠️ 衝突警報：</span>
+            <div className="flex items-center gap-2 text-sm" style={{ color: "#8a5a2a" }}>
+              <span className="font-semibold">衝突警報：</span>
               <span>偵測到外部變更，自動儲存已暫停。</span>
             </div>
             <div className="flex items-center gap-2">
@@ -372,7 +381,7 @@ export default function PromptEditor({
                 onClick={reloadExternal}
                 disabled={busy}
                 data-testid="conflict-load-external"
-                className="px-3 py-1 bg-white border border-amber-300 text-amber-800 rounded text-xs hover:bg-amber-100 transition-colors disabled:opacity-60"
+                className="pm-btn h-8 px-3 text-[11px] disabled:opacity-60"
               >
                 載入外部變更
               </button>
@@ -380,7 +389,7 @@ export default function PromptEditor({
                 onClick={overwriteWithLocal}
                 disabled={busy}
                 data-testid="conflict-keep-local"
-                className="px-3 py-1 bg-amber-600 text-white rounded text-xs hover:bg-amber-700 transition-colors disabled:opacity-60"
+                className="pm-btn pm-btn-primary h-8 px-3 text-[11px] disabled:opacity-60"
               >
                 保留本地(覆寫)
               </button>
@@ -388,43 +397,47 @@ export default function PromptEditor({
                 onClick={saveAsCopy}
                 disabled={busy}
                 data-testid="conflict-save-copy"
-                className="px-3 py-1 bg-white border border-amber-300 text-amber-800 rounded text-xs hover:bg-amber-100 transition-colors disabled:opacity-60"
+                className="pm-btn h-8 px-3 text-[11px] disabled:opacity-60"
               >
                 另存副本
               </button>
               <button
                 onClick={previewExternal}
                 disabled={busy}
-                className="px-3 py-1 text-amber-700 text-xs hover:underline disabled:opacity-60"
+                className="pm-btn h-8 px-3 text-[11px] disabled:opacity-60"
               >
                 檢視差異
               </button>
             </div>
           </div>
           {externalPreview && (
-            <div className="mt-2 text-[11px] text-amber-900 bg-white border border-amber-200 rounded p-2 max-h-32 overflow-auto whitespace-pre-wrap">
+            <div
+              className="mt-2 text-[11px] rounded p-2 max-h-32 overflow-auto whitespace-pre-wrap"
+              style={{ color: "#5a3b1f", background: "#fff", border: "1px solid rgba(212, 163, 115, 0.35)" }}
+            >
               {externalPreview}
             </div>
           )}
+          </div>
         </div>
       )}
-      <div className="h-10 px-3 flex items-center justify-between text-[12px] text-slate-500 border-b border-slate-200 bg-slate-50">
+      <div className="h-10 px-3 flex items-center justify-between text-[12px] pm-panel-header">
         <div className="flex items-center gap-2">
           <button
-            className={`px-2 py-1 rounded-full text-xs ${view === "edit" ? "bg-slate-900 text-white" : "bg-white border border-slate-300"}`}
+            className={`pm-btn h-7 px-3 text-[11px] ${view === "edit" ? "pm-btn-primary" : ""}`}
             onClick={() => setView("edit")}
           >
             編輯
           </button>
           <button
-            className={`px-2 py-1 rounded-full text-xs ${view === "preview" ? "bg-slate-900 text-white" : "bg-white border border-slate-300"}`}
+            className={`pm-btn h-7 px-3 text-[11px] ${view === "preview" ? "pm-btn-primary" : ""}`}
             onClick={() => setView("preview")}
           >
             預覽
           </button>
         </div>
-        <span className="flex items-center gap-2">
-          {error && !conflictHash && <span className="text-amber-600">{error}</span>}
+        <span className="flex items-center gap-2" style={{ color: "var(--pm-muted)" }}>
+          {error && !conflictHash && <span style={{ color: "#8a5a2a" }}>{error}</span>}
           {isSaving ? "自動儲存中…" : lastSavedAt ? `已儲存：${lastSavedAt}` : "等待編輯"}
         </span>
       </div>

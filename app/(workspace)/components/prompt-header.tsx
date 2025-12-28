@@ -52,54 +52,62 @@ export default function PromptHeader({ title, frontmatter, body, onToggleFocus }
   }, [frontmatter, body]);
 
   return (
-    <div className="border-b border-slate-200 bg-white px-4 py-3 space-y-2 sticky top-0 z-10">
+    <div className="pm-panel-header px-4 py-3 space-y-2 sticky top-0 z-10">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-[11px] text-slate-500 mb-0.5">目前編輯中</div>
-          <div className="text-xs font-semibold text-slate-900 truncate max-w-[260px]">{title}</div>
+          <div className="text-[11px] mb-0.5" style={{ color: "var(--pm-muted)" }}>
+            目前編輯中
+          </div>
+          <div className="text-xs font-semibold truncate max-w-[260px]" style={{ color: "var(--pm-text)" }}>
+            {title}
+          </div>
         </div>
         <div className="flex flex-col items-end gap-1 text-[10px]">
           <div className="flex gap-1">
             <button
               onClick={handleCopyFull}
-              className="px-2 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-100"
+              className="pm-btn h-7 px-3 text-[10px]"
             >
               複製完整提示詞
             </button>
             <button
               onClick={handleCopySlim}
-              className="px-2 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-100"
+              className="pm-btn h-7 px-3 text-[10px]"
             >
               複製給模型用
             </button>
             {onToggleFocus ? (
               <button
                 onClick={onToggleFocus}
-                className="px-2 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-100"
+                className="pm-btn h-7 px-3 text-[10px]"
               >
                 專注模式
               </button>
             ) : null}
           </div>
-          <div className="flex gap-1 text-slate-400">
+          <div className="flex gap-1" style={{ color: "var(--pm-muted)" }}>
             <span>Ctrl + C 完整</span>
             <span>Ctrl + Shift + C 精簡</span>
           </div>
           {frontmatter?.updatedAt ? (
-            <div className="text-[10px] text-slate-500">最後儲存：{formatForUI_HHmm(frontmatter.updatedAt)}</div>
+            <div className="text-[10px]" style={{ color: "var(--pm-muted)" }}>
+              最後儲存：{formatForUI_HHmm(frontmatter.updatedAt)}
+            </div>
           ) : null}
         </div>
       </div>
       {frontmatter && (
-        <div className="flex items-center gap-2 text-[10px] text-slate-500">
-          <span className="px-2 py-0.5 rounded-full bg-slate-100">狀態：{frontmatter.status}</span>
-          <span className="px-2 py-0.5 rounded-full bg-slate-100">模型：{frontmatter.model}</span>
-          <span className="px-2 py-0.5 rounded-full bg-slate-100">
-            所屬專案：{frontmatter.project}
-          </span>
+        <div className="flex items-center gap-2 text-[10px]" style={{ color: "var(--pm-muted)" }}>
+          <span className="pm-badge text-[10px]">狀態：{frontmatter.status}</span>
+          <span className="pm-badge text-[10px]">模型：{frontmatter.model}</span>
+          <span className="pm-badge pm-badge-brand text-[10px]">所屬專案：{frontmatter.project}</span>
         </div>
       )}
-      {copyMessage ? <div className="text-[10px] text-emerald-600">{copyMessage}</div> : null}
+      {copyMessage ? (
+        <div className="text-[10px]" style={{ color: "var(--pm-brand-strong)" }}>
+          {copyMessage}
+        </div>
+      ) : null}
     </div>
   );
 }
