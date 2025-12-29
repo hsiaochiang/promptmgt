@@ -1,11 +1,11 @@
-## Implementation Plan：提示詞工作台（UI/UX 以 prototype 為準）
+## 實作計畫：提示詞工作台（UI/UX 以原型為準）
 
 **Branch**：`001-local-prompt-manager` | **日期**：2025-12-29 | **Spec**：`specs/001-local-prompt-manager/spec.md`
 **Input**：`specs/001-local-prompt-manager/spec.md`
 
 > 本文件由 `/speckit.plan` 工作流填入（本次以 zh-TW 內容補齊）。
 
-## Summary
+## 摘要
 
 本次 feature 以 `0resource/prototype/` 作為 UI/UX 權威來源，維持固定 Shell（Main + Side）與 Topbar Tabs（Projects / Prompts / Scratchpad），並補齊/升級資料層與 API 契約以支援：
 
@@ -22,26 +22,26 @@ Phase 0/1 設計輸出：
 - `contracts/`：OpenAPI 與摘要契約
 - `quickstart.md`：啟動與驗收操作
 
-## Technical Context
+## 技術背景
 
-**Language/Version**: TypeScript 5.4、Node.js 18+、Next.js 14.1、React 18  
-**Primary Dependencies**: Next.js App Router（Route Handlers）、Zod、Zustand、Tailwind CSS、LowDB、gray-matter、react-markdown、CodeMirror  
-**Storage**:
+**語言/版本**：TypeScript 5.4、Node.js 18+、Next.js 14.1、React 18  
+**主要依賴**：Next.js App Router（Route Handlers）、Zod、Zustand、Tailwind CSS、LowDB、gray-matter、react-markdown、CodeMirror  
+**儲存**：
 - LowDB（`db.json`）保存 projects/inbox/snippets/settings
 - 檔案系統（`rootPath`）保存專案資料夾、README、提示詞 Markdown（YAML frontmatter + body）與 `_meta.json`
-**Testing**: Vitest（含 coverage）、Testing Library（UI/Hook）、Playwright（E2E）  
-**Target Platform**: 本機（Windows/macOS），離線可用（local FS + local JSON DB）  
-**Project Type**: Web application（Next.js）  
-**Performance Goals**: 互動 API p95 < 200ms（本機）；列表/搜尋上限 1000 筆避免 UI 卡頓；需以量測腳本與可重複步驟記錄結果（docs/perf-checks.md + scripts/perf-test.ts）  
-**Constraints**:
+**測試**：Vitest（含 coverage）、Testing Library（UI/Hook）、Playwright（E2E）  
+**目標平台**：本機（Windows/macOS），離線可用（local FS + local JSON DB）  
+**專案型態**：Web 應用（Next.js）  
+**效能目標**：互動 API p95 < 200ms（本機）；列表/搜尋上限 1000 筆避免 UI 卡頓；需以量測腳本與可重複步驟記錄結果（docs/perf-checks.md + scripts/perf-test.ts）  
+**限制**：
 - 時間欄位一律 ISO 8601（UTC+08:00）；`createdAt/updatedAt` 自動補值
 - taxonomy 欄位雙寫入 `code+name`，且 server 驗證一致性
 - 衝突不可靜默覆蓋（409 三選一）
-**Scale/Scope**: 單使用者、本機檔案量中小規模（提示詞/專案數量可達數百；單次列表回傳最多 1000）
+**規模/範圍**：單使用者、本機檔案量中小規模（提示詞/專案數量可達數百；單次列表回傳最多 1000）
 
-## Constitution Check
+## 憲章檢查
 
-*GATE：Phase 0 前必須通過；Phase 1 設計完成後需重新檢查。*
+*閘門：Phase 0 前必須通過；Phase 1 設計完成後需重新檢查。*
 
 - **I. Code Quality First**：通過（沿用既有 Next.js route handler + `lib/` 分層；命名與錯誤格式一致化）
 - **II. Testing Standards（TDD/coverage/contract）**：通過（本 feature 的 API/關鍵路徑需補齊合約測試與關鍵路徑 100% 覆蓋；整體 unit coverage ≥ 80%）
@@ -49,9 +49,9 @@ Phase 0/1 設計輸出：
 - **IV. Performance Requirements**：通過（列表/搜尋限制；避免過度 FS 掃描；以快取/索引支援常用路徑；並以 docs/perf-checks.md 記錄 p95 與回歸風險）
 - **V. Language & Documentation（zh-TW）**：通過（本次 `specs/001-local-prompt-manager/` 產出以繁中撰寫）
 
-## Project Structure
+## 專案結構
 
-### Documentation (this feature)
+### 文件（本 feature）
 
 ```text
 specs/[###-feature]/
@@ -63,7 +63,7 @@ specs/[###-feature]/
 └── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
 ```
 
-### Source Code (repository root)
+### 原始碼（repo 根目錄）
 ```text
 app/
 ├── (app)/               # Workspace UI（Projects / Prompts / Scratchpad 等）
@@ -89,9 +89,8 @@ tests/
 
 > **Fill ONLY if Constitution Check has violations that must be justified**
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+| 違規項目 | 為何必要 | 為何不採更簡單替代方案 |
+|---------|----------|------------------------|
+| （無） |  |  |
 
 本次無需額外複雜度豁免。

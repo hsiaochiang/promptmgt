@@ -2,8 +2,12 @@ node_modules/
 .next/
 dist/
 build/
-coverage/
 out/
+.turbo/
+.vercel/
+coverage/
 playwright-report/
 test-results/
-*.min.js
+*.log
+*.tmp
+db.json

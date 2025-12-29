@@ -2,10 +2,13 @@ node_modules/
 .next/
 dist/
 build/
-coverage/
 out/
+.turbo/
+.vercel/
+coverage/
 playwright-report/
 test-results/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+db.json

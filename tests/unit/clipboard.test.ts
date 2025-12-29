@@ -35,4 +35,11 @@ describe("clipboard utils", () => {
     expect(slim).toContain("Body text");
     expect(slim.trim()).toBe("Body text");
   });
+
+  it("tolerates undefined body", () => {
+    const full = buildFullContent(fm as any, undefined as any);
+    expect(full).toContain("title: Test Title");
+    expect(full).not.toContain("undefined");
+    expect(buildSlimContent(full)).toBe("");
+  });
 });

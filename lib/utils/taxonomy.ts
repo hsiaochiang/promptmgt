@@ -52,7 +52,17 @@ export function normalizeTaxonomyArray(values: unknown, table?: TaxonomyTable): 
   const result: TaxonomyValue[] = [];
 
   for (const item of arr) {
-    const normalized = normalizeTaxonomyValue(item, table);
+    let normalized: TaxonomyValue;
+    try {
+      normalized = normalizeTaxonomyValue(item, table);
+    } catch {
+      continue;
+    }
+
+    if (!normalized.code.trim() || !normalized.name.trim()) {
+      continue;
+    }
+
     const key = normalized.code.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);

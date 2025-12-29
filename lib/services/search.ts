@@ -19,6 +19,17 @@ export function searchPrompts(
   const lowered = query.toLowerCase();
   const results: SearchResult[] = [];
 
+  const stringifyTag = (tag: unknown) => {
+    if (typeof tag === "string") return tag;
+    if (tag && typeof tag === "object") {
+      const payload = tag as Record<string, unknown>;
+      const code = typeof payload.code === "string" ? payload.code : "";
+      const name = typeof payload.name === "string" ? payload.name : "";
+      return `${code} ${name}`.trim();
+    }
+    return "";
+  };
+
   for (const item of prompts) {
     if (filter.projectId && item.projectId !== filter.projectId && item.project !== filter.projectId) {
       continue;
@@ -27,7 +38,10 @@ export function searchPrompts(
       continue;
     }
 
-    const tagsText = (item.tags ?? []).map((t) => `${t.code} ${t.name}`.toLowerCase()).join(" ");
+    const tagsText = (item.tags ?? [])
+      .map((t) => stringifyTag(t).toLowerCase())
+      .filter(Boolean)
+      .join(" ");
     const haystack = item.title.toLowerCase() + " " + tagsText + " " + (item.model ?? "");
     if (haystack.includes(lowered)) {
       results.push({

@@ -26,7 +26,7 @@
 
 本文件的目標是「收斂 spec 使其與 prototype 一致」，同時不推翻既有資料層能力。
 
-## Clarifications（補充釐清 / 需求鎖定）
+## 釐清與需求鎖定
 
 ### Session 2025-12-27
 
@@ -64,7 +64,7 @@
 - Tabs：專案（Projects）/ 提示詞（Prompts）/ 剪貼簿（Scratchpad）
 - Top actions（實作擴充，prototype 僅有部分）：操作指引（Help）/ 開啟/隱藏片語（Toggle，影響右側片語庫區塊）/ 設定 / 今日變更報告 / 新增提示詞
 
-## User Stories（對照頁面 / 方便拆 tasks）
+## 使用者故事（對照頁面，方便拆任務）
 
 > 本 spec 主要以「原型五頁面」描述；下列 User Stories 僅用於讓 `tasks.md` 的 US 編號有可追溯來源。
 
@@ -101,6 +101,7 @@
 ### 2) Project Detail（專案詳情）
 
 - Main：專案摘要、專案 README（編輯/預覽/儲存）、該專案提示詞清單、檔案列表（上傳/描述/刪除）、進度紀錄（新增/刪除）
+- 本次範圍說明：Project Detail 的「檔案列表 / 進度紀錄」屬既有能力描述或未納入本次交付範圍，本 feature 不新增/不改動其 UI 或 API 契約；若需擴充，另立獨立 feature 與 tasks。
 - Side：
 	- 分類與標籤（持久化以專案資料夾的 `_meta.json` 為主；並確保 Projects API 會彙整回傳 `projectType/tags` 供列表卡片呈現）
 		- 平台標籤/交付物標籤/受眾標籤/共通標籤：輸入框 + Enter 新增，chips 可移除，提供清空
@@ -243,13 +244,13 @@ Project 實體需具備並可由 API 回傳以下欄位，以支援 Projects（�
 - **效能**：互動 API p95 < 200ms（本機、非大量資料）；列表/搜尋結果上限 1000，超出需截斷或提示收斂。
 - **量測與紀錄**：針對互動路徑（列表載入、Prompt Detail 讀取/寫入、autosave）建立可重複量測步驟並記錄 p95；若未達標需在同一變更集中附上原因與改善計畫，避免回歸。
 
-## Testing / Quality Gates（依 Constitution，非選配）
+## 測試與品質閘門（依憲章，非選配）
 
 - 本功能的所有變更必須遵循專案 Constitution 的 **Testing Standards (NON-NEGOTIABLE)**：測試需先寫、先失敗、再實作使其通過（Red-Green-Refactor）。
 - 所有 public API（Route Handlers）需具備契約測試，並涵蓋成功回應、錯誤格式與衝突情境（含 409）。
 - 覆蓋率門檻：單元測試至少 80%；關鍵路徑（autosave、409 衝突三選一、deferred delete/undo）需 100%。
 
-## Functional Requirements（收斂後）
+## 功能需求（收斂後）
 
 - **FR-002**: 系統必須在使用者輸入過程自動保存草稿與提示詞（間隔 2 秒，無輸入時暫停，恢復輸入後重新計時），並顯示最後保存時間；若偵測到寫入衝突（例如 409），必須提示並提供「重新載入 / 另存副本 / 強制覆寫」三選一
 - **FR-005**: 系統必須將正式提示詞以 Markdown 檔案儲存於專案資料夾，包含 YAML Frontmatter 與內容本體

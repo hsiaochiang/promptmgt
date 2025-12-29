@@ -80,7 +80,7 @@ describe("prompt file system adapter", () => {
       projectId: "專案A",
       title: "非法:/檔名",
       status: "草稿",
-      tags: ["a"]
+      tags: [{ code: "a", name: "a" }]
     });
   });
 
@@ -123,7 +123,10 @@ describe("frontmatter parsing", () => {
     const serialized = serializePrompt(frontmatter, "body text");
     const parsed = parsePrompt(serialized);
     expect(parsed.damaged).toBe(false);
-    expect(parsed.frontmatter).toMatchObject(frontmatter);
+    expect(parsed.frontmatter).toMatchObject({
+      ...frontmatter,
+      tags: [{ code: "tag", name: "tag" }]
+    });
     expect(parsed.body.trim()).toBe("body text");
 
     const broken = parsePrompt("---\n: bad yaml\n---\ntext");
@@ -212,6 +215,17 @@ describe("search service", () => {
         model: "gpt-4",
         tags: ["vector", "retrieval"],
         updatedAt: "2024-01-01T00:00:00.000Z"
+      },
+      {
+        id: "2",
+        projectId: "p2",
+        title: "No keyword in title",
+        project: "p2",
+        type: "其他" as const,
+        status: "使用中" as const,
+        model: "gpt-4",
+        tags: [{ code: "emb", name: "Embedding" }, { code: "codeOnly", name: "" }, null, 123] as any,
+        updatedAt: "2024-01-01T00:00:00.000Z"
       }
     ];
 
@@ -221,6 +235,10 @@ describe("search service", () => {
 
     const empty = searchPrompts(prompts, "", 5);
     expect(empty).toHaveLength(0);
+
+    const objTag = searchPrompts(prompts, "embedding", 5);
+    expect(objTag).toHaveLength(1);
+    expect(objTag[0]?.id).toBe("2");
   });
 
   it("stops when reaching the result cap", async () => {

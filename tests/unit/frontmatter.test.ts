@@ -17,6 +17,6 @@ describe("frontmatter parse defaults", () => {
       "---\ntitle: 測試\nproject: P1\ntags: [ \"a\", \"\", \"A\" ]\n---\nBody"
     );
     expect(damaged).toBe(false);
-    expect(frontmatter?.tags).toEqual(["a"]);
+    expect(frontmatter?.tags).toEqual([{ code: "a", name: "a" }]);
   });
 });
