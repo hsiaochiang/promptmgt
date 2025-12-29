@@ -64,7 +64,7 @@
 
 - [X] T014 [P] [US1] 整合測試：Topbar Tabs 切換時 Main/Side 內容正確切換：tests/integration/us1-shell-tabs-rootpath.test.tsx
 - [X] T015 [P] [US1] a11y 整合測試：Tabs 鍵盤操作與 ARIA（tablist/tab/tabpanel）：tests/integration/us1-shell-tabs-a11y.test.tsx
-- [ ] T016 [P] [US1] 契約測試：GET/POST /api/settings rootPath 驗證與錯誤格式：tests/contract/api-settings.test.ts
+- [X] T016 [P] [US1] 契約測試：GET/POST /api/settings rootPath 驗證與錯誤格式：tests/contract/api-settings.test.ts
 
 ### Implementation
 
@@ -122,7 +122,7 @@
 ### Implementation
 
 - [ ] T035 [US3] 更新 /api/prompts：支援新篩選參數並以 updatedAt desc 排序：app/api/prompts/route.ts
-- [ ] T036 [US3] 更新 PromptListItem schema（tags 改為 TaxonomyValue[] 等）：lib/types/schema.ts
+- [X] T036 [US3] 更新 PromptListItem schema（tags 改為 TaxonomyValue[] 等）：lib/types/schema.ts
 - [ ] T037 [US3] Prompts 列表 UI：新增 prototype 篩選器（category/stage/platform/tag）與 KPI：app/(workspace)/components/prompt-list.tsx
 
 ---
