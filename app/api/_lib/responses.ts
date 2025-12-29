@@ -24,8 +24,15 @@ function normalizeConflictDetails(details?: unknown): ConflictDetails | undefine
   return Object.keys(normalized).length > 0 ? normalized : undefined;
 }
 
+function safeMessage(message: unknown, fallback: string) {
+  return typeof message === "string" && message.trim() ? message : fallback;
+}
+
 export function apiError(status: number, code: string, message: string, details?: unknown) {
-  return NextResponse.json({ code, message, details }, { status });
+  return NextResponse.json(
+    { code, message: safeMessage(message, code.replace(/_/g, " ")), details: details ?? undefined },
+    { status }
+  );
 }
 
 export function badRequest(message: string, details?: unknown) {
