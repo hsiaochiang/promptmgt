@@ -9,24 +9,38 @@ export function toTaxonomyTable(values: TaxonomyValue[]): TaxonomyTable {
   }, {});
 }
 
+function resolveCodeAndName(text: string, table?: TaxonomyTable): TaxonomyValue {
+  const trimmed = text.trim();
+  if (!table) return { code: trimmed, name: trimmed };
+  const directName = table[trimmed];
+  if (directName) return { code: trimmed, name: directName };
+
+  const matchByName = Object.entries(table).find(([, name]) => name === trimmed);
+  if (matchByName) {
+    const [code, name] = matchByName;
+    return { code, name };
+  }
+  return { code: trimmed, name: trimmed };
+}
+
 export function normalizeTaxonomyValue(input: unknown, table?: TaxonomyTable): TaxonomyValue {
   if (typeof input === "string") {
-    const code = input.trim();
-    const name = table?.[code] ?? code;
-    return { code, name };
+    return resolveCodeAndName(input, table);
   }
 
   if (input && typeof input === "object") {
     const payload = input as Record<string, unknown>;
     const code = typeof payload.code === "string" ? payload.code.trim() : "";
     const name = typeof payload.name === "string" ? payload.name.trim() : "";
-    if (!code || !name) {
-      throw new Error("taxonomy value requires code and name");
+    if (code && name) {
+      if (table && table[code] && table[code] !== name) {
+        throw new Error(`taxonomy code/name mismatch: ${code}`);
+      }
+      return { code, name: table?.[code] ?? name };
     }
-    if (table && table[code] && table[code] !== name) {
-      throw new Error(`taxonomy code/name mismatch: ${code}`);
+    if (code || name) {
+      return resolveCodeAndName(code || name, table);
     }
-    return { code, name: table?.[code] ?? name };
   }
 
   throw new Error("invalid taxonomy value");

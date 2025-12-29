@@ -1,6 +1,19 @@
 import matter from "gray-matter";
 import { toIsoWithOffset } from "./date";
 import type { PromptFrontmatter } from "../types/schema";
+import {
+  audienceTags,
+  commonTags,
+  deliverableTags,
+  platformTags,
+  promptCategories,
+  promptStages
+} from "../taxonomy/data";
+import {
+  normalizeTaxonomyArray,
+  normalizeTaxonomyValue,
+  toTaxonomyTable
+} from "./taxonomy";
 
 export interface ParsedPrompt {
   frontmatter: PromptFrontmatter | null;
@@ -15,6 +28,13 @@ interface ParsePromptOptions {
   fallbackProject?: string;
 }
 
+const categoryTable = toTaxonomyTable(promptCategories);
+const stageTable = toTaxonomyTable(promptStages);
+const platformTable = toTaxonomyTable(platformTags);
+const audienceTable = toTaxonomyTable(audienceTags);
+const deliverableTable = toTaxonomyTable(deliverableTags);
+const commonTable = toTaxonomyTable(commonTags);
+
 function buildFallbackFrontmatter(options?: ParsePromptOptions): PromptFrontmatter {
   const now = toIsoWithOffset();
   const title = options?.fallbackTitle?.trim().length ? options.fallbackTitle.trim() : "untitled";
@@ -24,7 +44,12 @@ function buildFallbackFrontmatter(options?: ParsePromptOptions): PromptFrontmatt
     project,
     type: "其他",
     status: "草稿",
+    category: promptCategories[0],
+    promptStage: promptStages[0],
     model: "",
+    platformTags: [],
+    audienceTags: [],
+    deliverableTags: [],
     tags: [],
     updatedAt: now,
     createdAt: now
@@ -46,20 +71,7 @@ function normalizeFrontmatter(
   const title = typeof data.title === "string" && data.title.trim().length > 0 ? data.title.trim() : null;
   const project = typeof data.project === "string" && data.project.trim().length > 0 ? data.project.trim() : null;
 
-  const tags = Array.isArray(data.tags)
-    ? (() => {
-        const seen = new Set<string>();
-        return (data.tags as unknown[])
-          .map((t) => (typeof t === "string" ? t.trim() : String(t ?? "").trim()))
-          .filter((t) => t.length > 0)
-          .filter((t) => {
-            const key = t.toLowerCase();
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-          });
-      })()
-    : [];
+  const tags = normalizeTaxonomyArray(data.tags, commonTable);
 
   const note =
     typeof (data as any).note === "string"
@@ -77,7 +89,42 @@ function normalizeFrontmatter(
     status: (typeof data.status === "string" && data.status.trim().length > 0
       ? data.status
       : "草稿") as PromptFrontmatter["status"],
+    category: (() => {
+      try {
+        return normalizeTaxonomyValue((data as any).category ?? promptCategories[0], categoryTable);
+      } catch {
+        return promptCategories[0];
+      }
+    })(),
+    promptStage: (() => {
+      try {
+        return normalizeTaxonomyValue((data as any).promptStage ?? promptStages[0], stageTable);
+      } catch {
+        return promptStages[0];
+      }
+    })(),
     model: typeof data.model === "string" ? data.model : "",
+    platformTags: (() => {
+      try {
+        return normalizeTaxonomyArray((data as any).platformTags, platformTable);
+      } catch {
+        return [];
+      }
+    })(),
+    audienceTags: (() => {
+      try {
+        return normalizeTaxonomyArray((data as any).audienceTags, audienceTable);
+      } catch {
+        return [];
+      }
+    })(),
+    deliverableTags: (() => {
+      try {
+        return normalizeTaxonomyArray((data as any).deliverableTags, deliverableTable);
+      } catch {
+        return [];
+      }
+    })(),
     tags,
     note,
     updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : fallback.updatedAt,

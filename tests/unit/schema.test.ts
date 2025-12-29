@@ -15,7 +15,10 @@ describe("promptFrontmatterSchema", () => {
       tags: [" tag ", "Tag", "b"],
       updatedAt: now
     });
-    expect(parsed.tags).toEqual(["tag", "b"]);
+    expect(parsed.tags).toEqual([
+      { code: "tag", name: "tag" },
+      { code: "b", name: "b" }
+    ]);
   });
 
   it("rejects illegal filename characters in title", () => {
@@ -37,22 +40,15 @@ describe("projectSchema", () => {
     const parsed = projectSchema.parse({
       id: "p1",
       name: "AI 工作流課程",
-      status: "進行中",
+      status: { code: "ACTIVE", name: "進行中" },
+      projectType: { code: "PRESALES", name: "售前/提案（對客戶）" },
+      summary: "摘要",
+      tags: [{ code: "REUSABLE", name: "可重用" }],
       promptCount: 0,
       docPath: "C:/tmp/AI-工作流課程/README.md",
       updatedAt: now
     });
-    expect(parsed.status).toBe("進行中");
-
-    const english = projectSchema.parse({
-      id: "p2",
-      name: "Project B",
-      status: "active",
-      promptCount: 1,
-      docPath: "C:/tmp/Project-B/README.md",
-      updatedAt: now
-    });
-    expect(english.status).toBe("active");
+    expect(parsed.status).toEqual({ code: "ACTIVE", name: "進行中" });
   });
 });
 

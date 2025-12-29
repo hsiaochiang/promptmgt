@@ -1,5 +1,16 @@
 import { z } from "zod";
 import { toIsoWithOffset } from "../utils/date";
+import {
+  audienceTags,
+  commonTags,
+  deliverableTags,
+  platformTags,
+  projectStatuses,
+  projectTypes,
+  promptCategories,
+  promptStages
+} from "../taxonomy/data";
+import { normalizeTaxonomyArray, normalizeTaxonomyValue, toTaxonomyTable } from "../utils/taxonomy";
 
 // 中文與英文字段並行，避免破壞現有資料，同時符合 data-model 驗證規範
 const ILLEGAL_FILENAME_CHARS = /[\/\\:*?"<>|]/;
@@ -24,31 +35,51 @@ const nonEmptyTrimmed = (max: number) =>
       message: "包含檔名禁用字元"
     });
 
-const projectStatusSchema = z.enum(["planned", "active", "archived", "規劃中", "進行中", "已結案"]);
+const projectStatusTable = toTaxonomyTable(projectStatuses);
+const projectTypeTable = toTaxonomyTable(projectTypes);
+const promptCategoryTable = toTaxonomyTable(promptCategories);
+const promptStageTable = toTaxonomyTable(promptStages);
+const platformTagTable = toTaxonomyTable(platformTags);
+const audienceTagTable = toTaxonomyTable(audienceTags);
+const deliverableTagTable = toTaxonomyTable(deliverableTags);
+const commonTagTable = toTaxonomyTable(commonTags);
+
+const taxonomyValueObjectSchema = z.object({
+  code: z.string().trim().min(1),
+  name: z.string().trim().min(1)
+});
+
+const taxonomyValueSchema = (table?: Record<string, string>) =>
+  z.preprocess(
+    (val) => {
+      if (val === undefined || val === null) {
+        if (table) {
+          const [code, name] = Object.entries(table)[0] ?? ["UNSPECIFIED", "UNSPECIFIED"];
+          return { code, name };
+        }
+        return { code: "UNSPECIFIED", name: "UNSPECIFIED" };
+      }
+      return normalizeTaxonomyValue(val, table);
+    },
+    taxonomyValueObjectSchema
+  );
+
+const taxonomyArraySchema = (table?: Record<string, string>) =>
+  z
+    .preprocess((val) => normalizeTaxonomyArray(val, table), z.array(taxonomyValueObjectSchema))
+    .transform((values) => values ?? []);
+
 const promptStatusSchema = z.enum(["draft", "active", "archived", "草稿", "使用中", "已封存"]);
 const promptTypeSchema = z.string().trim().min(1).max(100);
-
-const tagArraySchema = z
-  .array(z.string().trim().min(1).max(50))
-  .default([])
-  .transform((tags) => {
-    const seen = new Set<string>();
-    return tags
-      .map((tag) => tag.trim())
-      .filter((tag) => tag.length > 0)
-      .filter((tag) => {
-        const key = tag.toLowerCase();
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-  });
 
 export const projectSchema = z.object({
   id: z.string().min(1).max(120),
   name: nonEmptyTrimmed(100),
-  status: projectStatusSchema,
-  promptCount: z.number().int().nonnegative(),
+  status: taxonomyValueSchema(projectStatusTable).default(projectStatuses[0]),
+  summary: z.string().trim().min(1).max(200).default("未設定"),
+  projectType: taxonomyValueSchema(projectTypeTable).default(projectTypes[0]),
+  tags: taxonomyArraySchema(commonTagTable).default([]),
+  promptCount: z.number().int().nonnegative().default(0),
   docPath: z.string().trim().min(1, "docPath 必填"),
   updatedAt: isoUtc8StringWithDefault,
   createdAt: isoUtc8StringWithDefault,
@@ -99,8 +130,13 @@ export const promptFrontmatterSchema = z.object({
   project: nonEmptyTrimmed(100),
   type: promptTypeSchema,
   status: promptStatusSchema,
+  category: taxonomyValueSchema(promptCategoryTable).default(promptCategories[0]),
+  promptStage: taxonomyValueSchema(promptStageTable).default(promptStages[0]),
   model: z.string().trim().max(100).optional(),
-  tags: tagArraySchema,
+  platformTags: taxonomyArraySchema(platformTagTable).default([]),
+  audienceTags: taxonomyArraySchema(audienceTagTable).default([]),
+  deliverableTags: taxonomyArraySchema(deliverableTagTable).default([]),
+  tags: taxonomyArraySchema(commonTagTable).default([]),
   note: z.string().trim().max(2000).optional(),
   updatedAt: isoUtc8StringWithDefault,
   createdAt: isoUtc8StringWithDefault

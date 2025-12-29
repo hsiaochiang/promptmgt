@@ -22,6 +22,10 @@ export async function GET(request: Request) {
   const projectId = searchParams.get("projectId");
   const status = searchParams.get("status");
   const query = searchParams.get("q")?.toLowerCase() ?? "";
+  const category = searchParams.get("category");
+  const promptStage = searchParams.get("promptStage");
+  const platformTag = searchParams.get("platformTag");
+  const tag = searchParams.get("tag");
   const limit = Math.min(parseInt(searchParams.get("limit") ?? "1000", 10) || 1000, 1000);
   const all = await listPrompts(rootPath);
   setPromptMetaFromPrompts(all);
@@ -33,10 +37,34 @@ export async function GET(request: Request) {
     filtered = filtered.filter((p) => p.status === status);
   }
 
-  if (query.trim()) {
-    filtered = filtered.filter((p) =>
-      [p.title, p.model, p.tags.join(" ")].some((field) => (field ?? "").toLowerCase().includes(query))
+  if (category) {
+    filtered = filtered.filter((p) => p.category?.code === category || p.category?.name === category);
+  }
+
+  if (promptStage) {
+    filtered = filtered.filter(
+      (p) => p.promptStage?.code === promptStage || p.promptStage?.name === promptStage
     );
+  }
+
+  if (platformTag) {
+    filtered = filtered.filter((p) =>
+      (p.platformTags ?? []).some((t) => t.code === platformTag || t.name === platformTag)
+    );
+  }
+
+  if (tag) {
+    filtered = filtered.filter((p) => (p.tags ?? []).some((t) => t.code === tag || t.name === tag));
+  }
+
+  if (query.trim()) {
+    filtered = filtered.filter((p) => {
+      const tagText = (p.tags ?? []).map((t) => `${t.code} ${t.name}`).join(" ");
+      const platformText = (p.platformTags ?? []).map((t) => `${t.code} ${t.name}`).join(" ");
+      return [p.title, p.model, tagText, platformText]
+        .filter(Boolean)
+        .some((field) => (field ?? "").toLowerCase().includes(query));
+    });
   }
 
   filtered = filtered.slice(0, limit);

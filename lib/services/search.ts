@@ -27,8 +27,8 @@ export function searchPrompts(
       continue;
     }
 
-    const haystack =
-      item.title.toLowerCase() + " " + item.tags.join(" ").toLowerCase() + " " + (item.model ?? "");
+    const tagsText = (item.tags ?? []).map((t) => `${t.code} ${t.name}`.toLowerCase()).join(" ");
+    const haystack = item.title.toLowerCase() + " " + tagsText + " " + (item.model ?? "");
     if (haystack.includes(lowered)) {
       results.push({
         ...item,

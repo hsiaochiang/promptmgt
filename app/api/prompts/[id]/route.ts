@@ -53,23 +53,21 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   const baseFrontmatter: Partial<PromptFrontmatter> = current.frontmatter ?? {};
   const serverNow = toIsoWithOffset();
-  const mergedFrontmatter: PromptFrontmatter = {
-    title: frontmatter?.title ?? (baseFrontmatter.title as string),
-    project: frontmatter?.project ?? (baseFrontmatter.project as string),
-    type: (frontmatter?.type ?? baseFrontmatter.type ?? "其他") as PromptFrontmatter["type"],
-    status: (frontmatter?.status ?? baseFrontmatter.status ?? "草稿") as PromptFrontmatter["status"],
-    model: frontmatter?.model ?? baseFrontmatter.model ?? "",
-    tags: Array.isArray(frontmatter?.tags) ? frontmatter.tags : Array.isArray(baseFrontmatter.tags) ? baseFrontmatter.tags : [],
-    note: frontmatter?.note ?? baseFrontmatter.note,
-    createdAt: baseFrontmatter.createdAt ?? frontmatter?.createdAt ?? toIsoWithOffset(),
-    updatedAt: serverNow
+  const mergedFrontmatterInput = {
+    ...baseFrontmatter,
+    ...frontmatter,
+    updatedAt: serverNow,
+    createdAt: baseFrontmatter.createdAt ?? frontmatter?.createdAt ?? toIsoWithOffset()
   };
-  try {
-    promptFrontmatterSchema.parse(mergedFrontmatter);
-  } catch (err: any) {
-    return badRequest("frontmatter validation failed", { issues: err?.issues });
-  }
-  const updatedFrontmatter = mergedFrontmatter;
+  const parsedFrontmatter = (() => {
+    try {
+      return promptFrontmatterSchema.parse(mergedFrontmatterInput);
+    } catch (err: any) {
+      return badRequest("frontmatter validation failed", { issues: err?.issues });
+    }
+  })();
+  if (parsedFrontmatter instanceof NextResponse) return parsedFrontmatter;
+  const updatedFrontmatter = parsedFrontmatter;
   const projectName = updatedFrontmatter.project ?? baseFrontmatter.project;
 
   if (!projectName) {
