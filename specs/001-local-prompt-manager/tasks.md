@@ -37,9 +37,9 @@
 
 **Purpose**：所有 user story 共用且會阻塞後續實作的基礎能力（完成後 US1~US6 可並行）。
 
-- [ ] T005 建立 TaxonomyValue 與驗證 helper（code+name 雙寫入、一致性驗證、array 去重）：lib/utils/taxonomy.ts
-- [ ] T006 [P] 建立 Prompt taxonomy 內建表（category/promptStage/platform/audience/deliverable/commonTags）：lib/ui/promptTaxonomy.ts
-- [ ] T007 [P] 建立 Project taxonomy 內建表（projectStatuses/projectTypes/commonTags；沿用/擴充現有 options）：lib/ui/projectMetaTaxonomy.ts
+- [X] T005 建立 TaxonomyValue 與驗證 helper（code+name 雙寫入、一致性驗證、array 去重）：lib/utils/taxonomy.ts
+- [X] T006 [P] 建立 Prompt taxonomy 內建表（category/promptStage/platform/audience/deliverable/commonTags）：lib/ui/promptTaxonomy.ts
+- [X] T007 [P] 建立 Project taxonomy 內建表（projectStatuses/projectTypes/commonTags；沿用/擴充現有 options）：lib/ui/projectMetaTaxonomy.ts
 - [ ] T008 更新 Zod schema：Project 與 Prompt frontmatter 改用 TaxonomyValue 並符合欄位必填/補值策略：lib/types/schema.ts
 - [ ] T009 統一 API 錯誤回應格式（400/404/409 → {code,message,details?}）：app/api/_lib/responses.ts
 - [ ] T010 [P] 建立 MarkdownPreview 元件（搭配 react-markdown + sanitize；樣式最小可用）：app/(workspace)/components/markdown-preview.tsx
