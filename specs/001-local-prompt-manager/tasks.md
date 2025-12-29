@@ -42,10 +42,10 @@
 - [X] T007 [P] 建立 Project taxonomy 內建表（projectStatuses/projectTypes/commonTags；沿用/擴充現有 options）：lib/ui/projectMetaTaxonomy.ts
 - [X] T008 更新 Zod schema：Project 與 Prompt frontmatter 改用 TaxonomyValue 並符合欄位必填/補值策略：lib/types/schema.ts
 - [X] T009 統一 API 錯誤回應格式（400/404/409 → {code,message,details?}）：app/api/_lib/responses.ts
-- [ ] T010 [P] 建立 MarkdownPreview 元件（搭配 react-markdown + sanitize；樣式最小可用）：app/(workspace)/components/markdown-preview.tsx
-- [ ] T011 [P] 建立 EditorTabs 元件（編輯/預覽互斥；ARIA role/鍵盤操作）：app/(workspace)/components/editor-tabs.tsx
-- [ ] T012 [P] 建立 SnackbarUndo 元件（5 秒倒數、Undo/Close、可取消 timeout）：app/(workspace)/components/snackbar-undo.tsx
-- [ ] T013 [P] 建立 ConfirmModal 元件（focus trap、Esc、回復焦點）：app/(workspace)/components/confirm-modal.tsx
+- [X] T010 [P] 建立 MarkdownPreview 元件（搭配 react-markdown + sanitize；樣式最小可用）：app/(workspace)/components/markdown-preview.tsx
+- [X] T011 [P] 建立 EditorTabs 元件（編輯/預覽互斥；ARIA role/鍵盤操作）：app/(workspace)/components/editor-tabs.tsx
+- [X] T012 [P] 建立 SnackbarUndo 元件（5 秒倒數、Undo/Close、可取消 timeout）：app/(workspace)/components/snackbar-undo.tsx
+- [X] T013 [P] 建立 ConfirmModal 元件（focus trap、Esc、回復焦點）：app/(workspace)/components/confirm-modal.tsx
 
 **Checkpoint**：Foundation ready（已具備 taxonomy/schema/error/UI primitives）。
 
