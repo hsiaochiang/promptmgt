@@ -4,7 +4,8 @@ dist/
 build/
 coverage/
 out/
+playwright-report/
+test-results/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
-

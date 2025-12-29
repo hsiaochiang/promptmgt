@@ -68,11 +68,11 @@
 
 ### Implementation
 
-- [ ] T017 [US1] 實作 Topbar Tabs（Projects/Prompts/Scratchpad）狀態與 UI：app/(workspace)/components/top-bar.tsx
-- [ ] T018 [US1] 在 Workspace Shell 實作 activeTab 切換並渲染 Main/Side：app/(workspace)/workspace-shell.tsx
-- [ ] T019 [US1] 實作 RootPathAlert（全站提示、不阻擋、可導向設定頁）：app/(workspace)/components/root-path-alert.tsx
-- [ ] T020 [US1] Settings UI：rootPath 表單、儲存、可操作錯誤訊息：app/(workspace)/settings/page.tsx
-- [ ] T021 [US1] Settings API：rootPath 存取性檢查（不可存取 → 400 + details）：app/api/settings/route.ts
+- [X] T017 [US1] 實作 Topbar Tabs（Projects/Prompts/Scratchpad）狀態與 UI：app/(workspace)/components/top-bar.tsx
+- [X] T018 [US1] 在 Workspace Shell 實作 activeTab 切換並渲染 Main/Side：app/(workspace)/workspace-shell.tsx
+- [X] T019 [US1] 實作 RootPathAlert（全站提示、不阻擋、可導向設定頁）：app/(workspace)/components/root-path-alert.tsx
+- [X] T020 [US1] Settings UI：rootPath 表單、儲存、可操作錯誤訊息：app/(workspace)/settings/page.tsx
+- [X] T021 [US1] Settings API：rootPath 存取性檢查（不可存取 → 400 + details）：app/api/settings/route.ts
 
 ---
 

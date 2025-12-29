@@ -71,7 +71,32 @@ function normalizeFrontmatter(
   const title = typeof data.title === "string" && data.title.trim().length > 0 ? data.title.trim() : null;
   const project = typeof data.project === "string" && data.project.trim().length > 0 ? data.project.trim() : null;
 
-  const tags = normalizeTaxonomyArray(data.tags, commonTable);
+  const tags = (() => {
+    const raw = Array.isArray(data.tags) ? data.tags : [];
+    const seen = new Set<string>();
+    const result: string[] = [];
+
+    for (const item of raw) {
+      const value =
+        typeof item === "string"
+          ? item.trim()
+          : item && typeof item === "object"
+            ? (() => {
+                const code = typeof (item as any).code === "string" ? (item as any).code.trim() : "";
+                const name = typeof (item as any).name === "string" ? (item as any).name.trim() : "";
+                return code || name;
+              })()
+            : "";
+
+      if (!value) continue;
+      const key = value.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push(value);
+    }
+
+    return result;
+  })();
 
   const note =
     typeof (data as any).note === "string"
@@ -125,7 +150,7 @@ function normalizeFrontmatter(
         return [];
       }
     })(),
-    tags,
+    tags: tags as PromptFrontmatter["tags"],
     note,
     updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : fallback.updatedAt,
     createdAt: typeof data.createdAt === "string" ? data.createdAt : fallback.createdAt

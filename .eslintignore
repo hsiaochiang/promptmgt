@@ -4,5 +4,6 @@ dist/
 build/
 coverage/
 out/
+playwright-report/
+test-results/
 *.min.js
-
