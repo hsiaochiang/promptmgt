@@ -95,10 +95,10 @@
 
 ### 測試（先寫且先失敗）
 
-- [ ] T022 [P] [US2] 契約測試：/api/projects CRUD（含 taxonomy 欄位與 409）：tests/contract/api-projects-prompts.test.ts
-- [ ] T023 [P] [US2] 契約測試：/api/projects/:id/readme GET/PUT（含 409 details）：tests/contract/api-project-readme.test.ts
-- [ ] T024 [P] [US2] 契約測試：/api/projects/:id/meta 讀寫 taxonomy（code+name 一致性驗證）：tests/contract/api-project-meta.test.ts
-- [ ] T025 [P] [US2] 整合測試：Project Detail README 編輯/預覽/儲存與錯誤提示：tests/integration/us2-project-readme.test.tsx
+- [X] T022 [P] [US2] 契約測試：/api/projects CRUD（含 taxonomy 欄位與 409）：tests/contract/api-projects-prompts.test.ts
+- [X] T023 [P] [US2] 契約測試：/api/projects/:id/readme GET/PUT（含 409 details）：tests/contract/api-project-readme.test.ts
+- [X] T024 [P] [US2] 契約測試：/api/projects/:id/meta 讀寫 taxonomy（code+name 一致性驗證）：tests/contract/api-project-meta.test.ts
+- [X] T025 [P] [US2] 整合測試：Project Detail README 編輯/預覽/儲存與錯誤提示：tests/integration/us2-project-readme.test.tsx
 
 ### 實作
 
