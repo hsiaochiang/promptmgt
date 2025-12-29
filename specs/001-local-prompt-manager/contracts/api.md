@@ -2,10 +2,15 @@
 
 > 錯誤格式統一：`{ code, message, details? }`（400/404/409）
 
+## 共用型別
+- `TaxonomyValue`: `{ code: string; name: string }`
+- 規則：taxonomy 欄位必須雙寫入 `code+name`，server 驗證一致性；不一致 → 400
+
 ## Projects
-- `GET /api/projects` → 200: Project[]
-- `POST /api/projects` body: { name, description?, status?, id? } → 201: Project
-- `PATCH /api/projects` body: { id, name?, status?, promptCount? } → 200: Project
+- `GET /api/projects?q=&status=&projectType=&tag=&limit=` → 200: Project[]
+  - 列表卡片必備欄位：`summary/status/projectType/tags/promptCount/updatedAt`
+- `POST /api/projects` body: { name, status, summary, projectType, tags, id? } → 201: Project
+- `PATCH /api/projects` body: { id, name?, status?, summary?, projectType?, tags?, promptCount? } → 200: Project
 - `DELETE /api/projects` body: { id } → 200: { ok: true }
 
 ## Project README
@@ -19,7 +24,7 @@
 - `DELETE /api/inbox/{id}` → 200: { ok: true }
 
 ## Prompts
-- `GET /api/prompts?projectId=&status=&q=&limit=` → 200: PromptListItem[]
+- `GET /api/prompts?projectId=&status=&q=&category=&promptStage=&platformTag=&tag=&limit=` → 200: PromptListItem[]
 - `POST /api/prompts` body: { frontmatter, body? } → 201: { id, projectId, frontmatter, body, hash, mtimeMs }
 - `GET /api/prompts/{id}` → 200: { frontmatter, body, hash, mtimeMs, damaged, errorCode?, errorMessage? }
 - `POST /api/prompts/{id}` body: { frontmatter, body, clientHash?, clientMtime? } → 200: { hash, mtimeMs, updatedAt }；409 on conflict

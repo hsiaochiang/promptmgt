@@ -39,6 +39,14 @@
 - Q: RootPathAlert 何時觸發？ → A: rootPath 缺失/不可存取時採全站級提示（不阻擋瀏覽），並提供導向設定頁
 - Q: 自動儲存遇到寫入衝突（例如 409 / 檔案被外部修改）時如何處理？ → A: 顯示衝突提示，提供「重新載入 / 另存副本 / 強制覆寫」三選一
 
+### Session 2025-12-28
+
+- Q: Projects（專案列表）要不要真的對齊 prototype 的資料欄位（summary/projectType/tags）？ → A: 是，完整對齊：Project 實體新增 summary/projectType/tags，API/儲存/測試一起升級
+- Q: Prompts（提示詞列表）的篩選器要以哪一套為準？ → A: 以 prototype 為準：分類（category）+ 階段（stage）+ 平台（platform）+ 標籤（tag）
+- Q: Project 的 summary（專案摘要）欄位來源要怎麼定義？ → A: 混合：預設由 README 推導，但允許使用者覆寫並保存 summary
+- Q: taxonomy 欄位（Project projectType、Prompt category/promptStage/platformTags/...）在 API/儲存時要以什麼作為權威？ → A: 同時存 code 與 name（雙寫入），並保證一致性（不一致視為錯誤）
+- Q: Project 的 status 要不要改成 prototype 的狀態枚舉？ → A: 是，改為 prototype：ACTIVE/PAUSED/ARCHIVED（以 TaxonomyValue 存 code+name）
+
 ## 已對齊原型：變更點（相較於原先 spec 的主要收斂/修正）
 
 - 已對齊原型：以 Topbar Tabs 導覽為主（專案/提示詞/剪貼簿），固定兩欄 Shell（Main + Side）。
@@ -85,24 +93,26 @@
 
 ### 1) Projects（專案列表）
 
-- Main：專案卡片列表 + 篩選（狀態下拉 + 搜尋框）+「新增專案」
-- Side：專案概覽 KPI（進行中/規劃中/已結案）+ 使用建議（CTA：新增提示詞）
+- Main：專案卡片列表（以 prototype 的資訊密度呈現）+ 篩選（搜尋 + 狀態 + 分類 projectType + 標籤 tag）+「新增專案」
+- 專案卡片需顯示：專案名稱、摘要（summary）、狀態（badge）、分類 projectType（badge）、共通標籤 tags（chips）、提示詞數（promptCount）、更新時間（updatedAt）
+- Side：專案概覽 KPI（進行中/暫停/封存）+ 使用建議（CTA：新增提示詞）
 - 行為：點擊專案卡片 → 進入 Project Detail
 
 ### 2) Project Detail（專案詳情）
 
 - Main：專案摘要、專案 README（編輯/預覽/儲存）、該專案提示詞清單、檔案列表（上傳/描述/刪除）、進度紀錄（新增/刪除）
 - Side：
-	- 分類與標籤（儲存於專案資料夾的 `_meta.json`；以 taxonomy 選項為主，並允許自訂輸入）
+	- 分類與標籤（持久化以專案資料夾的 `_meta.json` 為主；並確保 Projects API 會彙整回傳 `projectType/tags` 供列表卡片呈現）
 		- 平台標籤/交付物標籤/受眾標籤/共通標籤：輸入框 + Enter 新增，chips 可移除，提供清空
-		- 若輸入符合 taxonomy 的 code/name，需正規化為 code 後存檔
+		- taxonomy 欄位採 `code+name` 雙寫入；server 需驗證一致性，不一致視為錯誤
 	- 專案資訊（狀態等）
 	- 危險操作（刪除專案）
 - 行為：刪除類操作均需 Confirm，刪除後顯示 Snackbar Undo（5 秒）；5 秒內可復原，逾時永久刪除
 
 ### 3) Prompts（提示詞列表）
 
-- Main：跨專案提示詞列表 + 篩選（搜尋/專案/狀態）
+- Main：跨專案提示詞列表 + 篩選（搜尋 + 分類 category + 階段 stage + 平台 platform + 標籤 tag；對齊 prototype）
+- 列表列資訊需包含：標題、（專案名稱 · 分類名稱 · 階段名稱）、更新時間、狀態（badge）
 - Side：
 	- 提示詞概覽 KPI
 	- 常用片語庫（可新增/編輯/插入/刪除；顯示 usage 次數與最後使用）
@@ -129,6 +139,7 @@
 ### 6) Settings（設定）
 
 - Main：rootPath/logPath 與功能開關（遙測、更新檢查等）
+- 本次範圍說明：Settings 以「rootPath 缺失/不可存取導引」為主要對齊點；logPath/遙測/更新檢查沿用既有能力，本次不新增/改動 UI 或 API 契約。
 - rootPath：必填且需可存取；缺失/不可存取時 RootPathAlert 以全站提示導向 Settings
 - logPath：必須位於「使用者目錄」或「rootPath」底下
 	- UI 提供快捷：使用預設（DEFAULT_ROOT/logs/app.log）、使用 rootPath（rootPath/logs/app.log）
@@ -138,8 +149,34 @@
 
 - 提供快速檢視最近 24 小時內的變更（提示詞/收件匣/專案等），從 Topbar 進入
 - 若無資料顯示空狀態；載入/錯誤需有明確回饋
+- 本次範圍說明：今日變更報告屬既有擴充能力說明，本次不新增/改動其 UI 或 API；若需擴充，另立獨立 feature 與 tasks。
 
 ## 非 UI/UX 的資料層與格式（以現有系統已實作為準）
+
+**TaxonomyValue（規格型別）**
+
+本 spec 中提到的 taxonomy 欄位（例如 projectType、category、promptStage、platformTags 等）採用以下型別：
+
+```ts
+type TaxonomyValue = { code: string; name: string };
+```
+
+**規則（非選配）**
+
+- API 與持久化需雙寫入 `code` + `name`。
+- server 必須驗證 `code` 對應的 `name` 是否正確（以系統內建 taxonomy 表為準）。
+- 若 `code`/`name` 不一致：回傳 400（validation error），不得靜默修正。
+
+**Project 欄位（對齊 prototype）**
+
+Project 實體需具備並可由 API 回傳以下欄位，以支援 Projects（專案列表）的 prototype 呈現：
+
+| key | type | required | notes |
+|-----|------|----------|-------|
+| status | TaxonomyValue | Y | 對齊 prototype taxonomy.projectStatuses（允許值：`ACTIVE/PAUSED/ARCHIVED` 對應中文 `進行中/暫停/封存`） |
+| summary | string | Y | 專案摘要（用於列表卡片第二行）；預設可由 README 第一段/前 N 字推導產生，但允許使用者覆寫並持久化保存（覆寫後以保存值為準）；長度建議 ≤ 200 |
+| projectType | TaxonomyValue | Y | 專案分類（對齊 prototype taxonomy.projectTypes） |
+| tags | TaxonomyValue[] | Y | 共通標籤清單（對齊 prototype taxonomy.commonTags；用於列表 chips；需去重） |
 
 ### rootPath 設定與路徑失效導引
 
@@ -162,8 +199,13 @@
 | project | string | Y | `"unspecified"`（補值） | 不可空白；用於歸屬專案（顯示用專案名） |
 | type | string | Y | `"其他"` | 長度 ≤100；目前不限制枚舉值 |
 | status | string | Y | `"草稿"` | 允許值：`draft/active/archived` 或 `草稿/使用中/已封存`（允許英中並行） |
+| category | TaxonomyValue | Y | 對齊 prototype taxonomy.conversationCategories |
+| promptStage | TaxonomyValue | Y | 對齊 prototype taxonomy.promptStages |
 | model | string | N | `""`（可省略） | 長度 ≤100 |
-| tags | string[] | Y | `[]` | 去空白、去重（不分大小寫） |
+| platformTags | TaxonomyValue[] | Y | `[]` | 對齊 prototype taxonomy.platformTags；需去重 |
+| audienceTags | TaxonomyValue[] | Y | `[]` | 對齊 prototype taxonomy.audienceTags；需去重 |
+| deliverableTags | TaxonomyValue[] | Y | `[]` | 對齊 prototype taxonomy.deliverableTags；需去重 |
+| tags | TaxonomyValue[] | Y | `[]` | 對齊 prototype taxonomy.commonTags；需去重 |
 | note | string | N | （省略） | 長度 ≤2000；歷史相容 `notes` → 正規化為 `note` |
 | createdAt | string | Y | server/資料層補值 | ISO 8601 (UTC+08:00)；僅首次建立設定 |
 | updatedAt | string | Y | server/資料層補值 | ISO 8601 (UTC+08:00)；每次成功儲存（含 autosave）都由 server/資料層更新並回傳 |

@@ -1,6 +1,20 @@
 # Data Model（Phase 1）
 
-> 本文件以現行程式碼的 Zod schema（`lib/types/schema.ts`）為準。
+> 本文件以 `spec.md` 的需求為準，並對照現行資料層（Zod schema / FS 儲存）規劃升級路徑。
+
+## 共用型別
+
+### TaxonomyValue
+
+```ts
+type TaxonomyValue = { code: string; name: string };
+```
+
+**規則（非選配）**
+
+- API 與持久化需雙寫入 `code` + `name`
+- server 必須驗證 `code` 對應的 `name` 是否正確（以內建 taxonomy 表為準）
+- 若 `code`/`name` 不一致：回傳 400（validation error），不得靜默修正
 
 ## 實體與欄位
 
@@ -9,7 +23,10 @@
 ### Project（專案）
 - `id`: string（必填；現況常見 `proj-xxxxxx`）
 - `name`: string（必填、唯一（不分大小寫），<=100，禁用檔名非法字元）
-- `status`: enum [`planned`,`active`,`archived`,`規劃中`,`進行中`,`已結案`]
+- `status`: TaxonomyValue（必填；允許值：`ACTIVE/PAUSED/ARCHIVED`）
+- `summary`: string（必填；預設可由 README 推導，但允許使用者覆寫並持久化；建議 <= 200）
+- `projectType`: TaxonomyValue（必填；對齊 prototype taxonomy.projectTypes）
+- `tags`: TaxonomyValue[]（必填；對齊 prototype taxonomy.commonTags；需去重）
 - `promptCount`: number（>=0）
 - `docPath`: string（專案說明 Markdown 路徑，位於專案資料夾）
 - `updatedAt`: datetime (ISO 8601, UTC+08:00)
@@ -17,15 +34,22 @@
 - `path`: string（可選；rootPath 設定後可推導）
 - 關聯：1:N `Prompt`
 
+> Project Detail 的側欄更完整 taxonomy（平台/交付物/受眾/共通）建議持久化於專案資料夾 `_meta.json`，並由 `GET /projects` 彙整必要欄位（`status/summary/projectType/tags`）供列表卡片使用。
+
 ### Prompt（提示詞 Markdown 檔案）
 - `id`: string（檔案路徑 base64url；用於 API 路由參數）
 - `projectId`: string（現況為 project 名稱；亦兼容以 projectId 進行篩選）
 - `title`: string（必填，<=200，禁用檔名非法字元）
 - `type`: string（必填；<=100）
-- `status`: enum [`draft`,`active`,`archived`,`草稿`,`使用中`,`已封存`]
+- `status`: string（必填；允許值：`draft/active/archived` 或 `草稿/使用中/已封存`，英中並行）
+- `category`: TaxonomyValue（必填；對齊 prototype taxonomy.conversationCategories）
+- `promptStage`: TaxonomyValue（必填；對齊 prototype taxonomy.promptStages）
 - `model`: string（可選；<=100）
-- `tags`: string[]（去重；單一標籤 <=50）
-- `note`: string（可選；<=2000）
+- `platformTags`: TaxonomyValue[]（必填；對齊 prototype taxonomy.platformTags；需去重）
+- `audienceTags`: TaxonomyValue[]（必填；對齊 prototype taxonomy.audienceTags；需去重）
+- `deliverableTags`: TaxonomyValue[]（必填；對齊 prototype taxonomy.deliverableTags；需去重）
+- `tags`: TaxonomyValue[]（必填；對齊 prototype taxonomy.commonTags；需去重）
+- `note`: string（可選；<=2000；歷史相容 `notes` → 正規化為 `note`）
 - `createdAt`: datetime (ISO 8601, UTC+08:00)
 - `updatedAt`: datetime (ISO 8601, UTC+08:00)
 - `content`: string（Markdown 本體；僅在詳細讀取時）
@@ -73,13 +97,14 @@
 ## 驗證規則
 - 標題/名稱不得含檔名禁用字元 `/ \ : * ? " < > |`；寫檔前必須經 `sanitizeFilename`。  
 - 所有時間欄位強制使用 ISO 8601（UTC+08:00），缺值自動補齊；解析需驗證偏移存在。  
-- `tags` 需去重、trim、禁止空白字串（以 schema transform 保證）。  
+- 所有 taxonomy array 欄位需去重（以 `code` 不分大小寫作為 key）、trim，並拒絕空值；`code/name` 不一致視為錯誤。  
 - `rootPath` 允許為 null；若為 null 或不可存取，UI 需以 RootPathAlert 導向設定頁，且寫入操作不可靜默失敗。  
 - Frontmatter 缺失/損壞時需可降級（例如純文字模式）並允許修復。  
 - 列表輸出建議限制 1000 筆並提示收斂條件（避免 UI 卡頓）。
 
 ## 狀態與轉換
-- Prompt `status` / Project `status` 允許中英文枚舉值並行（避免破壞既有資料）。
+- Prompt `status` 允許中英文枚舉值並行（避免破壞既有資料）。
+- Project `status` 以 taxonomy（`ACTIVE/PAUSED/ARCHIVED`）為準；若需相容舊值，應在 migration 階段明確映射並一次性清理。
 - 刪除 + Undo：本次建議採 UI deferred delete（5 秒）；不要求在資料模型新增永久 soft-delete 欄位。
 
 ## 事件與派生資料

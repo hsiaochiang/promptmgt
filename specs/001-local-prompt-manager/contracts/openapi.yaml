@@ -9,6 +9,22 @@ paths:
   /projects:
     get:
       summary: 列出專案
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: status
+          schema: { $ref: "#/components/schemas/ProjectStatusCode" }
+        - in: query
+          name: projectType
+          schema: { type: string, description: "taxonomy code" }
+        - in: query
+          name: tag
+          schema: { type: string, description: "taxonomy code" }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 1000 }
       responses:
         "200":
           description: OK
@@ -149,6 +165,18 @@ paths:
         - in: query
           name: q
           schema: { type: string }
+        - in: query
+          name: category
+          schema: { type: string, description: "taxonomy code" }
+        - in: query
+          name: promptStage
+          schema: { type: string, description: "taxonomy code" }
+        - in: query
+          name: platformTag
+          schema: { type: string, description: "taxonomy code" }
+        - in: query
+          name: tag
+          schema: { type: string, description: "taxonomy code" }
         - in: query
           name: limit
           schema: { type: integer, minimum: 1, maximum: 1000 }
@@ -617,6 +645,20 @@ components:
           schema: { $ref: "#/components/schemas/ErrorResponse" }
 
   schemas:
+    TaxonomyValue:
+      type: object
+      required: [code, name]
+      properties:
+        code: { type: string }
+        name: { type: string }
+
+    ProjectStatusCode:
+      type: string
+      enum: [ACTIVE, PAUSED, ARCHIVED]
+
+    PromptTaxonomyCode:
+      type: string
+      description: taxonomy code（實際允許值以內建 taxonomy 表為準）
     ErrorResponse:
       type: object
       required: [code, message]
@@ -659,11 +701,17 @@ components:
 
     Project:
       type: object
-      required: [id, name, status, promptCount, docPath, createdAt, updatedAt]
+      required:
+        [id, name, status, summary, projectType, tags, promptCount, docPath, createdAt, updatedAt]
       properties:
         id: { type: string }
         name: { type: string }
-        status: { type: string }
+        status: { $ref: "#/components/schemas/TaxonomyValue" }
+        summary: { type: string }
+        projectType: { $ref: "#/components/schemas/TaxonomyValue" }
+        tags:
+          type: array
+          items: { $ref: "#/components/schemas/TaxonomyValue" }
         promptCount: { type: integer }
         docPath: { type: string }
         path: { type: string }
@@ -672,12 +720,16 @@ components:
 
     ProjectCreateInput:
       type: object
-      required: [name]
+      required: [name, status, summary, projectType, tags]
       properties:
         id: { type: string }
         name: { type: string }
-        status: { type: string }
-        description: { type: string }
+        status: { $ref: "#/components/schemas/TaxonomyValue" }
+        summary: { type: string }
+        projectType: { $ref: "#/components/schemas/TaxonomyValue" }
+        tags:
+          type: array
+          items: { $ref: "#/components/schemas/TaxonomyValue" }
 
     ProjectUpdateInput:
       type: object
@@ -685,7 +737,12 @@ components:
       properties:
         id: { type: string }
         name: { type: string }
-        status: { type: string }
+        status: { $ref: "#/components/schemas/TaxonomyValue" }
+        summary: { type: string }
+        projectType: { $ref: "#/components/schemas/TaxonomyValue" }
+        tags:
+          type: array
+          items: { $ref: "#/components/schemas/TaxonomyValue" }
         promptCount: { type: integer }
 
     ProjectReadme:
@@ -716,16 +773,28 @@ components:
 
     PromptFrontmatter:
       type: object
-      required: [title, project, type, status, tags, createdAt, updatedAt]
+      required:
+        [title, project, type, status, category, promptStage, platformTags, audienceTags, deliverableTags, tags, createdAt, updatedAt]
       properties:
         title: { type: string }
         project: { type: string }
         type: { type: string }
         status: { type: string }
+        category: { $ref: "#/components/schemas/TaxonomyValue" }
+        promptStage: { $ref: "#/components/schemas/TaxonomyValue" }
         model: { type: string }
+        platformTags:
+          type: array
+          items: { $ref: "#/components/schemas/TaxonomyValue" }
+        audienceTags:
+          type: array
+          items: { $ref: "#/components/schemas/TaxonomyValue" }
+        deliverableTags:
+          type: array
+          items: { $ref: "#/components/schemas/TaxonomyValue" }
         tags:
           type: array
-          items: { type: string }
+          items: { $ref: "#/components/schemas/TaxonomyValue" }
         note: { type: string }
         createdAt: { $ref: "#/components/schemas/IsoDateTime" }
         updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
@@ -744,7 +813,7 @@ components:
         model: { type: string }
         tags:
           type: array
-          items: { type: string }
+          items: { $ref: "#/components/schemas/TaxonomyValue" }
         note: { type: string }
         createdAt: { $ref: "#/components/schemas/IsoDateTime" }
         updatedAt: { $ref: "#/components/schemas/IsoDateTime" }

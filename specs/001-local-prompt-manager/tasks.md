@@ -3,184 +3,211 @@
 
 # Tasks: 原型對齊提示詞工作台（001-local-prompt-manager）
 
-**Input**: `specs/001-local-prompt-manager/`（plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md）
-**Tech**: TypeScript / Next.js 14 App Router / React 18 / Tailwind / Zod / LowDB / CodeMirror
+**Input**：`specs/001-local-prompt-manager/`（plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md）
+**Tech**：TypeScript / Next.js 14 App Router / React 18 / Tailwind / Zod / LowDB
 
-> 測試為「必做」：依 `spec.md` / `plan.md` 與專案 Constitution，採 test-first（先寫測試且先失敗，再實作使其通過）。
+> 測試為必做：依 `spec.md` 的 Testing / Quality Gates 與 Constitution，採 test-first（先更新/新增測試並確保先失敗，再實作使其通過）。
 
 ## Checklist Format（REQUIRED）
 
+每個 task 必須符合：
+
 `- [ ] T001 [P?] [US?] 描述（含檔案路徑）`
 
----
+規則：
 
-## Phase 1: Setup（Shared Infrastructure）
-
-**Purpose**: 確立工作分支與開發基線（不做 story 開發）
-
-- [X] T001 確認本 feature 文件齊備且互相一致：specs/001-local-prompt-manager/{plan.md,spec.md,research.md,data-model.md,quickstart.md}
-- [X] T002 確認本 repo 的 dev/build/test 腳本可用並記錄到文件：package.json
-- [X] T003 [P] 確認 API 錯誤格式文件與實作一致（{code,message,details?}）：specs/001-local-prompt-manager/contracts/api.md
-- [X] T004 [P] 確認 OpenAPI 與 Route Handlers 一致（method/path/409 details）：specs/001-local-prompt-manager/contracts/openapi.yaml
+- `[P]`：可並行（不同檔案、無未完成依賴）
+- `[US#]`：僅用於 User Story phases（Setup/Foundational/Polish 不加）
+- 每個 task 描述必須包含明確檔案路徑
 
 ---
 
-## Phase 2: Foundational（Blocking Prerequisites）
+## Phase 1: Setup（專案基線）
 
-**Purpose**: 所有 User Story 共用且會阻塞實作的基礎元件/依賴
+**Purpose**：確認本 feature 的輸入文件、指令與品質閘門可用（不做任何 user story 實作）。
 
-- [X] T005 [P] 安裝 Markdown 預覽相依並更新 lockfile：package.json
-- [X] T006 [P] 新增可重用的 Markdown 預覽元件（含基本樣式與 XSS 防護策略）：app/(workspace)/components/markdown-preview.tsx
-- [X] T007 [P] 新增可重用的「編輯/預覽」Tabs 元件（供 Prompt Detail 使用）：app/(workspace)/components/editor-tabs.tsx
-- [X] T008 [P] 新增可重用的 Snackbar Undo 元件（5 秒倒數、可注入 undo callback）：app/(workspace)/components/snackbar-undo.tsx
-- [X] T009 [P] 擴充 workspace 狀態以支援 activeTab 與 scratchpad 內容：app/(workspace)/store/useWorkspaceStore.ts
-- [X] T010 將 RootPathAlert 視為全站提示（不阻擋瀏覽）並統一掛載位置：app/(workspace)/workspace-shell.tsx
-- [X] T011 統一 409 衝突回應 details（含 currentHash/currentMtime）以供 UI 顯示：app/api/_lib/responses.ts
-
-**Checkpoint**: Foundational 完成後，US1~US6 可並行開發。
+ - [X] T001 確認 plan/spec/research/data-model/contracts/quickstart 內容一致且可追溯：specs/001-local-prompt-manager/{plan.md,spec.md,research.md,data-model.md,contracts/openapi.yaml,quickstart.md}（結果：核心需求一致，落差列於 route-handler-checklist.md、schema-gaps.md）
+ - [X] T002 確認 npm scripts（dev/test/test:contract/typecheck）可用並記錄於 quickstart：package.json
+ - [X] T003 [P] 建立「合約文件 vs Route Handlers」比對清單（端點/錯誤碼/409 details）：specs/001-local-prompt-manager/contracts/openapi.yaml（見 contracts/route-handler-checklist.md）
+ - [X] T004 [P] 建立「資料模型 vs Zod schema」差距清單（TaxonomyValue/欄位/時間規範）：lib/types/schema.ts（見 schema-gaps.md）
 
 ---
 
-## Phase 3: User Story 1 - Workspace Shell + Topbar Tabs（Priority: P1）🎯 MVP
+## Phase 2: Foundational（阻塞性共用基礎）
 
-**Goal**: 以 prototype 為準提供 Topbar Tabs（專案/提示詞/剪貼簿）與固定 Main/Side Shell，並保留全域回饋元件。
+**Purpose**：所有 user story 共用且會阻塞後續實作的基礎能力（完成後 US1~US6 可並行）。
 
-**Independent Test**: 切換三個 Tabs 時，Main/Side 內容正確切換；rootPath 缺失時仍可瀏覽頁面且顯示 RootPathAlert。
+- [ ] T005 建立 TaxonomyValue 與驗證 helper（code+name 雙寫入、一致性驗證、array 去重）：lib/utils/taxonomy.ts
+- [ ] T006 [P] 建立 Prompt taxonomy 內建表（category/promptStage/platform/audience/deliverable/commonTags）：lib/ui/promptTaxonomy.ts
+- [ ] T007 [P] 建立 Project taxonomy 內建表（projectStatuses/projectTypes/commonTags；沿用/擴充現有 options）：lib/ui/projectMetaTaxonomy.ts
+- [ ] T008 更新 Zod schema：Project 與 Prompt frontmatter 改用 TaxonomyValue 並符合欄位必填/補值策略：lib/types/schema.ts
+- [ ] T009 統一 API 錯誤回應格式（400/404/409 → {code,message,details?}）：app/api/_lib/responses.ts
+- [ ] T010 [P] 建立 MarkdownPreview 元件（搭配 react-markdown + sanitize；樣式最小可用）：app/(workspace)/components/markdown-preview.tsx
+- [ ] T011 [P] 建立 EditorTabs 元件（編輯/預覽互斥；ARIA role/鍵盤操作）：app/(workspace)/components/editor-tabs.tsx
+- [ ] T012 [P] 建立 SnackbarUndo 元件（5 秒倒數、Undo/Close、可取消 timeout）：app/(workspace)/components/snackbar-undo.tsx
+- [ ] T013 [P] 建立 ConfirmModal 元件（focus trap、Esc、回復焦點）：app/(workspace)/components/confirm-modal.tsx
 
-### Tests（必須先寫且先失敗）
+**Checkpoint**：Foundation ready（已具備 taxonomy/schema/error/UI primitives）。
 
-- [X] T063 [P] [US1] E2E（最小 smoke）：啟動 app → Tabs 切換（Projects/Prompts/Scratchpad）→ RootPathAlert 不阻擋：tests/e2e/us1-smoke.spec.ts
+---
 
-- [X] T043 [P] [US1] 整合測試：Topbar Tabs 切換 + RootPathAlert 顯示不阻擋：tests/integration/us1-shell-tabs-rootpath.test.tsx
-- [X] T044 [P] [US1] 契約測試：Settings rootPath 讀寫與基本錯誤格式（空字串等）：tests/contract/api-settings.test.ts
-- [X] T064 [P] [US1] 契約測試：Settings rootPath 不可存取路徑回傳標準錯誤格式（400 + details）：tests/contract/api-settings.test.ts
+## Phase 3: User Story 1 - Workspace Shell + Topbar Tabs（Priority: P1）
 
-- [X] T065 [P] [US1] a11y 整合測試：Topbar Tabs 支援鍵盤操作（左右鍵切換、Enter/Space 啟用、aria-selected 正確）：tests/integration/us1-shell-tabs-a11y.test.tsx
-- [X] T066 [P] a11y 手動檢核：依 WCAG 2.1 AA 最小驗收逐項確認（Tabs/Modal/Snackbar/RootPathAlert/錯誤訊息）：docs/ux-checks.md
+**Goal**：依 prototype 提供 Topbar Tabs（Projects / Prompts / Scratchpad）與固定 Main/Side Shell；rootPath 缺失/不可存取時顯示全站提示但不阻擋瀏覽。
 
-- [X] T012 [US1] 將 Topbar 改為 Tabs 導覽（Projects/Prompts/Scratchpad）並保留設定入口：app/(workspace)/components/top-bar.tsx
-- [X] T013 [US1] 在 workspace shell 實作 tab routing/state（不依賴 URL 亦可）：app/(workspace)/workspace-shell.tsx
-- [X] T014 [P] [US1] 建立三個 Tab 的 placeholder views（未完成空態也可切換）：app/(workspace)/components/tab-placeholders.tsx
-- [X] T015 [US1] 將 placeholder views 接到 workspace shell 的 tab switch（Main/Side 都切換）：app/(workspace)/workspace-shell.tsx
-- [X] T016 [US1] 於 Shell 內掛載 Snackbar Undo（供後續刪除故事共用）：app/(workspace)/workspace-shell.tsx
+**Independent Test**：
 
-- [X] T045 [US1] Settings API：支援 rootPath 讀寫與驗證（不可存取需回標準錯誤）：app/api/settings/route.ts
-- [X] T046 [US1] Settings UI：提供 rootPath 表單/儲存/錯誤提示，並確保 RootPathAlert 可導向：app/(workspace)/settings/page.tsx
-- [X] T047 [US1] RootPathAlert 文案/導向一致化（不阻擋瀏覽）：app/(workspace)/components/root-path-alert.tsx
+- 可用鍵盤切換 Tabs（左右鍵、Enter/Space），且 aria-selected/tabpanel 正確
+- rootPath 無效時仍可切換 Tabs，RootPathAlert 顯示且可導向 Settings
+
+### Tests（先寫且先失敗）
+
+- [ ] T014 [P] [US1] 整合測試：Topbar Tabs 切換時 Main/Side 內容正確切換：tests/integration/us1-shell-tabs-rootpath.test.tsx
+- [ ] T015 [P] [US1] a11y 整合測試：Tabs 鍵盤操作與 ARIA（tablist/tab/tabpanel）：tests/integration/us1-shell-tabs-a11y.test.tsx
+- [ ] T016 [P] [US1] 契約測試：GET/POST /api/settings rootPath 驗證與錯誤格式：tests/contract/api-settings.test.ts
+
+### Implementation
+
+- [ ] T017 [US1] 實作 Topbar Tabs（Projects/Prompts/Scratchpad）狀態與 UI：app/(workspace)/components/top-bar.tsx
+- [ ] T018 [US1] 在 Workspace Shell 實作 activeTab 切換並渲染 Main/Side：app/(workspace)/workspace-shell.tsx
+- [ ] T019 [US1] 實作 RootPathAlert（全站提示、不阻擋、可導向設定頁）：app/(workspace)/components/root-path-alert.tsx
+- [ ] T020 [US1] Settings UI：rootPath 表單、儲存、可操作錯誤訊息：app/(workspace)/settings/page.tsx
+- [ ] T021 [US1] Settings API：rootPath 存取性檢查（不可存取 → 400 + details）：app/api/settings/route.ts
 
 ---
 
 ## Phase 4: User Story 2 - Projects + Project Detail + README（Priority: P1）
 
-**Goal**: 提供專案列表與專案詳情（含 README 編輯/儲存），互動與回饋對齊 prototype。
+**Goal**：Projects 列表卡片完整呈現 `summary/status/projectType/tags/promptCount/updatedAt`，並提供 Project Detail 的 README 編輯/預覽/儲存與 409 衝突處理。
 
-**Independent Test**: 可建立/切換專案；在 Project Detail 編輯 README 並成功儲存；保存後時間/狀態更新可見。
+**Independent Test**：
 
-### Tests（必須先寫且先失敗）
+- 可建立專案（含 taxonomy 欄位），重名回 409
+- 列表可依搜尋/狀態/分類/標籤篩選
+- Project README 可 GET/PUT；外部修改時 PUT 回 409 並含 currentHash/currentMtime
 
-- [X] T048 [P] [US2] 契約測試：Project README GET/PUT（含 409 details 與錯誤格式）（新增或擴充測試檔）：tests/contract/
-- [X] T049 [P] [US2] 整合測試：Project Detail README 編輯/儲存/錯誤提示：tests/integration/us2-project-readme.test.tsx
+### Tests（先寫且先失敗）
 
-- [X] T017 [US2] 對齊 Projects 列表（卡片/篩選/點擊進入詳情）與 Side KPI：app/(workspace)/components/project-list.tsx
-- [X] T018 [US2] 在 Project Detail 中整合 README 編輯器（載入/儲存/錯誤提示）：app/(workspace)/components/project-readme.tsx
-- [X] T019 [US2] README 儲存成功後更新 UI 顯示（使用 updatedAt 或 mtimeMs 顯示最後更新時間）：app/(workspace)/components/project-readme.tsx
+- [ ] T022 [P] [US2] 契約測試：/api/projects CRUD（含 taxonomy 欄位與 409）：tests/contract/api-projects-prompts.test.ts
+- [ ] T023 [P] [US2] 契約測試：/api/projects/:id/readme GET/PUT（含 409 details）：tests/contract/api-project-readme.test.ts
+- [ ] T024 [P] [US2] 契約測試：/api/projects/:id/meta 讀寫 taxonomy（code+name 一致性驗證）：tests/contract/api-project-meta.test.ts
+- [ ] T025 [P] [US2] 整合測試：Project Detail README 編輯/預覽/儲存與錯誤提示：tests/integration/us2-project-readme.test.tsx
+
+### Implementation
+
+- [ ] T026 [US2] 更新 Project 資料模型儲存（summary/projectType/tags/status）與預設 summary 推導：lib/db/fs/projects.ts
+- [ ] T027 [US2] 更新 /api/projects：支援新欄位、篩選參數（q/status/projectType/tag/limit）、重名 409：app/api/projects/route.ts
+- [ ] T028 [US2] 更新 /api/projects/:id/meta：讀寫 `_meta.json` 並驗證 taxonomy code+name：app/api/projects/[id]/meta/route.ts
+- [ ] T029 [US2] 更新 /api/projects/:id/readme：GET/PUT、寫入衝突偵測與 409 details：app/api/projects/[id]/readme/route.ts
+- [ ] T030 [US2] Projects 列表 UI：卡片欄位與篩選器對齊 prototype：app/(workspace)/components/project-list.tsx
+- [ ] T031 [US2] Project Meta UI：可編輯 taxonomy chips（Enter 新增、可移除、清空）：app/(workspace)/components/project-meta.tsx
+- [ ] T032 [US2] Project README UI：編輯/預覽 Tabs、儲存、409 時三選一（重新載入/另存副本/強制覆寫）：app/(workspace)/components/project-readme.tsx
 
 ---
 
-## Phase 5: User Story 3 - Prompts（提示詞列表）（Priority: P1）
+## Phase 5: User Story 3 - Prompts（列表）（Priority: P1）
 
-**Goal**: 提示詞列表提供基本篩選/瀏覽並可進入 Prompt Detail。
+**Goal**：Prompts 列表可依 prototype 的條件篩選（category + promptStage + platformTag + tag + q），並可點擊進入 Prompt Detail。
 
-**Independent Test**: 在 Prompts 頁可看到列表並點擊進入 Prompt Detail；選取項目後 Side KPI 正確顯示。
+**Independent Test**：
 
-### Tests（必須先寫且先失敗）
+- /api/prompts 支援新 query params 且最多回 1000 筆
+- UI 篩選器操作後列表可收斂，點擊可進入 Prompt Detail
 
-- [X] T050 [P] [US3] 整合測試：Prompts 列表點擊進入 Prompt Detail（選取狀態/Side KPI）：tests/integration/us3-prompts-nav.test.tsx
+### Tests（先寫且先失敗）
 
-- [X] T020 [US3] 對齊 Prompts 列表（篩選/搜尋/點擊進入詳情）與 Side KPI：app/(workspace)/components/prompt-list.tsx
+- [ ] T033 [P] [US3] 契約測試：/api/prompts list filtering（category/promptStage/platformTag/tag/q/limit）：tests/contract/api-projects-prompts.test.ts
+- [ ] T034 [P] [US3] 整合測試：Prompts 列表篩選與導覽到 detail：tests/integration/us3-prompts-nav.test.tsx
+
+### Implementation
+
+- [ ] T035 [US3] 更新 /api/prompts：支援新篩選參數並以 updatedAt desc 排序：app/api/prompts/route.ts
+- [ ] T036 [US3] 更新 PromptListItem schema（tags 改為 TaxonomyValue[] 等）：lib/types/schema.ts
+- [ ] T037 [US3] Prompts 列表 UI：新增 prototype 篩選器（category/stage/platform/tag）與 KPI：app/(workspace)/components/prompt-list.tsx
 
 ---
 
 ## Phase 6: User Story 4 - Prompt Detail（編輯/預覽 + autosave + 複製 + 409 三選一）（Priority: P1）
 
-**Goal**: Prompt Detail 依原型提供 Markdown 編輯/預覽 Tabs、2 秒 autosave、完整/精簡複製，並在 409 時提供「重新載入 / 另存副本 / 強制覆寫」。
+**Goal**：Prompt Detail 提供 Markdown 編輯/預覽 Tabs、2 秒 autosave（無輸入不觸發）、精簡/完整複製，並在 409 衝突時提供三選一。
 
-**Independent Test**:
-- 編輯提示詞內容，停止輸入 2 秒觸發 autosave，且無輸入期間不重複觸發。
-- 切換到「預覽」可看到 Markdown 渲染結果。
-- 精簡/完整複製可正確寫入剪貼簿。
-- 模擬 409 後可三選一且行為正確。
+**Independent Test**：
 
-### Tests（必須先寫且先失敗）
+- 停止輸入 2 秒觸發 autosave，且 updatedAt 以 server 回傳為準（client 不能當權威）
+- 409 時顯示三選一：重新載入 / 另存副本 / 強制覆寫
+- 精簡複製只複製 body；完整複製包含 frontmatter + body
 
-- [X] T051 [P] [US4] 契約測試：Prompt detail 讀寫（updatedAt/createdAt 規則、409 details）：tests/contract/api-prompts-detail.test.ts
-- [X] T052 [P] [US4] 整合測試：Prompt Detail（編輯→2 秒 autosave→預覽切換→複製）：tests/integration/us4-prompt-detail-core.test.tsx
-- [X] T053 [P] [US4] 整合測試：409 三選一（重新載入/另存副本/強制覆寫）：tests/integration/us4-conflict-three-way.test.tsx
-- [X] T054 [P] [US4] 單元測試：frontmatter 最小欄位與補值策略（含 createdAt/updatedAt）：tests/unit/frontmatter.test.ts
+### Tests（先寫且先失敗）
 
-- [X] T021 [US4] 在 Prompt Detail 改為「編輯/預覽」Tabs（互斥切換，Main 區塊）：app/(workspace)/components/prompt-editor.tsx
-- [X] T022 [US4] 以 MarkdownPreview 顯示預覽內容（需支援基本 Markdown、code block、列表）：app/(workspace)/components/prompt-editor.tsx
-- [X] T023 [US4] autosave 成功後由 server 回傳值更新 lastSavedAt（避免 client 自行產生時間）：app/(workspace)/hooks/useAutosavePrompt.ts
-- [X] T024 [US4] 修正後端：每次成功寫入強制更新 frontmatter.updatedAt（server 主導），createdAt 僅首次建立：app/api/prompts/[id]/route.ts
-- [X] T025 [US4] 確保 PromptHeader 的「精簡/完整複製」符合 spec 並回饋 Toast/Snackbar：app/(workspace)/components/prompt-header.tsx
-- [X] T026 [US4] 調整衝突對話框文案與按鈕命名為三選一：app/(workspace)/components/conflict-dialog.tsx
-- [X] T027 [US4] 在 PromptEditor 實作「另存副本」：以 POST /api/prompts 建立新提示詞（新 title），並切換選取到新 prompt：app/(workspace)/components/prompt-editor.tsx
-- [X] T028 [US4] 讓 autosave 409 回傳包含 currentHash/currentMtime，UI 用於顯示與後續覆寫：app/api/prompts/[id]/route.ts
-- [X] T029 [US4] README 儲存遇到 409 時提供三選一（重新載入 / 另存副本（下載 .md） / 強制覆寫）：app/(workspace)/components/project-readme.tsx
-- [X] T030 [US4] README 409 details 回傳補齊 currentHash/currentMtime：app/api/projects/[id]/readme/route.ts
-- [X] T031 [US4] 更新合約文件反映 409 details 與三選一：specs/001-local-prompt-manager/contracts/{api.md,openapi.yaml}
+- [ ] T038 [P] [US4] 契約測試：/api/prompts/:id GET/POST（server 主導 updatedAt、409 details）：tests/contract/api-prompts-detail.test.ts
+- [ ] T039 [P] [US4] 整合測試：Prompt Detail 編輯→2 秒 autosave→預覽切換：tests/integration/us4-prompt-detail-core.test.tsx
+- [ ] T040 [P] [US4] 整合測試：409 三選一流程（reload/save copy/force overwrite）：tests/integration/us4-conflict-three-way.test.tsx
+- [ ] T041 [P] [US4] 單元測試：frontmatter 必填欄位補值與驗證（TaxonomyValue/時間格式）：tests/unit/frontmatter.test.ts
 
-- [X] T055 [US4] Frontmatter：落實 FR-006 最小欄位要求（缺值補值或阻擋靜默寫入）：lib/utils/frontmatter.ts
-- [X] T056 [US4] Schema：更新/補強 frontmatter 相關驗證（對應 FR-006）：lib/types/schema.ts
-- [X] T057 [US4] Prompt 寫入路徑：避免產出缺欄位 frontmatter（createdAt/updatedAt 由資料層主導）：app/api/prompts/[id]/route.ts
+### Implementation
+
+- [ ] T042 [US4] Frontmatter 讀寫：新增 taxonomy 欄位（category/promptStage/platformTags/audienceTags/deliverableTags/tags）並做一致性驗證：lib/utils/frontmatter.ts
+- [ ] T043 [US4] 更新 /api/prompts/:id：以 clientHash/clientMtime 做衝突偵測；成功寫入一律 server 更新 updatedAt：app/api/prompts/[id]/route.ts
+- [ ] T044 [US4] 更新 /api/prompts POST：建立新提示詞時自動補齊 createdAt/updatedAt（UTC+08:00）：app/api/prompts/route.ts
+- [ ] T045 [US4] Prompt Editor：改為 EditorTabs（編輯/預覽互斥），預覽使用 MarkdownPreview：app/(workspace)/components/prompt-editor.tsx
+- [ ] T046 [US4] Autosave hook：2 秒 debounce、成功後以 server 回傳 updatedAt 更新 UI：app/(workspace)/hooks/useAutosavePrompt.ts
+- [ ] T047 [US4] Conflict dialog：三選一 UI 與行為（reload/save copy/force overwrite）：app/(workspace)/components/conflict-dialog.tsx
+- [ ] T048 [US4] Copy actions：精簡/完整複製並顯示 Toast/Snackbar 回饋：app/(workspace)/components/prompt-header.tsx
 
 ---
 
 ## Phase 7: User Story 5 - Scratchpad（剪貼簿）（Priority: P1）
 
-**Goal**: 提供剪貼簿的新增/編輯/複製/刪除（UI/UX 依原型），Side 顯示 KPI。
+**Goal**：Scratchpad 以 localStorage 持久化，不依賴 rootPath；提供新增、列表、複製與 Side count。
 
-**Independent Test**: 在 Scratchpad 可新增/編輯/複製項目，Side KPI 更新正確。
+**Independent Test**：新增/編輯/複製後 count 正確更新；重整頁面後資料仍在。
 
-### Tests（必須先寫且先失敗）
+### Tests（先寫且先失敗）
 
-- [X] T058 [P] [US5] 整合測試：Scratchpad 新增/編輯/複製（KPI 更新）：tests/integration/us5-scratchpad.test.tsx
+- [ ] T049 [P] [US5] 整合測試：Scratchpad 新增/複製/刪除與 count 更新：tests/integration/us5-scratchpad.test.tsx
 
-- [X] T032 [P] [US5] 建立 Scratchpad（剪貼簿）頁面元件（Main 編輯、Side KPI/動作）：app/(workspace)/components/scratchpad.tsx
-- [X] T033 [US5] 將 Scratchpad 納入 workspace store（含匯出/另存為提示詞的資料結構）：app/(workspace)/store/useWorkspaceStore.ts
+### Implementation
+
+- [ ] T050 [US5] Scratchpad 元件（Main：輸入+列表；Side：動作+count）：app/(workspace)/components/scratchpad.tsx
+- [ ] T051 [US5] Workspace store：加入 scratchpad 狀態與 localStorage key/節流寫入：app/(workspace)/store/useWorkspaceStore.ts
 
 ---
 
 ## Phase 8: User Story 6 - 刪除 + Undo（5 秒 deferred delete）（Priority: P1）
 
-**Goal**: 專案/提示詞/剪貼簿刪除均採 Confirm → Snackbar Undo（5 秒）；逾時才呼叫永久刪除。
+**Goal**：Project/Prompt/Scratchpad 的刪除皆採 Confirm → Snackbar Undo（5 秒）；5 秒內 Undo 可完整復原；逾時才執行永久刪除。
 
-**Independent Test**: 任一刪除操作確認後 5 秒內可 Undo 並完全復原；超過 5 秒才實際刪除且刷新列表。
+**Independent Test**：
 
-### Tests（必須先寫且先失敗）
+- 任一刪除確認後顯示 Undo；5 秒內 Undo 不會呼叫 API delete
+- 超過 5 秒才呼叫 API delete 並刷新列表
 
-- [X] T059 [P] [US6] 整合測試：Project/Prompt/Scratchpad deferred delete + Undo 5 秒：tests/integration/us6-deferred-delete-undo.test.tsx
+### Tests（先寫且先失敗）
 
-- [X] T034 [US6] 確保 Confirm Modal 元件可重用且文案對齊原型（取消/刪除）：app/(workspace)/components/confirm-modal.tsx
-- [X] T035 [US6] 將 ProjectList 刪除流程統一改為 deferred delete（5 秒後才呼叫 DELETE）：app/(workspace)/components/project-list.tsx
-- [X] T036 [US6] 將 PromptList 刪除流程統一改為 deferred delete（5 秒後才呼叫 DELETE）：app/(workspace)/components/prompt-list.tsx
-- [X] T037 [US6] 將 Prompt Detail 的刪除入口改走共用 deferred delete（避免立即永久刪除）：app/(workspace)/workspace-shell.tsx
-- [X] T038 [US6] Scratchpad 的刪除/清空動作改為 Confirm + Snackbar Undo（5 秒）：app/(workspace)/components/scratchpad.tsx
+- [ ] T052 [P] [US6] 整合測試：deferred delete + Undo 5 秒（Projects/Prompts/Scratchpad）：tests/integration/us6-deferred-delete-undo.test.tsx
+
+### Implementation
+
+- [ ] T053 [US6] Projects 刪除流程改為 deferred delete（timeout 後呼叫 DELETE /api/projects）：app/(workspace)/components/project-list.tsx
+- [ ] T054 [US6] Prompts 刪除流程改為 deferred delete（timeout 後呼叫 DELETE /api/prompts/:id）：app/(workspace)/components/prompt-list.tsx
+- [ ] T055 [US6] Scratchpad 刪除/清空流程改為 Confirm + SnackbarUndo：app/(workspace)/components/scratchpad.tsx
+- [ ] T056 [US6] Workspace Shell 掛載共用 SnackbarUndo 容器並支援多個 pending deletes：app/(workspace)/workspace-shell.tsx
 
 ---
 
 ## Phase 9: Polish & Cross-Cutting Concerns
 
-- [X] T039 [P] 驗證並（如需要）修正 createdAt/updatedAt 與 ISO+08:00 自動補值（涵蓋所有實體 schema）：lib/types/schema.ts
-- [X] T040 [P] 同步 quickstart 與規格的用語（編輯/預覽 Tabs、Undo 5 秒、409 三選一）：specs/001-local-prompt-manager/quickstart.md
-- [X] T041 [P] 更新 research 的 gap closure 註記（server 主導 updatedAt 已落實）：specs/001-local-prompt-manager/research.md
-- [X] T042 [P] 執行並確認基本檢核通過（typecheck/test）：package.json
+**Purpose**：跨 story 的一致性、文件同步、效能與品質閘門收尾。
 
-- [X] T060 [P] 效能量測：列表載入、Prompt Detail 讀寫、autosave 的 p95 測量與記錄：docs/perf-checks.md
-- [X] T061 [P] 覆蓋率門檢核：單元 ≥80%，關鍵路徑 100%（記錄落差與修正清單）：docs/perf-checks.md
-- [X] T062 [P] FR-035 落地檢核：Project/Prompt/Inbox/Snippet/Settings 的 createdAt/updatedAt 自動補值與更新規則逐一驗證：lib/types/schema.ts
-
-- [X] T067 [P] Prompts 版面對齊 prototype：改為 Main/Side 兩欄 shell，Side 放 KPI + 片語面板並套用 pm tokens：app/(workspace)/workspace-shell.tsx, app/(workspace)/components/snippet-panel.tsx, app/globals.css
+- [ ] T057 [P] 同步合約文件與實作（含 409 details 與 query params）：specs/001-local-prompt-manager/contracts/{openapi.yaml,api.md}
+- [ ] T058 [P] 同步 quickstart 與 UI 用語（編輯/預覽 Tabs、Undo 5 秒、409 三選一）：specs/001-local-prompt-manager/quickstart.md
+- [ ] T059 [P] 覆蓋率與測試金字塔檢核（unit≥80%、關鍵路徑 100%）並記錄落差：vitest.config.ts
+- [ ] T060 執行 typecheck/test/contract tests 並確保全綠：package.json
+- [ ] T061 [P] 效能量測步驟與記錄格式對齊 spec NFR（p95/1000 上限），並確保可重複執行：docs/perf-checks.md
+- [ ] T062 [P] 執行效能量測腳本並記錄結果（list load / prompt read/write / autosave p95）：scripts/perf-test.ts, docs/perf-checks.md
+- [ ] T063 [P] FR-035 回歸：補齊/確認 Inbox timestamps（createdAt/updatedAt +08:00 自動補值與更新規則）：tests/contract/api-inbox.test.ts, tests/contract/api-inbox-pagination.test.ts
+- [ ] T064 [P] FR-035 回歸：補齊/確認 Snippets timestamps（createdAt/updatedAt +08:00、自動補值與更新規則）：tests/contract/api-snippets.test.ts
+- [ ] T065 [P] FR-035 回歸：補齊/確認 Settings timestamps（含 update-check 路徑不破壞）：tests/contract/api-settings.test.ts, tests/contract/api-settings-update-check.test.ts
 
 ---
 
@@ -188,13 +215,13 @@
 
 ### User Story Dependencies
 
-- US1（P1）是 UI 框架層，建議先做。
-- US2（P1）與 US3（P1）在 Foundational 後可並行，但都依賴 US1 的 Shell/Tabs。
-- US4（P1）依賴 US3（可從列表進入詳情）與 US1（Shell/Tabs）。
-- US5（P1）依賴 US1（Shell/Tabs）與 Foundational 的 store 結構。
-- US6（P1）依賴 Foundational 的 SnackbarUndo，並在 US2/US3/US5 完成後套用各刪除入口。
+- US1 依賴 Phase 2（EditorTabs/RootPathAlert primitives）；完成後為其他 stories 的 UI 基礎。
+- US2、US3 可在 US1 後並行（同屬 P1）。
+- US4 依賴 US3（可從列表進入詳情）與 Foundation（EditorTabs/MarkdownPreview/統一錯誤格式）。
+- US5 依賴 US1（Shell/Tabs）即可。
+- US6 依賴 Foundation（ConfirmModal/SnackbarUndo）並套用到 US2/US3/US5 的刪除入口。
 
-### Completion Order（建議交付）
+### Completion Order（建議）
 
 Phase 1 → Phase 2 → US1 →（US2 + US3 並行）→ US4 → US5 → US6 → Polish
 
@@ -204,23 +231,31 @@ Phase 1 → Phase 2 → US1 →（US2 + US3 並行）→ US4 → US5 → US6 →
 
 ### US1
 
-- 可並行：T012（Topbar Tabs）與 T014（Tab placeholder views）
+- 可並行：T014（整合測試）與 T015（a11y 測試）
+- 可並行：T017（Topbar）與 T019（RootPathAlert）
 
-### US3
+### US2
 
-- 可並行：T020（Prompts 列表對齊）與 T017（Projects 列表對齊）
+- 可並行：T022（projects 合約測試）與 T023（readme 合約測試）
+- 可並行：T027（/api/projects）與 T029（/api/projects/:id/readme）
 
 ### US4
 
-- 可並行：T021（PromptEditor Tabs）與 T024（後端 updatedAt server 主導）
+- 可並行：T038（契約測試更新）與 T041（frontmatter 單元測試）
+- 可並行：T045（PromptEditor UI）與 T043（/api/prompts/:id 衝突偵測）
 
 ### US6
 
-- 可並行：T035（ProjectList deferred delete）與 T036（PromptList deferred delete）
+- 可並行：T053（Projects deferred delete）與 T054（Prompts deferred delete）
 
 ---
 
 ## Implementation Strategy
 
-- MVP 建議先做 US1：先把 Tabs/Shell 跑起來，確保 prototype 的 IA 可演示。
-- 第二步做 US3 + US4：先有列表可進入，再補齊 Prompt Detail 的核心工作流（編輯/預覽 + autosave + copy + 409 三選一）。
+### MVP 建議
+
+- 建議 MVP 先交付 US1（Shell + Tabs + RootPathAlert），先把 prototype 的 IA 跑起來並可演示。
+
+### 增量交付
+
+- US2/US3 補齊列表與導覽 → US4 補齊 Prompt 核心工作流 → US5/US6 補齊剪貼簿與刪除 Undo。

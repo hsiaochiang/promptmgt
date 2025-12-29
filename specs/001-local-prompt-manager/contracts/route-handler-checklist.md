@@ -1,0 +1,46 @@
+# Route Handlers vs Contract（Phase 1）
+
+- `/projects` → `app/api/projects/route.ts`
+  - GET：未實作 query 篩選（q/status/projectType/tag/limit），回傳舊欄位（缺 summary/projectType/tags，status 為 planned/active/archived/規劃中），無 1000 cap 提示。
+  - POST：僅接受 name/status，未驗證 taxonomy（status/projectType/tags）與 summary 必填；409 details 只含 `field`。
+  - PATCH：僅支援 id/name/status/promptCount，未覆寫 summary/projectType/tags；status 仍舊枚舉；409 details 僅 `field`。
+  - DELETE：符合 200/404，無 deferred delete；刪除後會重算 prompt meta。
+- `/projects/{id}/readme` → `app/api/projects/[id]/readme/route.ts`
+  - GET：回傳 content/path/hash/mtimeMs，符合合約。
+  - PUT：409 details 僅 `currentHash/currentMtime`；未處理檔案不存在情境（writePrompt 例外會 bubble 為 500）。
+- `/prompts` → `app/api/prompts/route.ts`
+  - GET：僅支援 projectId/status/q/limit，缺 category/promptStage/platformTag/tag 篩選；rootPath 缺失直接回空陣列（合約未定義 fallback）；回傳 tags 為 string[]，無 taxonomy。
+  - POST：frontmatter/schema 為舊版（缺 category/promptStage/platformTags/audienceTags/deliverableTags，tags 為 string[]）；若 project 不存在會自動建立舊版 project；未回傳 createdAt/updatedAt 欄位；無 409/400 taxonomy 驗證。
+- `/prompts/{id}` → `app/api/prompts/[id]/route.ts`
+  - GET：frontmatter 舊版且缺 taxonomy；無 projectId 欄位；ENOENT 以 404 處理。
+  - POST：衝突以 `{currentHash,currentMtime}` 回 409；未驗證 taxonomy，也未處理檔案不存在（readPrompt 失敗可能 500）；回傳僅 hash/mtimeMs/updatedAt，未回傳 frontmatter。
+  - DELETE：直接移除檔案；若 rootPath 存在才重算 meta；無 404。
+- `/inbox` → `app/api/inbox/route.ts`
+  - GET：支援 q/limit/offset（limit≤200），排序 updatedAt desc，符合合約。
+  - POST：201 建立草稿；未驗證輸入長度/格式（合約未約束）。
+- `/inbox/{id}` → `app/api/inbox/[id]/route.ts`
+  - GET/DELETE：200/404 符合。
+  - PATCH：expectedUpdatedAt 不符時 409，details 僅 `currentUpdatedAt`；未驗證內容長度。
+- `/snippets` → `app/api/snippets/route.ts`
+  - GET：支援 q；回傳 usage/usageCount 正規化。
+  - POST：name 缺失 400；名稱重複 409（無 details）；未限制長度/格式；category 預設「其他」。
+  - PATCH：僅支援 id/name/category/content；名稱衝突回 409（無 details）。
+  - DELETE：需 body.id，404 時 404；符合合約形狀但無 details。
+- `/snippets/{id}` → `app/api/snippets/[id]/route.ts`
+  - GET/PATCH/DELETE：404 正確；未檢查名稱長度；409 無 details。
+- `/snippets/{id}/usage` → `app/api/snippets/[id]/usage/route.ts`
+  - POST：遞增 usage/usageCount，404 正確。
+- `/search` → `app/api/search/route.ts`
+  - GET：支援 q/projectId/status/limit；rootPath 缺失回空結果（合約未定義 fallback）。
+- `/settings` → `app/api/settings/route.ts`
+  - GET：回傳 pathExists 並自動補 logPath（DEFAULT_ROOT/logs/app.log）；符合欄位但未回 telemetry exportPath 的 default=undefined。
+  - POST：rootPath/logPath 驗證錯誤以 400 + details 回傳；未驗證 ISO 時間（schema handle）。
+- `/settings/update-check` → `app/api/settings/update-check/route.ts`
+  - GET：直接回 checkForUpdates 結果；合約 OK。
+- `/settings/change-report` → `app/api/settings/change-report/route.ts`
+  - GET：24h 內 prompt/inbox 變更；錯誤時回 500 {message}（符合合約）。
+- `/telemetry` → `app/api/telemetry/route.ts`
+  - POST：event 缺失回 400 `{ok:false,error}`；成功回 `{ok:true,result}`，與合約對齊。
+- `/archive` → `app/api/archive/route.ts`
+  - POST：代理 `archiveDraft`，未區分 400/409；總是 200。
+- 合約未涵蓋但已存在的 handlers：`/projects/{id}/meta`、`/projects/{id}/files`、`/projects/{id}/files/{name}`、`/projects/{id}/timeline`。

@@ -44,6 +44,7 @@
 - 合併前/CI（含 coverage 閘門）：`npm run test`  
 - 契約測試（不含 coverage 閘門）：`npm run test:contract`  
 - 單檔快速驗證（不含 coverage 閘門）：`npm run test:fast -- <test-file>`  
+- 型別檢查：`npm run typecheck`  
 - 覆蓋率需 ≥80%，關鍵路徑力求 100%。
 
 ## 常見錯誤 / 修復

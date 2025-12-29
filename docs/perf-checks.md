@@ -1,4 +1,6 @@
-# 性能檢查與量測腳本（Phase 7 / T045/T055–T057/T062/T063）
+# 性能檢查與量測腳本
+
+> 本文件為「可重複執行的效能與時間欄位驗證」操作手冊；對應本 feature tasks 的 Phase 9，特別是 T061–T065（效能量測/記錄與 timestamps 回歸）。
 
 ## Phase 9 量測摘要（2025-12-28）
 
@@ -15,12 +17,18 @@
    - `INBOX_PAGE_SIZE` 可設定觀察分頁開銷。
    - 如需乾淨環境，清除 `db.json` 或使用 `DEFAULT_ROOT` 指向臨時資料夾。
 
-## 時間格式驗證（FR-034/FR-035 | T073/T079）
+## 時間格式驗證（FR-035）
 
 - 自動化：執行整合測試 `tests/integration/frontmatter-timezone.test.ts`、`tests/integration/timestamps-all-entities.test.ts`（ISO+08:00 確認）。
 - 檔案抽樣：隨機檢查 prompt/inbox/snippet/專案 README frontmatter 的 `createdAt`/`updatedAt`，應為 `YYYY-MM-DDTHH:mm:ss.sss+08:00` 並可被 `Date.parse`。
 - UI 抽樣：列表/專案卡片顯示 `MM/DD HH:mm`，編輯器標題列顯示 `HH:mm`（來源同 ISO+08:00）。
 - 修復指引：若發現非 +08:00 或缺值，重新透過對應 API 保存一次（會套用 `toIsoWithOffset()`）；settings 可呼叫 `/api/settings` POST 更新以刷新 `updatedAt`；若檔案前述仍異常，手動套用 ISO+08:00 後重跑測試。
+
+### FR-035 合約回歸（對應 tasks：T063–T065）
+
+- Inbox：`tests/contract/api-inbox.test.ts`、`tests/contract/api-inbox-pagination.test.ts`
+- Snippets：`tests/contract/api-snippets.test.ts`
+- Settings：`tests/contract/api-settings.test.ts`、`tests/contract/api-settings-update-check.test.ts`
 
 ## 量測項目與方法
 
@@ -53,7 +61,7 @@
    1) 切換 Pin = OFF，點擊提示詞觸發收合。
    2) 以 Performance 量測動畫結束時間，目標 150–250ms。
 
-## 量測腳本（T055）
+## 量測腳本（對應 tasks：T062）
 
 1) **啟動（SC-001/SC-008）**：清空 localStorage，載入 50/500 資料集，打開 DevTools Performance，錄製從載入到列表可互動並儲存 trace（trace-001.json）。  
 2) **草稿→轉正（SC-002）**：建立草稿、執行轉正，重複 3 次，取平均時間並記錄 trace（trace-002.json）。  
@@ -72,36 +80,36 @@
 | SC-001 | 50/500 | 1.8s / 4.7s | <2s / <5s | ✓ | — | |
 | SC-004 | 1000+ 搜尋「demo」p95 | 1.2s | ≤2s | ✓ | 截斷旗標= true | |
 
-未達標時需列出調優方案（節流、快取、索引或 UI 降載），並回填 T045/T056。對應 SC 結果亦需同步到 T062/T063 的 SC 對應表與實測紀錄。**請將 Performance 錄製檔（.json/.har）與摘要隨 PR 或文件備檔。**
+未達標時需列出調優方案（節流、快取、索引或 UI 降載），並在本文件追加「改善計畫」說明；同時在對應 PR 或設計文件留下回歸風險註記。**請將 Performance 錄製檔（.json/.har）與摘要隨 PR 或文件備檔。**
 
-## SC 驗證對應表（T062，含 SC-001~SC-020）
+## SC 驗證對應表（不綁定 task 編號；供驗收對照）
 
-| SC | 驗證方法/工具 | 對應測試/任務 | 狀態 |
+| SC | 驗證方法/工具 | 對應測試/文件 | 狀態 |
 |----|---------------|---------------|------|
-| SC-001 | 手動 Perf trace（50/500 資料集） | T055/T056 | 待量測 |
-| SC-002 | 手動 Perf trace（草稿→轉正三次平均） | T055/T056 | 待量測 |
-| SC-003 | 手動 Perf trace（複製完整/精簡，記錄驗收 ≤3s、內部 <150ms） | T055/T056 | 待量測 |
-| SC-004 | 手動 Perf trace（1000+ 搜尋 p95；截斷旗標） | T055/T056/T057 | 待量測 |
-| SC-005 | 整合/契約測試（autosave/復原） | T012 等 | 測試覆蓋 |
-| SC-006 | 手動/自動化（外部修改 5s 內提示） | T045/T056 | 待量測 |
-| SC-007 | 手動 Perf trace 或整合測試（片語搜尋/插入） | T033/T055 | 待量測 |
-| SC-008 | 手動 Perf trace（50/500 啟動） | T055/T056 | 待量測 |
-| SC-009 | UX 檢查（5 次新手流程成功率） | T055–T060 | 待量測 |
-| SC-010 | UX 檢查（卡頓回報率） | T055–T060 | 待量測 |
-| SC-011 | 手動 Perf trace（Pin 收合 150–250ms） | T055/T056/T057 | 待量測 |
+| SC-001 | 手動 Perf trace（50/500 資料集） | docs/perf-checks.md（本節） | 待量測 |
+| SC-002 | 手動 Perf trace（草稿→轉正三次平均） | docs/perf-checks.md（本節） | 待量測 |
+| SC-003 | 手動 Perf trace（複製完整/精簡，記錄驗收 ≤3s、內部 <150ms） | docs/perf-checks.md（本節） | 待量測 |
+| SC-004 | 手動 Perf trace（1000+ 搜尋 p95；截斷旗標） | docs/perf-checks.md（本節） | 待量測 |
+| SC-005 | 整合/契約測試（autosave/復原） | 相關 tests/contract 與 tests/integration | 測試覆蓋 |
+| SC-006 | 手動/自動化（外部修改 5s 內提示） | docs/perf-checks.md（本節） | 待量測 |
+| SC-007 | 手動 Perf trace 或整合測試（片語搜尋/插入） | docs/perf-checks.md（本節） | 待量測 |
+| SC-008 | 手動 Perf trace（50/500 啟動） | docs/perf-checks.md（本節） | 待量測 |
+| SC-009 | UX 檢查（5 次新手流程成功率） | docs/ux-checks.md | 待量測 |
+| SC-010 | UX 檢查（卡頓回報率） | docs/ux-checks.md | 待量測 |
+| SC-011 | 手動 Perf trace（Pin 收合 150–250ms） | docs/perf-checks.md（本節） | 待量測 |
 | SC-012 | 整合測試（專注模式游標/寬度） | 既有 US3 測試 | 測試覆蓋 |
 | SC-013 | 整合測試（快捷鍵成功率） | 既有 US5 測試 | 測試覆蓋 |
 | SC-014 | 整合測試（Undo/snackbar） | 既有 US5 測試 | 測試覆蓋 |
 | SC-015 | 整合測試（accordion 收合行為） | 既有 US3 測試 | 測試覆蓋 |
-| SC-016 | UX 檢查（Inbox 淨空可見性） | T055–T060 | 待量測 |
-| SC-017 | UX 檢查（Undo/Redo 易發現性） | T055–T060 | 待量測 |
-| SC-018 | UX 檢查（Accordion 快捷鍵一致性） | T055–T060 | 待量測 |
-| SC-019 | UX 檢查（錯誤敘述可理解性） | T055–T060 | 待量測 |
-| SC-020 | UX 檢查（長操作忙碌指示） | T055–T060 | 待量測 |
+| SC-016 | UX 檢查（Inbox 淨空可見性） | docs/ux-checks.md | 待量測 |
+| SC-017 | UX 檢查（Undo/Redo 易發現性） | docs/ux-checks.md | 待量測 |
+| SC-018 | UX 檢查（Accordion 快捷鍵一致性） | docs/ux-checks.md | 待量測 |
+| SC-019 | UX 檢查（錯誤敘述可理解性） | docs/ux-checks.md | 待量測 |
+| SC-020 | UX 檢查（長操作忙碌指示） | docs/ux-checks.md | 待量測 |
 
-## SC 實測紀錄（T056/T063，待填）
+## SC 實測紀錄（待填）
 
-> 2025-12-25：本輪尚未更新數據，執行 T055 後請覆寫下表並附上最新 trace/.har。
+> 2025-12-25：本輪尚未更新數據，執行量測腳本後請覆寫下表並附上最新 trace/.har。
 
 | SC | 場景/資料集 | 測得值 | 目標 | 結果 | 備註/調優 | 證據 |
 |----|-------------|--------|------|------|-----------|------|

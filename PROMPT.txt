@@ -1,18 +1,1 @@
 /speckit.implement
-Execute Phase 9 tasks:
-1.  **T060 Performance Checks**:
-    -   Create a script `scripts/perf-test.ts` (or similar) to measure list load, prompt read/write, and autosave p95.
-    -   Run the script and record the results in `docs/perf-checks.md`.
-2.  **T061 Coverage Checks**:
-    -   Run `npm run test -- --coverage` to generate the coverage report.
-    -   Analyze the report and update `docs/perf-checks.md` with the current coverage stats and any gaps.
-3.  **T062 & T039 Schema Verification**:
-    -   Verify `lib/types/schema.ts` ensures `createdAt`/`updatedAt` are ISO strings.
-    -   Verify API routes (prompts, projects, etc.) correctly handle these fields (server-side authority).
-4.  **Documentation Updates**:
-    -   Update `specs/001-local-prompt-manager/quickstart.md` (T040) to match the current implementation (Tabs, Undo, Conflict handling).
-    -   Update `specs/001-local-prompt-manager/research.md` (T041) to mark gap closures.
-5.  **Final Checks**:
-    -   Run `npm run typecheck` and `npm run test` (T042) to ensure everything is green.
-6.  **Task Update**:
-    -   Mark all Phase 9 tasks as completed in `specs/001-local-prompt-manager/tasks.md`.

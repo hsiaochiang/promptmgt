@@ -1,132 +1,97 @@
-# 原型對齊 Implementation Plan：提示詞工作台（UI/UX 以 prototype 為準）
+## Implementation Plan：提示詞工作台（UI/UX 以 prototype 為準）
 
-**分支**：`001-local-prompt-manager` | **日期**：2025-12-28 | **規格**：`specs/001-local-prompt-manager/spec.md`
+**Branch**：`001-local-prompt-manager` | **日期**：2025-12-29 | **Spec**：`specs/001-local-prompt-manager/spec.md`
+**Input**：`specs/001-local-prompt-manager/spec.md`
 
-**輸入**：來自 `specs/001-local-prompt-manager/spec.md`（以 `0resource/prototype/` 的畫面與互動為 UI/UX 權威來源；資料層沿用現有系統實作）
+> 本文件由 `/speckit.plan` 工作流填入（本次以 zh-TW 內容補齊）。
 
 ## Summary
 
-本次計畫的重點是讓「原型的 UI/UX」與「既有資料層能力」一致對齊：
+本次 feature 以 `0resource/prototype/` 作為 UI/UX 權威來源，維持固定 Shell（Main + Side）與 Topbar Tabs（Projects / Prompts / Scratchpad），並補齊/升級資料層與 API 契約以支援：
 
-- UI/UX：Topbar Tabs（專案/提示詞/剪貼簿）+ Main/Side Shell、Toast/Confirm/Snackbar Undo
-- Topbar actions：操作指引、隱藏片語（切換右側片語庫顯示）、設定、今日變更報告、新增提示詞
-- Prompt Detail：Markdown 編輯 + 預覽（以「編輯/預覽」Tabs 切換）、2 秒 autosave、完整/精簡複製
-- 刪除 Undo：5 秒內可撤銷（以 UI 層 deferred delete 視作 soft delete），逾時才呼叫永久刪除
-- 衝突處理：偵測 409/外部修改時，提供「重新載入 / 另存副本 / 強制覆寫」
-- Settings：rootPath/logPath 與可操作的錯誤回饋；logPath 允許位於 userDir 或 rootPath 下
-- Change report：提供最近 24 小時變更檢視（Topbar 入口）
-- 剪貼簿（Scratchpad）：對齊 prototype 的「列表 + 快速新增 + 右側操作/列表數量」，以 localStorage 保存
+- Projects 列表卡片完整欄位（`summary/projectType/tags/status`），以及與 Project Detail 的 `_meta.json` 同步
+- Prompts 列表篩選器（category + stage + platform + tag）與 Prompt Detail（Markdown 編輯/預覽 Tabs）
+- Autosave（2 秒 debounce）與 409 衝突三選一（重新載入 / 另存副本 / 強制覆寫）
+- 刪除 + Undo（Confirm → Snackbar，5 秒 deferred delete）
+- 全域 RootPathAlert（rootPath 缺失/不可存取時提示但不阻擋瀏覽）
 
-文件同步（本次新增）：
+Phase 0/1 設計輸出：
 
-- 在 `spec.md` 明確標註「與 `0resource/prototype/` 的差異（已落地）」與規則：prototype 作為 IA/視覺基線，但已交付且有測試覆蓋的擴充功能也納入 spec，避免規格與實作互相打架。
+- `research.md`：決策與替代方案
+- `data-model.md`：實體/欄位/驗證與狀態
+- `contracts/`：OpenAPI 與摘要契約
+- `quickstart.md`：啟動與驗收操作
 
 ## Technical Context
 
-**Language/Version**: TypeScript（Node.js 18+；Next.js 14；React 18）  
-**語言/版本**：TypeScript + React 18；Node.js 18+；Next.js `^14.1.0`（App Router / Route Handlers）  
-**主要依賴**：Tailwind CSS、Zod、LowDB、gray-matter、`@uiw/react-codemirror` + `@codemirror/lang-markdown`  
-**儲存**：
-- `db.json`（LowDB；projects/inbox/snippets/settings）
-- `rootPath` 下的 Markdown 檔（提示詞正文：YAML frontmatter + body；以及每個專案 README）
-**測試**：Vitest（含 `tests/contract`、`tests/unit`、`tests/integration`）  
-**目標平台**：本機 Web（Windows/macOS；localhost）  
-**專案型態**：Web application（Next.js 單 repo；app router + route handlers）  
-**效能目標**（可驗收）：
-- 互動 API p95 < 200ms（本機，非大量資料）
-- 列表/搜尋結果上限 1000，超出需截斷或提示收斂
-
-### Performance Validation
-
-- 針對互動路徑（列表載入、Prompt Detail 讀取/寫入、autosave）建立可重複的量測步驟（手動或簡易腳本皆可），並記錄 p95 結果。
-- 若 p95 未達標，需在同一變更集中附上原因與改善計畫，避免效能回歸。
-**限制條件**：離線可用；rootPath 缺失/不可存取時不得靜默失敗；文件/規格/計畫需維持繁體中文  
-**規模/範圍**：以 prototype 的頁面與 Topbar actions 為 UI 範圍（Projects / Project Detail / Prompts / Prompt Detail / Scratchpad / Settings / Change report）；資料層沿用既有架構（Route Handlers + lib services + fs）。
+**Language/Version**: TypeScript 5.4、Node.js 18+、Next.js 14.1、React 18  
+**Primary Dependencies**: Next.js App Router（Route Handlers）、Zod、Zustand、Tailwind CSS、LowDB、gray-matter、react-markdown、CodeMirror  
+**Storage**:
+- LowDB（`db.json`）保存 projects/inbox/snippets/settings
+- 檔案系統（`rootPath`）保存專案資料夾、README、提示詞 Markdown（YAML frontmatter + body）與 `_meta.json`
+**Testing**: Vitest（含 coverage）、Testing Library（UI/Hook）、Playwright（E2E）  
+**Target Platform**: 本機（Windows/macOS），離線可用（local FS + local JSON DB）  
+**Project Type**: Web application（Next.js）  
+**Performance Goals**: 互動 API p95 < 200ms（本機）；列表/搜尋上限 1000 筆避免 UI 卡頓；需以量測腳本與可重複步驟記錄結果（docs/perf-checks.md + scripts/perf-test.ts）  
+**Constraints**:
+- 時間欄位一律 ISO 8601（UTC+08:00）；`createdAt/updatedAt` 自動補值
+- taxonomy 欄位雙寫入 `code+name`，且 server 驗證一致性
+- 衝突不可靜默覆蓋（409 三選一）
+**Scale/Scope**: 單使用者、本機檔案量中小規模（提示詞/專案數量可達數百；單次列表回傳最多 1000）
 
 ## Constitution Check
 
-*GATE：Phase 0 前必須通過；Phase 1（Design & Contracts）後再檢查一次。*
+*GATE：Phase 0 前必須通過；Phase 1 設計完成後需重新檢查。*
 
-### Gate 結果（Pre-Design）
-
-1. **Code Quality First**：OK（計畫要求沿用既有模式：Route Handlers + lib services + zod schema）
-2. **Testing Standards**：OK（契約/單元/整合測試既有；本次若調整 API/錯誤格式，需同步更新契約測試）
-3. **User Experience Consistency**：OK（以 prototype 做一致性來源；衝突/錯誤訊息需可操作）
-4. **Performance Requirements**：OK（列出互動 SLA 與上限；避免全量重算）
-5. **Language & Documentation Standards**：OK（本 feature 的 specs 文件皆維持繁體中文）
-
-### Gate 結果（Post-Design）
-
-完成 contracts/data-model/quickstart 更新後再次檢查：OK（無新增語言或測試規範違反）。
-
-## Testing Plan（落地規範）
-
-> 依專案 Constitution：測試為非選配；需先寫、先失敗，再實作使其通過（Red-Green-Refactor）。
-
-- **契約測試**：所有修改/新增的 Route Handlers 必須新增或更新 `tests/contract`，覆蓋成功回應與 `{code,message,details?}` 錯誤格式，並包含 409 衝突案例。
-- **整合測試**：針對使用者旅程（Prompt Detail 的 autosave、409 三選一、刪除後 Undo）新增或更新 `tests/integration`，以確保 UX 行為一致。
-- **單元測試**：工具函式與關鍵邏輯（frontmatter、日期、deferred delete 計時/狀態）新增或更新 `tests/unit`。
-- **E2E（最小）**：提供至少一條 smoke flow（啟動 app → Tabs 切換 → RootPathAlert 不阻擋），用於驗證端到端啟動與核心導覽不回歸。
-- **a11y（最小檢核）**：Tabs/Modal/Snackbar/Alert 需可鍵盤操作、焦點管理正確、錯誤訊息可被輔助工具讀取（對齊 WCAG 2.1 AA 的最低要求；對應 tasks：T065/T066）。
-- **門檻**：單元測試 ≥80%；關鍵路徑（autosave、409 衝突三選一、deferred delete/undo）需 100%。
+- **I. Code Quality First**：通過（沿用既有 Next.js route handler + `lib/` 分層；命名與錯誤格式一致化）
+- **II. Testing Standards（TDD/coverage/contract）**：通過（本 feature 的 API/關鍵路徑需補齊合約測試與關鍵路徑 100% 覆蓋；整體 unit coverage ≥ 80%）
+- **III. UX Consistency / a11y**：通過（遵循 prototype Shell 與 Tabs；錯誤訊息可操作；Modal focus trap；Undo 可鍵盤操作）
+- **IV. Performance Requirements**：通過（列表/搜尋限制；避免過度 FS 掃描；以快取/索引支援常用路徑；並以 docs/perf-checks.md 記錄 p95 與回歸風險）
+- **V. Language & Documentation（zh-TW）**：通過（本次 `specs/001-local-prompt-manager/` 產出以繁中撰寫）
 
 ## Project Structure
 
-### Documentation（本 feature）
+### Documentation (this feature)
 
 ```text
-specs/001-local-prompt-manager/
-├── plan.md
-├── research.md
-├── data-model.md
-├── quickstart.md
-├── contracts/
-│   ├── openapi.yaml
-│   └── api.md
-└── tasks.md
+specs/[###-feature]/
+├── plan.md              # This file (/speckit.plan command output)
+├── research.md          # Phase 0 output (/speckit.plan command)
+├── data-model.md        # Phase 1 output (/speckit.plan command)
+├── quickstart.md        # Phase 1 output (/speckit.plan command)
+├── contracts/           # Phase 1 output (/speckit.plan command)
+└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
 ```
 
-### Source Code（repo root）
-
+### Source Code (repository root)
 ```text
 app/
-├── (app)/
-├── (workspace)/
-└── api/
-    ├── projects/
-    ├── prompts/
-    ├── settings/
-    ├── search/
-    ├── inbox/
-    ├── snippets/
-    └── telemetry/
+├── (app)/               # Workspace UI（Projects / Prompts / Scratchpad 等）
+├── (workspace)/         # Workspace shell / hooks / store
+└── api/                 # Next.js Route Handlers（/api/*）
 
 lib/
-├── db.ts
-├── fs/
-├── services/
-├── types/
-└── utils/
+├── db.ts                # LowDB 入口
+├── db/                  # lowdb + fs adapters
+├── services/            # 快取、衝突、搜尋、設定、遙測
+└── types/               # Zod schemas / shared types
 
 tests/
-├── contract/
+├── contract/            # Route Handlers 合約測試（含 409/錯誤格式）
 ├── integration/
-└── unit/
+├── unit/
+└── e2e/                 # Playwright
 ```
 
-**Structure Decision**：採 Next.js App Router（UI：`app/`；API：`app/api/`；領域邏輯：`lib/`；測試：`tests/`）。
+**Structure Decision**：採單一 Next.js Web App（App Router）。API 以 `app/api/**/route.ts` 為 public interface；資料層集中於 `lib/`；測試分 contract/integration/unit/e2e。
 
-## Phase 0：Research（輸出：research.md）
+## Complexity Tracking
 
-- 釐清/決策：Markdown 預覽的 UI 呈現（選擇 Tabs 切換）、Undo 的 deferred delete 策略、409 衝突 UX（重新載入/另存副本/強制覆寫）、timestamps 更新規則與現況差距
-- 更新 `specs/001-local-prompt-manager/research.md` 以對齊最新 Clarifications
+> **Fill ONLY if Constitution Check has violations that must be justified**
 
-## Phase 1：Design & Contracts（輸出：data-model.md、contracts/*、quickstart.md）
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|-----------|------------|-------------------------------------|
+| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
 
-- `data-model.md` 以現行 `lib/types/schema.ts` 為準，標註「本次 prototype 對齊必用」與「既有但非本次 UI 重點」
-- `contracts/openapi.yaml` 對齊實際 Route Handlers（HTTP method、path、conflict/validation 錯誤碼）
-- `quickstart.md` 收斂到 prototype 五頁面流程，移除原型未呈現的快捷鍵/Drawer/專注模式等說明
-
-## Phase 2：Implementation Planning（不在此命令輸出 tasks.md）
-
-- 以 `tasks.md`（由 `/speckit.tasks` 產出）拆分 UI 對齊、契約/錯誤格式一致、以及「timestamps 由系統主導更新」等差距修正工作。
+本次無需額外複雜度豁免。
