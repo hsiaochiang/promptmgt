@@ -62,8 +62,8 @@
 
 ### Tests（先寫且先失敗）
 
-- [ ] T014 [P] [US1] 整合測試：Topbar Tabs 切換時 Main/Side 內容正確切換：tests/integration/us1-shell-tabs-rootpath.test.tsx
-- [ ] T015 [P] [US1] a11y 整合測試：Tabs 鍵盤操作與 ARIA（tablist/tab/tabpanel）：tests/integration/us1-shell-tabs-a11y.test.tsx
+- [X] T014 [P] [US1] 整合測試：Topbar Tabs 切換時 Main/Side 內容正確切換：tests/integration/us1-shell-tabs-rootpath.test.tsx
+- [X] T015 [P] [US1] a11y 整合測試：Tabs 鍵盤操作與 ARIA（tablist/tab/tabpanel）：tests/integration/us1-shell-tabs-a11y.test.tsx
 - [ ] T016 [P] [US1] 契約測試：GET/POST /api/settings rootPath 驗證與錯誤格式：tests/contract/api-settings.test.ts
 
 ### Implementation
