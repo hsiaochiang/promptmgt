@@ -9,11 +9,28 @@ import { listPrompts } from "@/lib/fs/prompts";
 import { writeProjectReadme } from "@/lib/fs/projects";
 import { sanitizeFilename } from "@/lib/utils/sanitizeFilename";
 import { toIsoWithOffset } from "@/lib/utils/date";
+import { projectStatuses, projectTypes } from "@/lib/taxonomy/data";
+import { normalizeTaxonomyArray, normalizeTaxonomyValue, toTaxonomyTable } from "@/lib/utils/taxonomy";
+
+const statusTable = toTaxonomyTable(projectStatuses);
+const projectTypeTable = toTaxonomyTable(projectTypes);
+
+function normalizeProjectOutput(project: any) {
+  return {
+    ...project,
+    status: normalizeTaxonomyValue(project.status ?? projectStatuses[0], statusTable),
+    projectType: project.projectType
+      ? normalizeTaxonomyValue(project.projectType, projectTypeTable)
+      : normalizeTaxonomyValue(projectTypes[0], projectTypeTable),
+    tags: normalizeTaxonomyArray(project.tags ?? [], undefined)
+  };
+}
 
 export async function GET() {
   const db = await getDb();
   const projects = db.data!.projects;
-  return NextResponse.json(applyPromptMeta(projects));
+  const normalized = applyPromptMeta(projects).map(normalizeProjectOutput);
+  return NextResponse.json(normalized);
 }
 
 export async function POST(request: Request) {
@@ -36,7 +53,9 @@ export async function POST(request: Request) {
   const project = {
     id: payload.id ?? `proj-${nanoid(6)}`,
     name,
-    status: payload.status ?? "規劃中",
+    status: normalizeTaxonomyValue(payload.status ?? projectStatuses[0], statusTable),
+    projectType: normalizeTaxonomyValue(payload.projectType ?? projectTypes[0], projectTypeTable),
+    tags: normalizeTaxonomyArray(payload.tags ?? [], undefined),
     promptCount: 0,
     updatedAt: createdAt,
     createdAt,
@@ -54,7 +73,7 @@ export async function POST(request: Request) {
   }
   db.data!.projects.push(project);
   await db.write();
-  return NextResponse.json(project, { status: 201 });
+  return NextResponse.json(normalizeProjectOutput(project), { status: 201 });
 }
 
 export async function PATCH(request: Request) {
@@ -81,7 +100,7 @@ export async function PATCH(request: Request) {
     project.name = trimmed;
   }
 
-  if (status) project.status = status;
+  if (status) project.status = normalizeTaxonomyValue(status, statusTable);
   if (typeof promptCount === "number") project.promptCount = promptCount;
   project.updatedAt = toIsoWithOffset();
 
@@ -93,7 +112,7 @@ export async function PATCH(request: Request) {
   }
 
   await db.write();
-  return NextResponse.json(project);
+  return NextResponse.json(normalizeProjectOutput(project));
 }
 
 export async function DELETE(request: Request) {

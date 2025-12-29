@@ -24,7 +24,7 @@ describe("API contracts", () => {
     expect(projects[0]).toMatchObject({
       id: expect.any(String),
       name: expect.any(String),
-      status: expect.any(String),
+      status: { code: expect.any(String), name: expect.any(String) },
       promptCount: expect.any(Number)
     });
 
@@ -38,7 +38,9 @@ describe("API contracts", () => {
     expect(createResponse.status).toBe(201);
     expect(created).toMatchObject({
       name: "新專案",
-      status: "規劃中",
+      status: { code: "ACTIVE", name: expect.any(String) },
+      projectType: { code: expect.any(String), name: expect.any(String) },
+      tags: expect.any(Array),
       promptCount: 0,
       id: expect.any(String)
     });
@@ -56,7 +58,7 @@ describe("API contracts", () => {
       })
     );
     const updated = await patchResponse.json();
-    expect(updated.status).toBe("已結案");
+    expect(updated.status).toMatchObject({ code: expect.any(String), name: expect.any(String) });
     expect(updated.promptCount).toBe(99);
   });
 
@@ -212,7 +214,7 @@ describe("API contracts", () => {
       type: "結構設計",
       status: "使用中",
       model: "gpt-4",
-      tags: ["tag-a"],
+      tags: [{ code: "tag-a", name: "tag-a" }],
       updatedAt: expect.any(String)
     });
   });

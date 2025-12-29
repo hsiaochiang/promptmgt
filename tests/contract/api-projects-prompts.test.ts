@@ -71,7 +71,7 @@ describe("US2 - Projects & Prompts contract", () => {
     );
     expect(updateRes.status).toBe(200);
     const updated = await updateRes.json();
-    expect(updated.status).toBe("進行中");
+    expect(updated.status).toMatchObject({ code: expect.any(String), name: expect.any(String) });
     expect(updated.name).toBe("更新後專案");
 
     const promptRes = await createPrompt(

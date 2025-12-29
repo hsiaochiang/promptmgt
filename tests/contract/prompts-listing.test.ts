@@ -81,7 +81,7 @@ describe("prompts listing contract", () => {
       type: "結構設計",
       status: "使用中",
       model: "gpt-4",
-      tags: ["beta"],
+      tags: [{ code: "beta", name: "beta" }],
       updatedAt: "2025-01-02T00:00:00.000Z"
     });
   });

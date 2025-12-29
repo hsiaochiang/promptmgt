@@ -16,8 +16,8 @@ describe("POST /api/telemetry", () => {
 
     expect(res.status).toBe(400);
     const data = await res.json();
-    expect(data.ok).toBe(false);
-    expect(data.error).toContain("event");
+    expect(data.code).toBe("bad_request");
+    expect(data.message).toContain("event");
   });
 
   it("sends telemetry with default timestamp when event is provided", async () => {
