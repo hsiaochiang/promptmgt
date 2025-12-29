@@ -102,13 +102,13 @@
 
 ### 實作
 
-- [ ] T026 [US2] 更新 Project 資料模型儲存（summary/projectType/tags/status）與預設 summary 推導：lib/db/fs/projects.ts
-- [ ] T027 [US2] 更新 /api/projects：支援新欄位、篩選參數（q/status/projectType/tag/limit）、重名 409：app/api/projects/route.ts
-- [ ] T028 [US2] 更新 /api/projects/:id/meta：讀寫 `_meta.json` 並驗證 taxonomy code+name：app/api/projects/[id]/meta/route.ts
-- [ ] T029 [US2] 更新 /api/projects/:id/readme：GET/PUT、寫入衝突偵測與 409 details：app/api/projects/[id]/readme/route.ts
-- [ ] T030 [US2] Projects 列表 UI：卡片欄位與篩選器對齊 prototype：app/(workspace)/components/project-list.tsx
-- [ ] T031 [US2] Project Meta UI：可編輯 taxonomy chips（Enter 新增、可移除、清空）：app/(workspace)/components/project-meta.tsx
-- [ ] T032 [US2] Project README UI：編輯/預覽 Tabs、儲存、409 時三選一（重新載入/另存副本/強制覆寫）：app/(workspace)/components/project-readme.tsx
+- [X] T026 [US2] 更新 Project 資料模型儲存（summary/projectType/tags/status）與預設 summary 推導：lib/db/fs/projects.ts
+- [X] T027 [US2] 更新 /api/projects：支援新欄位、篩選參數（q/status/projectType/tag/limit）、重名 409：app/api/projects/route.ts
+- [X] T028 [US2] 更新 /api/projects/:id/meta：讀寫 `_meta.json` 並驗證 taxonomy code+name：app/api/projects/[id]/meta/route.ts
+- [X] T029 [US2] 更新 /api/projects/:id/readme：GET/PUT、寫入衝突偵測與 409 details：app/api/projects/[id]/readme/route.ts
+- [X] T030 [US2] Projects 列表 UI：卡片欄位與篩選器對齊 prototype：app/(workspace)/components/project-list.tsx
+- [X] T031 [US2] Project Meta UI：可編輯 taxonomy chips（Enter 新增、可移除、清空）：app/(workspace)/components/project-meta.tsx
+- [X] T032 [US2] Project README UI：編輯/預覽 Tabs、儲存、409 時三選一（重新載入/另存副本/強制覆寫）：app/(workspace)/components/project-readme.tsx
 
 
 ---
@@ -124,14 +124,14 @@
 
 ### 測試（先寫且先失敗）
 
-- [ ] T033 [P] [US3] 契約測試：/api/prompts list filtering（category/promptStage/platformTag/tag/q/limit）：tests/contract/api-projects-prompts.test.ts
-- [ ] T034 [P] [US3] 整合測試：Prompts 列表篩選與導覽到 detail：tests/integration/us3-prompts-nav.test.tsx
+- [X] T033 [P] [US3] 契約測試：/api/prompts list filtering（category/promptStage/platformTag/tag/q/limit）：tests/contract/api-projects-prompts.test.ts
+- [X] T034 [P] [US3] 整合測試：Prompts 列表篩選與導覽到 detail：tests/integration/us3-prompts-nav.test.tsx
 
 ### 實作
 
-- [ ] T035 [US3] 更新 /api/prompts：支援新篩選參數並以 updatedAt desc 排序：app/api/prompts/route.ts
+- [X] T035 [US3] 更新 /api/prompts：支援新篩選參數並以 updatedAt desc 排序：app/api/prompts/route.ts
 - [X] T036 [US3] 更新 PromptListItem schema（tags 改為 TaxonomyValue[] 等）：lib/types/schema.ts
-- [ ] T037 [US3] Prompts 列表 UI：新增 prototype 篩選器（category/stage/platform/tag）與 KPI：app/(workspace)/components/prompt-list.tsx
+- [X] T037 [US3] Prompts 列表 UI：新增 prototype 篩選器（category/stage/platform/tag）與 KPI：app/(workspace)/components/prompt-list.tsx
 
 
 ---
@@ -148,20 +148,20 @@
 
 ### 測試（先寫且先失敗）
 
-- [ ] T038 [P] [US4] 契約測試：/api/prompts/:id GET/POST（server 主導 updatedAt、409 details）：tests/contract/api-prompts-detail.test.ts
-- [ ] T039 [P] [US4] 整合測試：Prompt Detail 編輯→2 秒 autosave→預覽切換：tests/integration/us4-prompt-detail-core.test.tsx
-- [ ] T040 [P] [US4] 整合測試：409 三選一流程（reload/save copy/force overwrite）：tests/integration/us4-conflict-three-way.test.tsx
-- [ ] T041 [P] [US4] 單元測試：frontmatter 必填欄位補值與驗證（TaxonomyValue/時間格式）：tests/unit/frontmatter.test.ts
+- [X] T038 [P] [US4] 契約測試：/api/prompts/:id GET/POST（server 主導 updatedAt、409 details）：tests/contract/api-prompts-detail.test.ts
+- [X] T039 [P] [US4] 整合測試：Prompt Detail 編輯→2 秒 autosave→預覽切換：tests/integration/us4-prompt-detail-core.test.tsx
+- [X] T040 [P] [US4] 整合測試：409 三選一流程（reload/save copy/force overwrite）：tests/integration/us4-conflict-three-way.test.tsx
+- [X] T041 [P] [US4] 單元測試：frontmatter 必填欄位補值與驗證（TaxonomyValue/時間格式）：tests/unit/frontmatter.test.ts
 
 ### 實作
 
-- [ ] T042 [US4] Frontmatter 讀寫：新增 taxonomy 欄位（category/promptStage/platformTags/audienceTags/deliverableTags/tags）並做一致性驗證：lib/utils/frontmatter.ts
-- [ ] T043 [US4] 更新 /api/prompts/:id：以 clientHash/clientMtime 做衝突偵測；成功寫入一律 server 更新 updatedAt：app/api/prompts/[id]/route.ts
-- [ ] T044 [US4] 更新 /api/prompts POST：建立新提示詞時自動補齊 createdAt/updatedAt（UTC+08:00）：app/api/prompts/route.ts
-- [ ] T045 [US4] Prompt Editor：改為 EditorTabs（編輯/預覽互斥），預覽使用 MarkdownPreview：app/(workspace)/components/prompt-editor.tsx
-- [ ] T046 [US4] Autosave hook：2 秒 debounce、成功後以 server 回傳 updatedAt 更新 UI：app/(workspace)/hooks/useAutosavePrompt.ts
-- [ ] T047 [US4] Conflict dialog：三選一 UI 與行為（reload/save copy/force overwrite）：app/(workspace)/components/conflict-dialog.tsx
-- [ ] T048 [US4] Copy actions：精簡/完整複製並顯示 Toast/Snackbar 回饋：app/(workspace)/components/prompt-header.tsx
+- [X] T042 [US4] Frontmatter 讀寫：新增 taxonomy 欄位（category/promptStage/platformTags/audienceTags/deliverableTags/tags）並做一致性驗證：lib/utils/frontmatter.ts
+- [X] T043 [US4] 更新 /api/prompts/:id：以 clientHash/clientMtime 做衝突偵測；成功寫入一律 server 更新 updatedAt：app/api/prompts/[id]/route.ts
+- [X] T044 [US4] 更新 /api/prompts POST：建立新提示詞時自動補齊 createdAt/updatedAt（UTC+08:00）：app/api/prompts/route.ts
+- [X] T045 [US4] Prompt Editor：改為 EditorTabs（編輯/預覽互斥），預覽使用 MarkdownPreview：app/(workspace)/components/prompt-editor.tsx
+- [X] T046 [US4] Autosave hook：2 秒 debounce、成功後以 server 回傳 updatedAt 更新 UI：app/(workspace)/hooks/useAutosavePrompt.ts
+- [X] T047 [US4] Conflict dialog：三選一 UI 與行為（reload/save copy/force overwrite）：app/(workspace)/components/conflict-dialog.tsx
+- [X] T048 [US4] Copy actions：精簡/完整複製並顯示 Toast/Snackbar 回饋：app/(workspace)/components/prompt-header.tsx
 
 
 ---
@@ -174,12 +174,12 @@
 
 ### 測試（先寫且先失敗）
 
-- [ ] T049 [P] [US5] 整合測試：Scratchpad 新增/複製/刪除與 count 更新：tests/integration/us5-scratchpad.test.tsx
+- [X] T049 [P] [US5] 整合測試：Scratchpad 新增/複製/刪除與 count 更新：tests/integration/us5-scratchpad.test.tsx
 
 ### 實作
 
-- [ ] T050 [US5] Scratchpad 元件（Main：輸入+列表；Side：動作+count）：app/(workspace)/components/scratchpad.tsx
-- [ ] T051 [US5] Workspace store：加入 scratchpad 狀態與 localStorage key/節流寫入：app/(workspace)/store/useWorkspaceStore.ts
+- [X] T050 [US5] Scratchpad 元件（Main：輸入+列表；Side：動作+count）：app/(workspace)/components/scratchpad.tsx
+- [X] T051 [US5] Workspace store：加入 scratchpad 狀態與 localStorage key/節流寫入：app/(workspace)/store/useWorkspaceStore.ts
 
 
 ---
@@ -195,14 +195,14 @@
 
 ### 測試（先寫且先失敗）
 
-- [ ] T052 [P] [US6] 整合測試：deferred delete + Undo 5 秒（Projects/Prompts/Scratchpad）：tests/integration/us6-deferred-delete-undo.test.tsx
+- [X] T052 [P] [US6] 整合測試：deferred delete + Undo 5 秒（Projects/Prompts/Scratchpad）：tests/integration/us6-deferred-delete-undo.test.tsx
 
 ### 實作
 
-- [ ] T053 [US6] Projects 刪除流程改為 deferred delete（timeout 後呼叫 DELETE /api/projects）：app/(workspace)/components/project-list.tsx
-- [ ] T054 [US6] Prompts 刪除流程改為 deferred delete（timeout 後呼叫 DELETE /api/prompts/:id）：app/(workspace)/components/prompt-list.tsx
-- [ ] T055 [US6] Scratchpad 刪除/清空流程改為 Confirm + SnackbarUndo：app/(workspace)/components/scratchpad.tsx
-- [ ] T056 [US6] Workspace Shell 掛載共用 SnackbarUndo 容器並支援多個 pending deletes：app/(workspace)/workspace-shell.tsx
+- [X] T053 [US6] Projects 刪除流程改為 deferred delete（timeout 後呼叫 DELETE /api/projects）：app/(workspace)/components/project-list.tsx
+- [X] T054 [US6] Prompts 刪除流程改為 deferred delete（timeout 後呼叫 DELETE /api/prompts/:id）：app/(workspace)/components/prompt-list.tsx
+- [X] T055 [US6] Scratchpad 刪除/清空流程改為 Confirm + SnackbarUndo：app/(workspace)/components/scratchpad.tsx
+- [X] T056 [US6] Workspace Shell 掛載共用 SnackbarUndo 容器並支援多個 pending deletes：app/(workspace)/workspace-shell.tsx
 
 
 ---
