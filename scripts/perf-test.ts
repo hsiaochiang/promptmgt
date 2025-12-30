@@ -4,6 +4,14 @@ import { join } from "path";
 import { performance } from "perf_hooks";
 import { writePrompt, listPrompts, readPrompt } from "@/lib/fs/prompts";
 import { toIsoWithOffset } from "@/lib/utils/date";
+import {
+  audienceTags,
+  commonTags,
+  deliverableTags,
+  platformTags,
+  promptCategories,
+  promptStages
+} from "@/lib/taxonomy/data";
 import type { PromptFrontmatter } from "@/lib/types/schema";
 
 type Metric = { label: string; ms: number };
@@ -22,8 +30,13 @@ async function main() {
     project: "PerfProject",
     type: "其他",
     status: "草稿",
+    category: promptCategories[0],
+    promptStage: promptStages[0],
+    platformTags: [platformTags[0]],
+    audienceTags: [audienceTags[0]],
+    deliverableTags: [deliverableTags[0]],
     model: "gpt-4",
-    tags: [],
+    tags: [commonTags[0]],
     createdAt: toIsoWithOffset(),
     updatedAt: toIsoWithOffset()
   };
