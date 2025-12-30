@@ -211,16 +211,16 @@
 
 **Purpose**：跨 story 的一致性、文件同步、效能與品質閘門收尾。
 
-- [ ] T057 [P] 同步合約文件與實作（含 409 details 與 query params）：specs/001-local-prompt-manager/contracts/{openapi.yaml,api.md}
-- [ ] T058 [P] 同步 quickstart 與 UI 用語（編輯/預覽 Tabs、Undo 5 秒、409 三選一）：specs/001-local-prompt-manager/quickstart.md
-- [ ] T059 [P] 覆蓋率與測試金字塔檢核（unit≥80%、關鍵路徑 100%）並記錄落差：vitest.config.ts
-- [ ] T060 執行 typecheck/test/contract tests 並確保全綠：package.json
-- [ ] T061 [P] 效能量測步驟與記錄格式對齊 spec NFR（p95/1000 上限），並確保可重複執行：docs/perf-checks.md
-- [ ] T062 [P] 執行效能量測腳本並記錄結果（list load / prompt read/write / autosave p95）：scripts/perf-test.ts, docs/perf-checks.md
-- [ ] T063 [P] FR-035 回歸：補齊/確認 Inbox timestamps（createdAt/updatedAt +08:00 自動補值與更新規則）：tests/contract/api-inbox.test.ts, tests/contract/api-inbox-pagination.test.ts
-- [ ] T064 [P] FR-035 回歸：補齊/確認 Snippets timestamps（createdAt/updatedAt +08:00、自動補值與更新規則）：tests/contract/api-snippets.test.ts
-- [ ] T065 [P] FR-035 回歸：補齊/確認 Settings timestamps（含 update-check 路徑不破壞）：tests/contract/api-settings.test.ts, tests/contract/api-settings-update-check.test.ts
-- [ ] T066 [P] FR-035 全實體回歸（Project/Prompt/Inbox/Snippet/Settings timestamps）：tests/integration/timestamps-all-entities.test.ts
+- [X] T057 [P] 同步合約文件與實作（含 409 details 與 query params）：specs/001-local-prompt-manager/contracts/{openapi.yaml,api.md}
+- [X] T058 [P] 同步 quickstart 與 UI 用語（編輯/預覽 Tabs、Undo 5 秒、409 三選一）：specs/001-local-prompt-manager/quickstart.md
+- [X] T059 [P] 覆蓋率與測試金字塔檢核（unit≥80%、關鍵路徑 100%）並記錄落差：vitest.config.ts
+- [X] T060 執行 typecheck/test/contract tests 並確保全綠：package.json
+- [X] T061 [P] 效能量測步驟與記錄格式對齊 spec NFR（p95/1000 上限），並確保可重複執行：docs/perf-checks.md
+- [X] T062 [P] 執行效能量測腳本並記錄結果（list load / prompt read/write / autosave p95）：scripts/perf-test.ts, docs/perf-checks.md
+- [X] T063 [P] FR-035 回歸：補齊/確認 Inbox timestamps（createdAt/updatedAt +08:00 自動補值與更新規則）：tests/contract/api-inbox.test.ts, tests/contract/api-inbox-pagination.test.ts
+- [X] T064 [P] FR-035 回歸：補齊/確認 Snippets timestamps（createdAt/updatedAt +08:00、自動補值與更新規則）：tests/contract/api-snippets.test.ts
+- [X] T065 [P] FR-035 回歸：補齊/確認 Settings timestamps（含 update-check 路徑不破壞）：tests/contract/api-settings.test.ts, tests/contract/api-settings-update-check.test.ts
+- [X] T066 [P] FR-035 全實體回歸（Project/Prompt/Inbox/Snippet/Settings timestamps）：tests/integration/timestamps-all-entities.test.ts
 
 - [X] T067 [P] 片語庫（Snippets）API 合約測試（查詢/CRUD/usage+timestamps）：tests/contract/api-snippets.test.ts
 - [X] T068 [P] 片語插入整合測試（插入內容 + usage +1）：tests/integration/us4-snippet-insert.test.tsx

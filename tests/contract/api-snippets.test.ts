@@ -3,6 +3,9 @@ import { setupIsolatedWorkspace } from "../utils/testEnv";
 
 let restoreWorkspace: (() => Promise<void>) | undefined;
 
+const isIsoUtc8 = (value?: string | null) =>
+  typeof value === "string" && /\+08:00$/.test(value) && !Number.isNaN(Date.parse(value));
+
 beforeEach(async () => {
   restoreWorkspace = await setupIsolatedWorkspace();
 });
@@ -25,6 +28,8 @@ describe("API /api/snippets", () => {
       name: expect.any(String),
       usageCount: expect.any(Number)
     });
+    expect(isIsoUtc8(all[0]?.createdAt)).toBe(true);
+    expect(isIsoUtc8(all[0]?.updatedAt)).toBe(true);
 
     const searchRes = await GET(new Request("http://localhost/api/snippets?q=markdown"));
     const filtered = await searchRes.json();
@@ -48,6 +53,8 @@ describe("API /api/snippets", () => {
     const created = await createRes.json();
     expect(createRes.status).toBe(201);
     expect(created).toMatchObject({ name: "新的片語", category: "測試", usageCount: 0 });
+    expect(isIsoUtc8(created.createdAt)).toBe(true);
+    expect(isIsoUtc8(created.updatedAt)).toBe(true);
 
     const conflictRes = await POST(
       new Request("http://localhost/api/snippets", {
@@ -72,6 +79,7 @@ describe("API /api/snippets", () => {
     const patched = await patchRes.json();
     expect(patched.name).toBe("更新後名稱");
     expect(patched.category).toBe("調整後");
+    expect(isIsoUtc8(patched.updatedAt)).toBe(true);
 
     const emptyNameRes = await PATCH(
       new Request("http://localhost/api/snippets/id", {
@@ -115,6 +123,8 @@ describe("API /api/snippets", () => {
       })
     );
     const created = await createdRes.json();
+    expect(isIsoUtc8(created.createdAt)).toBe(true);
+    expect(isIsoUtc8(created.updatedAt)).toBe(true);
 
     const first = await increment(new Request(`http://localhost/api/snippets/${created.id}/usage`, { method: "POST" }), {
       params: { id: created.id }
@@ -123,6 +133,8 @@ describe("API /api/snippets", () => {
     expect(first.status).toBe(200);
     expect(firstPayload.usageCount ?? firstPayload.usage).toBe(1);
     expect(firstPayload.lastUsedAt).toBeDefined();
+    expect(isIsoUtc8(firstPayload.lastUsedAt)).toBe(true);
+    expect(isIsoUtc8(firstPayload.updatedAt)).toBe(true);
 
     await increment(new Request(`http://localhost/api/snippets/${created.id}/usage`, { method: "POST" }), {
       params: { id: created.id }
@@ -132,5 +144,7 @@ describe("API /api/snippets", () => {
     const detail = await detailRes.json();
     expect(detail.usageCount ?? detail.usage).toBe(2);
     expect(detail.lastUsedAt).toBeDefined();
+    expect(isIsoUtc8(detail.lastUsedAt)).toBe(true);
+    expect(isIsoUtc8(detail.updatedAt)).toBe(true);
   });
 });

@@ -17,6 +17,10 @@
 - `GET /api/projects/{id}/readme` → 200: { content, path, hash, mtimeMs }
 - `PUT /api/projects/{id}/readme` body: { content, expectedHash?, expectedMtime? } → 200: { path, hash, mtimeMs, updatedAt }；409 on conflict（details: { currentHash, currentMtime }）
 
+## Project Meta
+- `GET /api/projects/{id}/meta` → 200: ProjectMeta（對應專案資料夾 `_meta.json`）
+- `PUT /api/projects/{id}/meta` body: ProjectMetaUpdateInput → 200: ProjectMeta
+
 ## Inbox
 - `GET /api/inbox?q=&limit=&offset=` → 200: { items, total, hasMore, limit, offset }
 - `POST /api/inbox` body: { title?, content?, hint? } → 201: InboxItem
@@ -31,8 +35,8 @@
 - `DELETE /api/prompts/{id}` → 200: { ok: true }
 
 ## Snippets
-- `GET /api/snippets` → 200: Snippet[]
-- `POST /api/snippets` body: { name, category, content } → 200: Snippet
+- `GET /api/snippets?q=` → 200: Snippet[]
+- `POST /api/snippets` body: { name, category, content } → 201: Snippet
 - `PATCH /api/snippets` body: { id, name?, category?, content? } → 200: Snippet
 - `GET /api/snippets/{id}` → 200: Snippet
 - `PATCH /api/snippets/{id}` body: { name?, category?, content? } → 200: Snippet

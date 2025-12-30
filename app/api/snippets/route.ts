@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { badRequest, conflict, notFound } from "@/app/api/_lib/responses";
 import { getDb } from "@/lib/db";
 import { nanoid } from "nanoid";
-import { toIsoWithOffset } from "@/lib/utils/date";
+import { ensureIsoUtc8, toIsoWithOffset } from "@/lib/utils/date";
 
 function normalizeName(name?: string) {
   return name?.trim().toLowerCase();
@@ -17,6 +17,15 @@ function toUsageCount(snippet: any) {
   return Number.isFinite(current) && current >= 0 ? current : 0;
 }
 
+function normalizeTimestamps(snippet: any) {
+  return {
+    ...snippet,
+    createdAt: ensureIsoUtc8(snippet?.createdAt),
+    updatedAt: ensureIsoUtc8(snippet?.updatedAt),
+    lastUsedAt: snippet?.lastUsedAt ? ensureIsoUtc8(snippet.lastUsedAt) : undefined
+  };
+}
+
 export async function GET(request: Request) {
   const db = await getDb();
   const url = request ? new URL(request.url) : new URL("http://localhost/api/snippets");
@@ -28,7 +37,7 @@ export async function GET(request: Request) {
   });
   return NextResponse.json(
     snippets.map((snippet) => ({
-      ...snippet,
+      ...normalizeTimestamps(snippet),
       usageCount: toUsageCount(snippet),
       usage: toUsageCount(snippet)
     }))
@@ -52,6 +61,7 @@ export async function POST(request: Request) {
     return conflictResponse();
   }
 
+  const now = toIsoWithOffset();
   const snippet = {
     id: payload.id ?? `snip-${nanoid(6)}`,
     name,
@@ -60,13 +70,13 @@ export async function POST(request: Request) {
     usage: 0,
     usageCount: 0,
     lastUsedAt: undefined,
-    createdAt: toIsoWithOffset(),
-    updatedAt: toIsoWithOffset()
+    createdAt: now,
+    updatedAt: now
   };
 
   db.data!.snippets.push(snippet);
   await db.write();
-  return NextResponse.json(snippet, { status: 201 });
+  return NextResponse.json(normalizeTimestamps(snippet), { status: 201 });
 }
 
 export async function PATCH(request: Request) {
@@ -90,7 +100,11 @@ export async function PATCH(request: Request) {
   if (content !== undefined) target.content = typeof content === "string" ? content : target.content;
   target.updatedAt = toIsoWithOffset();
   await db.write();
-  return NextResponse.json({ ...target, usageCount: toUsageCount(target), usage: toUsageCount(target) });
+  return NextResponse.json({
+    ...normalizeTimestamps(target),
+    usageCount: toUsageCount(target),
+    usage: toUsageCount(target)
+  });
 }
 
 export async function DELETE(request: Request) {

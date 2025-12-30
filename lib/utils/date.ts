@@ -17,6 +17,22 @@ export function toIsoWithOffset(date = new Date(), offsetHours = 8) {
   return `${yyyy}-${mm}-${dd}T${hh}:${min}:${ss}.${ms}${sign}${offH}:${offM}`;
 }
 
+export function ensureIsoUtc8(value?: string | null) {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed) {
+      if (/\+08:00$/.test(trimmed) && !Number.isNaN(Date.parse(trimmed))) {
+        return trimmed;
+      }
+      const parsed = new Date(trimmed);
+      if (!Number.isNaN(parsed.getTime())) {
+        return toIsoWithOffset(parsed, 8);
+      }
+    }
+  }
+  return toIsoWithOffset();
+}
+
 export function formatForUI_MMDD_HHmm(isoString: string) {
   try {
     const d = new Date(isoString);

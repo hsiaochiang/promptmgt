@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server";
 import { conflict, notFound } from "@/app/api/_lib/responses";
 import { getDb } from "@/lib/db";
-import { toIsoWithOffset } from "@/lib/utils/date";
+import { ensureIsoUtc8, toIsoWithOffset } from "@/lib/utils/date";
+
+function normalizeInboxItem(item: any) {
+  return {
+    ...item,
+    createdAt: ensureIsoUtc8(item?.createdAt),
+    updatedAt: ensureIsoUtc8(item?.updatedAt)
+  };
+}
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
   const db = await getDb();
   const draft = db.data!.inbox.find((i) => i.id === params.id);
   if (!draft) return notFound("Draft not found");
-  return NextResponse.json(draft);
+  return NextResponse.json(normalizeInboxItem(draft));
 }
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
@@ -15,6 +23,10 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   const db = await getDb();
   const draft = db.data!.inbox.find((i) => i.id === params.id);
   if (!draft) return notFound("Draft not found");
+
+  // Canonicalize timestamps to prevent false conflicts from legacy Z timestamps.
+  draft.createdAt = ensureIsoUtc8((draft as any).createdAt);
+  draft.updatedAt = ensureIsoUtc8((draft as any).updatedAt);
 
   const expectedUpdatedAt =
     payload.expectedUpdatedAt ?? payload.updatedAt ?? payload.clientUpdatedAt ?? null;
@@ -28,7 +40,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   draft.hint = payload.hint ?? draft.hint;
   draft.updatedAt = toIsoWithOffset();
   await db.write();
-  return NextResponse.json(draft);
+  return NextResponse.json(normalizeInboxItem(draft));
 }
 
 export async function DELETE(_: Request, { params }: { params: { id: string } }) {

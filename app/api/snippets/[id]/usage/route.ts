@@ -1,7 +1,16 @@
 import { NextResponse } from "next/server";
 import { notFound } from "@/app/api/_lib/responses";
 import { getDb } from "@/lib/db";
-import { toIsoWithOffset } from "@/lib/utils/date";
+import { ensureIsoUtc8, toIsoWithOffset } from "@/lib/utils/date";
+
+function normalizeTimestamps(snippet: any) {
+  return {
+    ...snippet,
+    createdAt: ensureIsoUtc8(snippet?.createdAt),
+    updatedAt: ensureIsoUtc8(snippet?.updatedAt),
+    lastUsedAt: snippet?.lastUsedAt ? ensureIsoUtc8(snippet.lastUsedAt) : undefined
+  };
+}
 
 export async function POST(_: Request, { params }: { params: { id: string } }) {
   const db = await getDb();
@@ -11,7 +20,9 @@ export async function POST(_: Request, { params }: { params: { id: string } }) {
   const nextCount = Number.isFinite(current) && current >= 0 ? current + 1 : 1;
   snippet.usage = nextCount;
   snippet.usageCount = nextCount;
-  snippet.lastUsedAt = toIsoWithOffset();
+  const now = toIsoWithOffset();
+  snippet.lastUsedAt = now;
+  snippet.updatedAt = now;
   await db.write();
-  return NextResponse.json(snippet);
+  return NextResponse.json(normalizeTimestamps(snippet));
 }

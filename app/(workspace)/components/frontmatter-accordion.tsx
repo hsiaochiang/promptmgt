@@ -2,6 +2,10 @@
 
 import React, { useMemo, useState } from "react";
 import type { PromptFrontmatter, PromptStatus, PromptType } from "@/lib/types/schema";
+import { commonTags } from "@/lib/taxonomy/data";
+import { normalizeTaxonomyArray, toTaxonomyTable } from "@/lib/utils/taxonomy";
+
+const commonTagTable = toTaxonomyTable(commonTags);
 
 interface Props {
   frontmatter: PromptFrontmatter | null;
@@ -11,14 +15,14 @@ interface Props {
 
 export default function FrontmatterAccordion({ frontmatter, onChange, onDelete }: Props) {
   const [open, setOpen] = useState(false);
-  const [tagsInput, setTagsInput] = useState(() => (frontmatter?.tags ?? []).join(", "));
+  const [tagsInput, setTagsInput] = useState(() => (frontmatter?.tags ?? []).map((t) => t.code).join(", "));
 
   const summary = useMemo(() => {
     if (!frontmatter) return "尚未選擇提示詞";
     const parts = [frontmatter.status, frontmatter.model, frontmatter.project]
       .filter(Boolean)
       .map((p) => `${p}`);
-    const tags = (frontmatter.tags ?? []).slice(0, 3).map((t) => `#${t}`);
+    const tags = (frontmatter.tags ?? []).slice(0, 3).map((t) => `#${t.code}`);
     return [...parts, ...tags].join(" · ") || "前言資訊";
   }, [frontmatter]);
 
@@ -112,10 +116,11 @@ export default function FrontmatterAccordion({ frontmatter, onChange, onDelete }
               onChange={(e) => {
                 const value = e.target.value;
                 setTagsInput(value);
-                const tags = value
+                const raw = value
                   .split(",")
                   .map((t) => t.trim())
                   .filter(Boolean);
+                const tags = normalizeTaxonomyArray(raw, commonTagTable);
                 onChange({ tags, updatedAt: new Date().toISOString() });
               }}
             />

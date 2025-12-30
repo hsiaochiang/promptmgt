@@ -5,6 +5,7 @@ import { Low } from "lowdb";
 import { JSONFile } from "lowdb/node";
 import { databaseSchema, type DatabaseSchema } from "./types/schema";
 import { toIsoWithOffset } from "./utils/date";
+import { projectStatuses, projectTypes } from "./taxonomy/data";
 
 const DB_FILE = process.env.DB_FILE || join(process.cwd(), "db.json");
 const DEFAULT_ROOT = process.env.DEFAULT_ROOT || join(homedir(), ".promptmgt");
@@ -27,7 +28,10 @@ const seedData: DatabaseSchema = {
     {
       id: "proj-1",
       name: "AI 工作流課程",
-      status: "進行中",
+      status: projectStatuses[0],
+      summary: "未設定",
+      projectType: projectTypes[0],
+      tags: [],
       promptCount: 12,
       docPath: projectDocPath("AI 工作流課程"),
       createdAt: ensureIsoUtc8("2025-12-01T00:00:00.000Z"),
@@ -36,7 +40,10 @@ const seedData: DatabaseSchema = {
     {
       id: "proj-2",
       name: "企業資金詢價平台",
-      status: "進行中",
+      status: projectStatuses[0],
+      summary: "未設定",
+      projectType: projectTypes[0],
+      tags: [],
       promptCount: 8,
       docPath: projectDocPath("企業資金詢價平台"),
       createdAt: ensureIsoUtc8("2025-12-01T00:00:00.000Z"),
@@ -45,7 +52,10 @@ const seedData: DatabaseSchema = {
     {
       id: "proj-3",
       name: "貿易管理業務知識資料庫",
-      status: "規劃中",
+      status: projectStatuses[1] ?? projectStatuses[0],
+      summary: "未設定",
+      projectType: projectTypes[0],
+      tags: [],
       promptCount: 5,
       docPath: projectDocPath("貿易管理業務知識資料庫"),
       createdAt: ensureIsoUtc8("2025-12-01T00:00:00.000Z"),

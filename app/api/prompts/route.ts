@@ -7,6 +7,7 @@ import { getDb } from "@/lib/db";
 import { applyPromptMeta, setPromptMetaFromPrompts } from "@/lib/services/cache";
 import type { PromptFrontmatter } from "@/lib/types/schema";
 import { promptFrontmatterSchema } from "@/lib/types/schema";
+import { projectStatuses, projectTypes, promptCategories, promptStages } from "@/lib/taxonomy/data";
 import { sanitizeFilename } from "@/lib/utils/sanitizeFilename";
 import { toIsoWithOffset } from "@/lib/utils/date";
 
@@ -89,7 +90,12 @@ export async function POST(request: Request) {
       project: frontmatter?.project ?? "",
       type: frontmatter?.type ?? "其他",
       status: frontmatter?.status ?? "草稿",
+      category: frontmatter?.category ?? promptCategories[0],
+      promptStage: frontmatter?.promptStage ?? promptStages[0],
       model: frontmatter?.model ?? "",
+      platformTags: Array.isArray(frontmatter?.platformTags) ? frontmatter.platformTags : [],
+      audienceTags: Array.isArray(frontmatter?.audienceTags) ? frontmatter.audienceTags : [],
+      deliverableTags: Array.isArray(frontmatter?.deliverableTags) ? frontmatter.deliverableTags : [],
       tags: Array.isArray(frontmatter?.tags) ? frontmatter.tags : [],
       note: frontmatter?.note,
       updatedAt: now,
@@ -113,7 +119,10 @@ export async function POST(request: Request) {
     db.data!.projects.push({
       id: `proj-${nanoid(6)}`,
       name: normalizedFrontmatter.project,
-      status: "進行中",
+      status: projectStatuses[0],
+      summary: "未設定",
+      projectType: projectTypes[0],
+      tags: [],
       promptCount: 0,
       createdAt: normalizedFrontmatter.createdAt,
       updatedAt: normalizedFrontmatter.updatedAt,

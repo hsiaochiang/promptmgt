@@ -152,6 +152,38 @@ paths:
                       details:
                         $ref: "#/components/schemas/ConflictHashMtimeDetails"
 
+  /projects/{id}/meta:
+    parameters:
+      - $ref: "#/components/parameters/ProjectId"
+    get:
+      summary: 取得專案 _meta.json（Project taxonomy/meta）
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectMeta"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      summary: 更新專案 _meta.json（Project taxonomy/meta）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectMetaUpdateInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectMeta"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /prompts:
     get:
       summary: 列出提示詞（支援篩選/搜尋）
@@ -770,6 +802,43 @@ components:
         hash: { type: string }
         mtimeMs: { type: number }
         updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
+
+    ProjectMeta:
+      type: object
+      properties:
+        category: { type: string }
+        stage: { type: string }
+        platforms:
+          type: array
+          items: { type: string }
+        deliverables:
+          type: array
+          items: { type: string }
+        audiences:
+          type: array
+          items: { type: string }
+        commonTags:
+          type: array
+          items: { type: string }
+        updatedAt: { $ref: "#/components/schemas/IsoDateTime" }
+
+    ProjectMetaUpdateInput:
+      type: object
+      properties:
+        category: { type: string }
+        stage: { type: string }
+        platforms:
+          type: array
+          items: { type: string }
+        deliverables:
+          type: array
+          items: { type: string }
+        audiences:
+          type: array
+          items: { type: string }
+        commonTags:
+          type: array
+          items: { type: string }
 
     PromptFrontmatter:
       type: object

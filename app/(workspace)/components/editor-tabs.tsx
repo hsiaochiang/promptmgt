@@ -44,7 +44,9 @@ export default function EditorTabs({ tabs, activeKey, onChange, className }: Edi
         return (
           <button
             key={tab.key}
-            ref={(el) => (tabRefs.current[tab.key] = el)}
+            ref={(el) => {
+              tabRefs.current[tab.key] = el;
+            }}
             type="button"
             role="tab"
             aria-selected={isActive}

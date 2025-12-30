@@ -509,10 +509,10 @@ export default function PromptList({
                 <div className="flex gap-1">
                   {prompt.tags.map((t) => (
                     <span
-                      key={t}
+                      key={`${prompt.id}-${t.code}`}
                       className="pm-chip pm-chip-neutral"
                     >
-                      #{t}
+                      #{t.name}
                     </span>
                   ))}
                 </div>

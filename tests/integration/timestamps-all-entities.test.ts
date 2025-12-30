@@ -14,7 +14,7 @@ afterEach(async () => {
   if (restoreWorkspace) await restoreWorkspace();
 });
 
-describe("T077 - 全實體時間欄位自動補值為 ISO+08:00", () => {
+describe("T066 - 全實體時間欄位自動補值為 ISO+08:00", () => {
   it("project/inbox/snippet/prompt/settings 皆自動帶 createdAt/updatedAt 且為 UTC+08", async () => {
     const { POST: postProject } = await import("@/app/api/projects/route");
     const { POST: postInbox } = await import("@/app/api/inbox/route");

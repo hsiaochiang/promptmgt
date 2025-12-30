@@ -305,14 +305,14 @@ export default function WorkspaceShell() {
   const selectedProject = projects.find((p) => p.name === selectedProjectId) ?? null;
 
   const projectsKpi = React.useMemo(() => {
-    const base = { total: 0, planning: 0, active: 0, done: 0 };
+    const base = { total: 0, active: 0, paused: 0, archived: 0 };
     if (!Array.isArray(projects)) return base;
     return projects.reduce(
       (acc, p) => {
         acc.total += 1;
-        if (p.status === "規劃中") acc.planning += 1;
-        else if (p.status === "進行中") acc.active += 1;
-        else if (p.status === "已結案") acc.done += 1;
+        if (p.status?.code === "ACTIVE") acc.active += 1;
+        else if (p.status?.code === "PAUSED") acc.paused += 1;
+        else if (p.status?.code === "ARCHIVED") acc.archived += 1;
         return acc;
       },
       { ...base }
@@ -703,7 +703,7 @@ export default function WorkspaceShell() {
                         className="pm-badge pm-badge-brand text-[10px]"
                         style={{ background: "rgba(47, 111, 111, 0.08)", borderColor: "rgba(47, 111, 111, 0.25)", color: "var(--pm-brand-strong)" }}
                       >
-                        {selectedProject.status}
+                        {selectedProject.status.name}
                       </span>
                     ) : null}
                   </div>
@@ -784,7 +784,7 @@ export default function WorkspaceShell() {
                   <div className="mt-3 space-y-3 text-sm">
                     <div className="flex items-center justify-between">
                       <span style={{ color: "var(--pm-muted)" }}>狀態</span>
-                      <span className="font-semibold">{selectedProject?.status ?? "—"}</span>
+                      <span className="font-semibold">{selectedProject?.status?.name ?? "—"}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span style={{ color: "var(--pm-muted)" }}>提示詞數</span>
@@ -878,18 +878,18 @@ export default function WorkspaceShell() {
                     </div>
                     <div className="pm-card">
                       <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
-                        規劃中
+                        暫停
                       </div>
                       <div className="text-lg font-semibold" style={{ color: "var(--pm-text)" }}>
-                        {projectsKpi.planning}
+                        {projectsKpi.paused}
                       </div>
                     </div>
                     <div className="pm-card">
                       <div className="text-[11px]" style={{ color: "var(--pm-muted)" }}>
-                        已結案
+                        已封存
                       </div>
                       <div className="text-lg font-semibold" style={{ color: "var(--pm-text)" }}>
-                        {projectsKpi.done}
+                        {projectsKpi.archived}
                       </div>
                     </div>
                   </div>

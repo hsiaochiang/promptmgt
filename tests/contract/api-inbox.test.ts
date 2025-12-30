@@ -3,6 +3,9 @@ import { setupIsolatedWorkspace } from "../utils/testEnv";
 
 let restoreWorkspace: (() => Promise<void>) | undefined;
 
+const isIsoUtc8 = (value?: string | null) =>
+  typeof value === "string" && /\+08:00$/.test(value) && !Number.isNaN(Date.parse(value));
+
 beforeEach(async () => {
   restoreWorkspace = await setupIsolatedWorkspace();
 });
@@ -21,12 +24,17 @@ describe("/api/inbox 合約", () => {
     await db.write();
 
     for (let i = 0; i < 60; i++) {
-      await createDraft(
+      const res = await createDraft(
         new Request("http://localhost/api/inbox", {
           method: "POST",
           body: JSON.stringify({ title: `草稿 ${i}`, content: `內容 ${i}` })
         })
       );
+      if (i === 0) {
+        const created = await res.json();
+        expect(isIsoUtc8(created.createdAt)).toBe(true);
+        expect(isIsoUtc8(created.updatedAt)).toBe(true);
+      }
     }
 
     const page1 = await listDrafts(new Request("http://localhost/api/inbox?limit=50&offset=0"));
@@ -34,6 +42,8 @@ describe("/api/inbox 合約", () => {
     expect(payload1.items).toHaveLength(50);
     expect(payload1.total).toBe(60);
     expect(payload1.hasMore).toBe(true);
+    expect(isIsoUtc8(payload1.items[0]?.createdAt)).toBe(true);
+    expect(isIsoUtc8(payload1.items[0]?.updatedAt)).toBe(true);
 
     const page2 = await listDrafts(new Request("http://localhost/api/inbox?limit=50&offset=50"));
     const payload2 = await page2.json();
@@ -52,6 +62,8 @@ describe("/api/inbox 合約", () => {
       })
     );
     const created = await createdRes.json();
+    expect(isIsoUtc8(created.createdAt)).toBe(true);
+    expect(isIsoUtc8(created.updatedAt)).toBe(true);
 
     const firstPatch = await updateDraft(
       new Request("http://localhost/api/inbox/id", {
@@ -64,6 +76,7 @@ describe("/api/inbox 合約", () => {
     expect(firstPatch.status).toBe(200);
     expect(firstData.content).toBe("更新一次");
     expect(firstData.updatedAt).toBeDefined();
+    expect(isIsoUtc8(firstData.updatedAt)).toBe(true);
 
     const conflictRes = await updateDraft(
       new Request("http://localhost/api/inbox/id", {

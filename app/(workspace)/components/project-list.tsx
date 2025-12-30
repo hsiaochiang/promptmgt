@@ -3,8 +3,12 @@
 import React, { useEffect, useState } from "react";
 import type { Project, ProjectStatus } from "@/lib/types/schema";
 import { formatForUI_MMDD_HHmm } from "@/lib/utils/date";
+import { projectStatuses } from "@/lib/taxonomy/data";
+import { normalizeTaxonomyValue, toTaxonomyTable } from "@/lib/utils/taxonomy";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 import ConfirmModal from "./confirm-modal";
+
+const projectStatusTable = toTaxonomyTable(projectStatuses);
 
 interface Props {
   refreshKey?: number;
@@ -19,7 +23,7 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const statusOptions: ProjectStatus[] = ["規劃中", "進行中", "已結案"];
+  const statusOptions: ProjectStatus[] = projectStatuses;
   const [newProject, setNewProject] = useState<{ name: string; description: string; status: ProjectStatus }>({
     name: "",
     description: "",
@@ -28,7 +32,7 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
   const [confirmTarget, setConfirmTarget] = useState<Project | null>(null);
   const selectedProjectId = useWorkspaceStore((s) => s.selectedProjectId);
   const setSelectedProjectId = useWorkspaceStore((s) => s.setSelectedProjectId);
-  const [filterStatus, setFilterStatus] = useState<ProjectStatus | "全部">("全部");
+  const [filterStatusCode, setFilterStatusCode] = useState<string>("ALL");
   const [search, setSearch] = useState("");
 
   const fetchProjects = async () => {
@@ -96,7 +100,11 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
 
   const handleEdit = async (project: Project) => {
     const name = window.prompt("專案名稱", project.name) ?? project.name;
-    const status = (window.prompt("專案狀態（規劃中/進行中/已結案）", project.status) as ProjectStatus | null) ?? project.status;
+    const statusText = window.prompt(
+      "專案狀態（可輸入 code 或名稱，例如：ACTIVE / 進行中）",
+      project.status?.code ?? project.status?.name
+    );
+    const status = statusText ? (normalizeTaxonomyValue(statusText, projectStatusTable) as ProjectStatus) : project.status;
     setBusy(true);
     setNotice(null);
     try {
@@ -168,13 +176,13 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
           </span>
           <select
             className="h-8 pm-select !text-[11px] !px-3 !py-1 !rounded-full"
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as ProjectStatus | "全部")}
+            value={filterStatusCode}
+            onChange={(e) => setFilterStatusCode(e.target.value)}
           >
-            <option value="全部">全部</option>
+            <option value="ALL">全部</option>
             {statusOptions.map((s) => (
-              <option key={s} value={s}>
-                {s}
+              <option key={s.code} value={s.code}>
+                {s.name}
               </option>
             ))}
           </select>
@@ -241,14 +249,17 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
             </label>
             <select
               id="project-status"
-              value={newProject.status}
-              onChange={(e) => setNewProject((p) => ({ ...p, status: e.target.value as ProjectStatus }))}
+              value={newProject.status.code}
+              onChange={(e) => {
+                const selected = statusOptions.find((s) => s.code === e.target.value) ?? statusOptions[0];
+                setNewProject((p) => ({ ...p, status: selected }));
+              }}
               disabled={busy}
               className="pm-select !text-xs"
             >
               {statusOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
+                <option key={option.code} value={option.code}>
+                  {option.name}
                 </option>
               ))}
             </select>
@@ -288,7 +299,7 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {projects
-          .filter((p) => (filterStatus === "全部" ? true : p.status === filterStatus))
+          .filter((p) => (filterStatusCode === "ALL" ? true : p.status?.code === filterStatusCode))
           .filter((p) => (search.trim() ? p.name.toLowerCase().includes(search.toLowerCase()) : true))
           .map((p) => (
           <div
@@ -327,7 +338,7 @@ export default function ProjectList({ refreshKey = 0, onProjectsChange, onSchedu
                 }
                 style={{ background: "rgba(47, 111, 111, 0.08)", borderColor: "rgba(47, 111, 111, 0.25)", color: "var(--pm-brand-strong)" }}
               >
-                {p.status}
+                {p.status?.name ?? "—"}
               </span>
               <span>更新：{formatForUI_MMDD_HHmm(p.updatedAt ?? "")}</span>
             </div>

@@ -1,6 +1,6 @@
 import { getDb } from "../db";
 import type { Settings } from "../types/schema";
-import { toIsoWithOffset } from "../utils/date";
+import { ensureIsoUtc8, toIsoWithOffset } from "../utils/date";
 import { join } from "path";
 import { homedir } from "os";
 
@@ -18,7 +18,12 @@ export async function getSettings(): Promise<Settings> {
   const db = await getDb();
   const settings = db.data!.settings;
   const logPath = resolveLogPath(settings.rootPath, settings.logPath) ?? settings.logPath;
-  return { ...settings, logPath: logPath ?? "" };
+  return {
+    ...settings,
+    createdAt: ensureIsoUtc8((settings as any).createdAt),
+    updatedAt: ensureIsoUtc8((settings as any).updatedAt),
+    logPath: logPath ?? ""
+  };
 }
 
 export async function updateSettings(partial: Partial<Settings>): Promise<Settings> {
@@ -46,7 +51,7 @@ export async function updateSettings(partial: Partial<Settings>): Promise<Settin
     ...rest,
     rootPath,
     logPath: resolvedLogPath,
-    createdAt: prev.createdAt ?? now,
+    createdAt: prev.createdAt ? ensureIsoUtc8(prev.createdAt) : now,
     updatedAt: now
   };
   db.data!.settings = next;

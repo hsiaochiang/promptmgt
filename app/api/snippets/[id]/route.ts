@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { badRequest, conflict, notFound } from "@/app/api/_lib/responses";
 import { getDb } from "@/lib/db";
+import { ensureIsoUtc8, toIsoWithOffset } from "@/lib/utils/date";
 
 function normalizeName(name?: string) {
   return name?.trim().toLowerCase();
@@ -18,6 +19,9 @@ function toUsageCount(snippet: any) {
 function inflate(snippet: any) {
   return {
     ...snippet,
+    createdAt: ensureIsoUtc8(snippet?.createdAt),
+    updatedAt: ensureIsoUtc8(snippet?.updatedAt),
+    lastUsedAt: snippet?.lastUsedAt ? ensureIsoUtc8(snippet.lastUsedAt) : undefined,
     usageCount: toUsageCount(snippet),
     usage: toUsageCount(snippet)
   };
@@ -59,6 +63,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   if (content !== undefined) {
     snippet.content = typeof content === "string" ? content : snippet.content;
   }
+
+  snippet.updatedAt = toIsoWithOffset();
 
   await db.write();
   return NextResponse.json(inflate(snippet));

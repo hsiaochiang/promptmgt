@@ -5,6 +5,9 @@ import { setupIsolatedWorkspace } from "../utils/testEnv";
 
 let restoreWorkspace: (() => Promise<void>) | undefined;
 
+const isIsoUtc8 = (value?: string | null) =>
+  typeof value === "string" && /\+08:00$/.test(value) && !Number.isNaN(Date.parse(value));
+
 beforeEach(async () => {
   restoreWorkspace = await setupIsolatedWorkspace();
 });
@@ -25,6 +28,8 @@ describe("Settings API", () => {
     expect(data.rootPath).toBeTruthy();
     expect(data.pathExists).toBe(true);
     expect(data.logPath).toBeDefined();
+    expect(isIsoUtc8(data.createdAt)).toBe(true);
+    expect(isIsoUtc8(data.updatedAt)).toBe(true);
   });
 
   it("空字串 rootPath 會以標準錯誤格式回傳", async () => {
@@ -103,7 +108,11 @@ describe("Settings API", () => {
   });
 
   it("允許更新布林旗標且不更動 rootPath", async () => {
-    const { POST } = await import("../../app/api/settings/route");
+    const { GET, POST } = await import("../../app/api/settings/route");
+
+    const beforeRes = await GET(new Request("http://localhost/api/settings"));
+    const before = await beforeRes.json();
+
     const res = await POST(
       new Request("http://localhost/api/settings", {
         method: "POST",
@@ -115,6 +124,8 @@ describe("Settings API", () => {
     const data = await res.json();
     expect(data.telemetryEnabled).toBe(false);
     expect(data.updateCheckEnabled).toBe(false);
+    expect(isIsoUtc8(data.updatedAt)).toBe(true);
+    expect(new Date(data.updatedAt).getTime()).toBeGreaterThan(new Date(before.updatedAt).getTime());
   });
 
   it("保存提供的 rootPath 並確認可存取", async () => {

@@ -6,6 +6,7 @@ import { markdown } from "@codemirror/lang-markdown";
 import { buildFullContent } from "@/lib/utils/clipboard";
 import { toIsoWithOffset } from "@/lib/utils/date";
 import type { PromptFrontmatter } from "@/lib/types/schema";
+import { promptCategories, promptStages } from "@/lib/taxonomy/data";
 import { useAutosavePrompt } from "../hooks/useAutosavePrompt";
 import { useWorkspaceStore } from "../store/useWorkspaceStore";
 import ConflictDialog from "./conflict-dialog";
@@ -159,6 +160,11 @@ export default function PromptEditor({
         ...frontmatter,
         title: frontmatter.title || "untitled",
         project: frontmatter.project || "unspecified",
+        category: frontmatter.category ?? promptCategories[0],
+        promptStage: frontmatter.promptStage ?? promptStages[0],
+        platformTags: Array.isArray(frontmatter.platformTags) ? frontmatter.platformTags : [],
+        audienceTags: Array.isArray(frontmatter.audienceTags) ? frontmatter.audienceTags : [],
+        deliverableTags: Array.isArray(frontmatter.deliverableTags) ? frontmatter.deliverableTags : [],
         updatedAt: frontmatter.updatedAt ?? now,
         createdAt: frontmatter.createdAt ?? now,
         tags: Array.isArray(frontmatter.tags) ? frontmatter.tags : []
@@ -169,7 +175,12 @@ export default function PromptEditor({
       project: "unspecified",
       type: "其他",
       status: "草稿",
+      category: promptCategories[0],
+      promptStage: promptStages[0],
       model: "",
+      platformTags: [],
+      audienceTags: [],
+      deliverableTags: [],
       tags: [],
       updatedAt: now,
       createdAt: now

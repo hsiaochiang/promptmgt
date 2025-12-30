@@ -2,7 +2,13 @@
 
 > 本文件為「可重複執行的效能與時間欄位驗證」操作手冊；對應本 feature tasks 的 Phase 9，特別是 T061–T065（效能量測/記錄與 timestamps 回歸）。
 
-## Phase 9 量測摘要（2025-12-28）
+## Phase 9 量測摘要（2025-12-30）
+
+- 腳本：`node scripts/perf-test.js`（臨時 root，50 筆提示樣本）
+- 量測結果：list_load_50 **19.11 ms** / prompt_read **0.37 ms** / prompt_write **0.86 ms** / autosave_p95 **0.86 ms**
+- 覆蓋率（`npm run test -- --coverage`）：Statements **95.66%** / Branches **80.86%** / Functions **95.51%** / Lines **95.66%**（門檻：branches ≥ 79.9，其餘 ≥ 80）
+
+## Phase 9 量測摘要（2025-12-28，歷史）
 
 - 腳本：`node scripts/perf-test.js`（臨時 root，50 筆提示樣本）
 - 量測結果：list_load_50 **22.89 ms** / prompt_read **0.65 ms** / prompt_write **2.10 ms** / autosave_p95 **2.43 ms**

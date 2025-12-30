@@ -7,6 +7,9 @@ const originalPageSizeEnv = {
   NEXT_PUBLIC_INBOX_PAGE_SIZE: process.env.NEXT_PUBLIC_INBOX_PAGE_SIZE
 };
 
+const isIsoUtc8 = (value?: string | null) =>
+  typeof value === "string" && /\+08:00$/.test(value) && !Number.isNaN(Date.parse(value));
+
 function makeInbox(total: number) {
   return Array.from({ length: total }).map((_, idx) => {
     const ts = new Date(2025, 0, idx + 1).toISOString();
@@ -47,6 +50,8 @@ describe("/api/inbox 分頁與搜尋 (Edge Case)", () => {
     expect(payload.total).toBe(120);
     expect(payload.hasMore).toBe(true);
     expect(payload.offset).toBe(0);
+    expect(isIsoUtc8(payload.items[0]?.createdAt)).toBe(true);
+    expect(isIsoUtc8(payload.items[0]?.updatedAt)).toBe(true);
   });
 
   it("搜尋需跨頁，命中後頁資料仍能返回單一結果", async () => {
@@ -59,6 +64,8 @@ describe("/api/inbox 分頁與搜尋 (Edge Case)", () => {
     expect(payload.items).toHaveLength(1);
     expect(payload.items[0].id).toBe("inbox-115");
     expect(payload.hasMore).toBe(false);
+    expect(isIsoUtc8(payload.items[0]?.createdAt)).toBe(true);
+    expect(isIsoUtc8(payload.items[0]?.updatedAt)).toBe(true);
   });
 
   it("頁大小可經環境變數調整，未提供 limit 也使用配置值", async () => {
